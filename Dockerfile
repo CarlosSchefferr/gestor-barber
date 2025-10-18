@@ -1,28 +1,39 @@
+# Usa a imagem oficial do PHP 8.2 com Apache
 FROM php:8.2-apache
 
-# Instala extensões necessárias do Laravel
-RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd
+# Instala dependências do sistema e extensões do PHP necessárias pro Laravel
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    zip \
+    git \
+    unzip \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_mysql gd bcmath exif pcntl mbstring
 
-# Copia os arquivos do projeto
+# Copia o código do projeto
 COPY . /var/www/html
 
 # Define o diretório de trabalho
 WORKDIR /var/www/html
 
-# Instala Composer e dependências do Laravel
-RUN apt-get update && apt-get install -y unzip git \
-    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-    && composer install --no-dev --optimize-autoloader
+# Instala o Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Permissões para o Apache acessar os arquivos
-RUN chown -R www-data:www-data /var/www/html
+# Instala dependências do Laravel (sem dependências de dev)
+RUN composer install --no-dev --optimize-autoloader
 
-# Expõe a porta 8080 (Fly usa 8080 por padrão)
+# Dá permissão para o Apache acessar os arquivos
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html/storage
+
+# Muda a porta do Apache para 8080 (padrão do Fly.io)
+RUN sed -i 's/80/8080/g' /etc/apache2/sites-available/000-default.conf && \
+    sed -i 's/80/8080/g' /etc/apache2/ports.conf
+
+# Expõe a porta 8080
 EXPOSE 8080
 
-# Ajusta o Apache para rodar na porta 8080
-RUN sed -i 's/80/8080/g' /etc/apache2/sites-available/000-default.conf
-RUN sed -i 's/80/8080/g' /etc/apache2/ports.conf
-
-# Comando final que inicia o servidor
+# Inicia o servidor Apache
 CMD ["apache2-foreground"]
