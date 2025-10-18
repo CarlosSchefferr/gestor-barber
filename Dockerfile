@@ -1,47 +1,45 @@
 # Usa a imagem oficial do PHP 8.2 com Apache
 FROM php:8.2-apache
 
-# Instala dependências do sistema e extensões do PHP necessárias para o Laravel
+# Instala dependências do sistema e extensões do PHP necessárias pro Laravel
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
-    libonig-dev \
-    libzip-dev \
     zip \
     git \
     unzip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo pdo_mysql gd bcmath exif pcntl mbstring zip \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    && docker-php-ext-install pdo pdo_mysql gd bcmath exif pcntl mbstring
 
 # Define o diretório de trabalho
 WORKDIR /var/www/html
 
 # Copia o código do projeto
-COPY . .
+COPY . /var/www/html
 
 # Instala o Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Instala as dependências do Laravel (sem dependências de dev)
+# Instala dependências do Laravel (sem dependências de dev)
 RUN composer install --no-dev --optimize-autoloader
 
-# Gera a APP_KEY automaticamente (se não existir)
-RUN php artisan key:generate --ansi || true
-
-# Dá permissão para o Apache acessar os arquivos
+# Corrige permissões
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage
+    && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Muda a porta do Apache para 8080 (padrão da Sevalla e Fly.io)
-RUN sed -i 's/80/8080/g' /etc/apache2/sites-available/000-default.conf && \
-    sed -i 's/80/8080/g' /etc/apache2/ports.conf
+# Configura o Apache para servir o diretório "public"
+RUN echo '<VirtualHost *:8080>\n\
+    DocumentRoot /var/www/html/public\n\
+    <Directory /var/www/html/public>\n\
+        AllowOverride All\n\
+        Require all granted\n\
+    </Directory>\n\
+</VirtualHost>' > /etc/apache2/sites-available/000-default.conf \
+    && sed -i 's/80/8080/g' /etc/apache2/ports.conf \
+    && a2enmod rewrite
 
-# Aponta o DocumentRoot para a pasta public do Laravel
-RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
-
-# Expõe a porta 8080
+# Expondo a porta 8080
 EXPOSE 8080
 
 # Inicia o servidor Apache
