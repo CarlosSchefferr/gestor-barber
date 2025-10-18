@@ -3,7 +3,6 @@
         <div class="flex justify-between h-16 items-center">
             <div class="flex items-center gap-6">
                 <a href="{{ route('dashboard') }}" class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-barber-500 rounded-full flex items-center justify-center text-white font-bold">B</div>
                     <div class="text-lg font-semibold tracking-wide">Gestor Barber</div>
                 </a>
 
