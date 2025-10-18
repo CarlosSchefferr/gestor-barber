@@ -2,18 +2,22 @@
 FROM php:8.2-apache
 
 # Instala dependências do sistema e extensões do PHP necessárias pro Laravel
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpng-dev \
-    libjpeg62-turbo-dev \
-    libfreetype6-dev \
-    libwebp-dev \
-    zlib1g-dev \
-    libzip-dev \
-    git \
-    unzip \
-    curl \
+RUN apt-get update -y \
+    && apt-get install -y --no-install-recommends \
+       ca-certificates \
+       $PHPIZE_DEPS \
+       libpng-dev \
+       libjpeg62-turbo-dev \
+       libfreetype6-dev \
+       libwebp-dev \
+       zlib1g-dev \
+       libzip-dev \
+       git \
+       unzip \
+       curl \
+    && update-ca-certificates \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
-    && docker-php-ext-install -j$(nproc) gd pdo pdo_mysql bcmath exif pcntl mbstring zip \
+    && docker-php-ext-install -j$(nproc) gd pdo_mysql bcmath exif mbstring zip \
     && rm -rf /var/lib/apt/lists/*
 
 # Define o diretório de trabalho
