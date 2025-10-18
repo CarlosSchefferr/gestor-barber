@@ -1,54 +1,47 @@
-# Usa a imagem oficial do PHP 8.2 com Apache
 FROM php:8.2-apache
 
-# Instala dependências do sistema e extensões do PHP necessárias pro Laravel
+# Dependências básicas do sistema
 RUN apt-get update -y \
     && apt-get install -y --no-install-recommends \
        ca-certificates \
-       $PHPIZE_DEPS \
-       libpng-dev \
-       libjpeg62-turbo-dev \
-       libfreetype6-dev \
-       libwebp-dev \
-       zlib1g-dev \
-       libzip-dev \
        git \
        unzip \
        curl \
     && update-ca-certificates \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
-    && docker-php-ext-install -j$(nproc) gd pdo_mysql bcmath exif mbstring zip \
     && rm -rf /var/lib/apt/lists/*
 
-# Define o diretório de trabalho
-WORKDIR /var/www/html
+# Habilita mod_rewrite do Apache
+RUN a2enmod rewrite
 
-# Copia o código do projeto
+# Instalador de extensões do PHP (resolve libs automaticamente)
+COPY --from=mlocati/php-extension-installer:2 /usr/bin/install-php-extensions /usr/local/bin/
+RUN install-php-extensions gd pdo_mysql bcmath exif mbstring zip
+
+# Composer (binário oficial)
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+
+# Define o diretório de trabalho e copia o app
+WORKDIR /var/www/html
 COPY . /var/www/html
 
-# Instala o Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-# Instala dependências do Laravel (sem dependências de dev)
+# Instala dependências do Laravel (production)
 RUN COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader
 
-# Corrige permissões
+# Permissões de escrita
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
+    && chmod -R 775 storage bootstrap/cache
 
-# Configura o Apache para servir o diretório "public"
-RUN echo '<VirtualHost *:8080>\n\
-    DocumentRoot /var/www/html/public\n\
-    <Directory /var/www/html/public>\n\
-        AllowOverride All\n\
-        Require all granted\n\
-    </Directory>\n\
-</VirtualHost>' > /etc/apache2/sites-available/000-default.conf \
-    && sed -i 's/80/8080/g' /etc/apache2/ports.conf \
-    && a2enmod rewrite
+# Configura o Apache para servir o diretório "public" (porta padrão 80)
+RUN printf '%s\n' \
+    '<VirtualHost *:80>' \
+    '    DocumentRoot /var/www/html/public' \
+    '    <Directory /var/www/html/public>' \
+    '        AllowOverride All' \
+    '        Require all granted' \
+    '    </Directory>' \
+    '</VirtualHost>' \
+    > /etc/apache2/sites-available/000-default.conf
 
-# Expondo a porta 8080
-EXPOSE 8080
+EXPOSE 80
 
-# Inicia o servidor Apache
 CMD ["apache2-foreground"]
