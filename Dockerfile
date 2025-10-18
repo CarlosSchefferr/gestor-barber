@@ -33,7 +33,10 @@ RUN chown -R www-data:www-data /var/www/html \
 
 # Configura o Apache para servir o diretório "public" (porta padrão 80)
 RUN printf '%s\n' \
-    '<VirtualHost *:80>' \
+    'Listen 8080' \
+    > /etc/apache2/ports.conf \
+    && printf '%s\n' \
+    '<VirtualHost *:8080>' \
     '    DocumentRoot /var/www/html/public' \
     '    <Directory /var/www/html/public>' \
     '        AllowOverride All' \
@@ -42,6 +45,9 @@ RUN printf '%s\n' \
     '</VirtualHost>' \
     > /etc/apache2/sites-available/000-default.conf
 
-EXPOSE 80
+# Define ServerName para evitar warnings
+RUN printf 'ServerName localhost\n' > /etc/apache2/conf-available/servername.conf && a2enconf servername
+
+EXPOSE 8080
 
 CMD ["apache2-foreground"]
