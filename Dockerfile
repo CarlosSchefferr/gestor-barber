@@ -2,15 +2,19 @@
 FROM php:8.2-apache
 
 # Instala dependências do sistema e extensões do PHP necessárias pro Laravel
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libpng-dev \
-    libjpeg-dev \
+    libjpeg62-turbo-dev \
     libfreetype6-dev \
-    zip \
+    libwebp-dev \
+    zlib1g-dev \
+    libzip-dev \
     git \
     unzip \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo pdo_mysql gd bcmath exif pcntl mbstring
+    curl \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install -j$(nproc) gd pdo pdo_mysql bcmath exif pcntl mbstring zip \
+    && rm -rf /var/lib/apt/lists/*
 
 # Define o diretório de trabalho
 WORKDIR /var/www/html
@@ -22,7 +26,7 @@ COPY . /var/www/html
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Instala dependências do Laravel (sem dependências de dev)
-RUN composer install --no-dev --optimize-autoloader
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader
 
 # Corrige permissões
 RUN chown -R www-data:www-data /var/www/html \
