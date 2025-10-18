@@ -38,6 +38,9 @@ RUN chown -R www-data:www-data /var/www/html \
 RUN sed -i 's/80/8080/g' /etc/apache2/sites-available/000-default.conf && \
     sed -i 's/80/8080/g' /etc/apache2/ports.conf
 
+# Aponta o DocumentRoot para a pasta public do Laravel
+RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
+
 # Expõe a porta 8080
 EXPOSE 8080
 
