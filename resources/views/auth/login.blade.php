@@ -38,7 +38,7 @@
                         @endif
                 </div>
 
-                <div class="flex flex-col sm:flex-row items-center justify-between mt-6 gap-3">
+                <div class="flex flex-col sm:flex-row items-center justify-center mt-6 gap-3">
                     <div class="flex gap-2">
                         <x-barber-button type="submit">
                             {{ __('Entrar') }}
