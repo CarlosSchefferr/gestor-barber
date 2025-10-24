@@ -7,6 +7,23 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
+        <!-- Favicon -->
+        <link rel="icon" type="image/png" sizes="64x64" href="{{ asset('images/logo.png') }}">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/logo.png') }}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/logo.png') }}">
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/logo.png') }}">
+        <link rel="apple-touch-icon" sizes="152x152" href="{{ asset('images/logo.png') }}">
+        <link rel="apple-touch-icon" sizes="144x144" href="{{ asset('images/logo.png') }}">
+        <link rel="apple-touch-icon" sizes="120x120" href="{{ asset('images/logo.png') }}">
+        <link rel="apple-touch-icon" sizes="114x114" href="{{ asset('images/logo.png') }}">
+        <link rel="apple-touch-icon" sizes="76x76" href="{{ asset('images/logo.png') }}">
+        <link rel="apple-touch-icon" sizes="72x72" href="{{ asset('images/logo.png') }}">
+        <link rel="apple-touch-icon" sizes="60x60" href="{{ asset('images/logo.png') }}">
+        <link rel="apple-touch-icon" sizes="57x57" href="{{ asset('images/logo.png') }}">
+        <meta name="msapplication-TileColor" content="#c96f1f">
+        <meta name="msapplication-TileImage" content="{{ asset('images/logo.png') }}">
+        <meta name="theme-color" content="#c96f1f">
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
