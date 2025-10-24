@@ -43,7 +43,7 @@
                 @auth
                     <!-- Quick Actions -->
                     <div class="hidden md:flex items-center">
-                       
+
                     </div>
 
                     <!-- User Menu -->
