@@ -63,4 +63,12 @@ class User extends Authenticatable
     {
         return $this->role === 'barber';
     }
+
+    /**
+     * Agendamentos do barbeiro
+     */
+    public function agendamentos()
+    {
+        return $this->hasMany(Agendamento::class, 'barbeiro_id');
+    }
 }

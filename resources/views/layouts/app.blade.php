@@ -15,7 +15,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100">
+        <div class="min-h-screen bg-gray-100 flex flex-col">
             @include('layouts.navigation')
 
             <!-- Page Heading -->
@@ -28,13 +28,112 @@
             @endisset
 
             <!-- Page Content -->
-            <main>
+            <main class="flex-1 py-6 pb-16">
                 @isset($slot)
                     {{ $slot }}
                 @else
                     @yield('content')
                 @endisset
             </main>
+
+            <!-- Footer -->
+            <footer class="bg-gradient-to-r from-barber-900 via-barber-black to-black text-white mt-16">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                    <div class="flex flex-col md:flex-row items-center justify-between">
+                        <!-- Logo (Esquerda) -->
+                        <div class="flex items-center mb-4 md:mb-0">
+                            <span class="text-xl font-bold text-white">Gestor Barber</span>
+                        </div>
+
+                        <!-- Informações de Tempo e Localização (Direita) -->
+                        <div class="flex items-center space-x-6 text-sm text-gray-400">
+                            <div class="flex items-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span id="brasilia-time">{{ now()->setTimezone('America/Sao_Paulo')->format('H:i:s') }}</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <span>{{ now()->setTimezone('America/Sao_Paulo')->format('d/m/Y') }}</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                <span id="user-location">Carregando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+
+            <!-- Script para atualizar o horário em tempo real e localização -->
+            <script>
+                function updateBrasiliaTime() {
+                    const now = new Date();
+                    const brasiliaTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+                    const timeString = brasiliaTime.toLocaleTimeString('pt-BR', {
+                        hour12: false,
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                    document.getElementById('brasilia-time').textContent = timeString;
+                }
+
+                // Função para obter a localização do usuário
+                function getUserLocation() {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            function(position) {
+                                // Usar API de geocodificação reversa para obter a cidade
+                                const lat = position.coords.latitude;
+                                const lon = position.coords.longitude;
+
+                                // Usar API gratuita do OpenStreetMap (Nominatim)
+                                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.address) {
+                                            const city = data.address.city || data.address.town || data.address.village || data.address.municipality || 'Localização';
+                                            const state = data.address.state || '';
+                                            const locationText = state ? `${city}, ${state}` : city;
+                                            document.getElementById('user-location').textContent = locationText;
+                                        } else {
+                                            document.getElementById('user-location').textContent = 'Localização';
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.log('Erro ao obter localização:', error);
+                                        document.getElementById('user-location').textContent = 'Localização';
+                                    });
+                            },
+                            function(error) {
+                                console.log('Erro de geolocalização:', error);
+                                document.getElementById('user-location').textContent = 'Localização';
+                            },
+                            {
+                                enableHighAccuracy: false,
+                                timeout: 10000,
+                                maximumAge: 300000 // 5 minutos
+                            }
+                        );
+                    } else {
+                        document.getElementById('user-location').textContent = 'Localização';
+                    }
+                }
+
+                // Atualizar horário a cada segundo
+                setInterval(updateBrasiliaTime, 1000);
+                updateBrasiliaTime();
+
+                // Obter localização do usuário
+                getUserLocation();
+            </script>
         </div>
         @stack('scripts')
     </body>
