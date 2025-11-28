@@ -23,6 +23,8 @@ class User extends Authenticatable
         'password',
         'role',
         'avatar',
+        'date_of_birth',
+        'phone',
     ];
 
     /**
@@ -70,5 +72,13 @@ class User extends Authenticatable
     public function agendamentos()
     {
         return $this->hasMany(Agendamento::class, 'barbeiro_id');
+    }
+
+    /**
+     * Override password reset notification to use custom template
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new \App\Notifications\ResetPasswordNotification($token));
     }
 }

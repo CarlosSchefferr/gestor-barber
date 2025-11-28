@@ -62,7 +62,63 @@ class AdminController extends Controller
                 ->first(),
         ];
 
-        return view('admin.show', compact('user', 'agendamentos', 'estatisticasUsuario'));
+        // indicadores dinâmicos para filtros (hoje, semanal, mensal)
+        $now = \Carbon\Carbon::now();
+
+        // helper para calcular indicadores em um intervalo
+        $calcIndicators = function ($start, $end) use ($user) {
+            // slots: assumimos expediente de 08:00-18:00 e intervalos de 30 minutos
+            $slotsPerDay = ((18 - 8) * 60) / 30; // 20
+
+            $days = \Carbon\CarbonPeriod::create($start->startOfDay(), $end->endOfDay());
+            $workDays = 0;
+            foreach ($days as $d) {
+                // contar apenas seg-sex (1..5)
+                if (in_array($d->dayOfWeekIso, [1,2,3,4,5])) {
+                    $workDays++;
+                }
+            }
+
+            $totalSlots = max(0, $workDays * $slotsPerDay);
+
+            $scheduledQuery = Agendamento::where('barbeiro_id', $user->id)
+                ->whereBetween('starts_at', [$start->startOfDay(), $end->endOfDay()]);
+
+            $scheduled = (int) $scheduledQuery->count();
+            $completed = (int) $scheduledQuery->where('status', 'concluido')->count();
+            $totalRevenue = (float) $scheduledQuery->whereNotNull('price')->sum('price');
+
+            // comissão: assumimos 30% por padrão
+            $commission = $totalRevenue * 0.30;
+
+            $vacant = max(0, $totalSlots - $scheduled);
+
+            return [
+                'vacant_slots' => $vacant,
+                'scheduled' => $scheduled,
+                'completed' => $completed,
+                'commission' => $commission,
+            ];
+        };
+
+        $startToday = $now->copy();
+        $endToday = $now->copy();
+
+        // semana atual: segunda a sexta
+        $startWeek = $now->copy()->startOfWeek(1);
+        $endWeek = $now->copy()->startOfWeek(1)->addDays(4);
+
+        // mês atual
+        $startMonth = $now->copy()->startOfMonth();
+        $endMonth = $now->copy()->endOfMonth();
+
+        $indicators = [
+            'today' => $calcIndicators($startToday, $endToday),
+            'week' => $calcIndicators($startWeek, $endWeek),
+            'month' => $calcIndicators($startMonth, $endMonth),
+        ];
+
+        return view('admin.show', compact('user', 'agendamentos', 'estatisticasUsuario', 'indicators'));
     }
 
     public function edit(User $user)
@@ -77,6 +133,8 @@ class AdminController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
             'role' => 'required|in:owner,barber',
             'password' => 'nullable|min:8|confirmed',
+            'date_of_birth' => 'nullable|date',
+            'phone' => 'nullable|string|max:25',
         ]);
 
         if ($request->filled('password')) {
@@ -119,6 +177,8 @@ class AdminController extends Controller
             'email' => 'required|email|unique:users',
             'role' => 'required|in:owner,barber',
             'password' => 'required|min:8|confirmed',
+            'date_of_birth' => 'required|date',
+            'phone' => 'required|string|max:25',
         ]);
 
         $data['password'] = Hash::make($data['password']);

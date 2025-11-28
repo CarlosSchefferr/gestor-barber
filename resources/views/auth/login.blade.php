@@ -45,12 +45,14 @@
                         </x-barber-button>
                     </div>
                 </div>
-                <div class="mt-4 text-center text-sm text-gray-600">
-                    {{ __("Ainda não tem conta?") }}
-                    <a href="{{ route('register') }}" class="text-barber-500 hover:underline font-semibold">
-                        {{ __('Registrar agora') }}
-                    </a>
-                </div>
+                {{-- 
+                                <div class="mt-4 text-center text-sm text-gray-600">
+                                    {{ __("Ainda não tem conta?") }}
+                                    <a href="{{ route('register') }}" class="text-barber-500 hover:underline font-semibold">
+                                        {{ __('Registrar agora') }}
+                                    </a>
+                                </div>
+                --}}
             </form>
 
     </div>

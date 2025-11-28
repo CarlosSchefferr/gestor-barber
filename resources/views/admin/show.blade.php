@@ -40,23 +40,74 @@
         </div>
 
         <!-- Estatísticas -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Estatísticas</h3>
-            <div class="space-y-3">
-                <div class="flex justify-between">
-                    <span class="text-sm text-gray-500">Total de Agendamentos</span>
-                    <span class="text-sm font-medium text-gray-900">{{ $estatisticasUsuario['total_agendamentos'] }}</span>
+            <div id="admin-stats-widget" x-data="{ filter: 'today', indicators: @json($indicators) }" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Estatísticas</h3>
+
+                {{-- filtros em formato de cards --}}
+                <div class="flex gap-3 mb-4">
+                    <button data-filter="today" :class="filter === 'today' ? 'bg-barber-600 text-white' : 'bg-gray-50 text-gray-700'" @click="filter = 'today'" class="px-4 py-2 rounded-lg border border-gray-200 shadow-sm">Hoje</button>
+                    <button data-filter="week" :class="filter === 'week' ? 'bg-barber-600 text-white' : 'bg-gray-50 text-gray-700'" @click="filter = 'week'" class="px-4 py-2 rounded-lg border border-gray-200 shadow-sm">Semanal</button>
+                    <button data-filter="month" :class="filter === 'month' ? 'bg-barber-600 text-white' : 'bg-gray-50 text-gray-700'" @click="filter = 'month'" class="px-4 py-2 rounded-lg border border-gray-200 shadow-sm">Mensal</button>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-sm text-gray-500">Agendamentos Hoje</span>
-                    <span class="text-sm font-medium text-gray-900">{{ $estatisticasUsuario['agendamentos_hoje'] }}</span>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-barber-50 border border-barber-100 rounded-lg p-4">
+                        <div class="text-sm text-gray-500">Horários vagos</div>
+                        <div id="vacant_slots_stat" class="text-2xl font-semibold text-barber-700 mt-2" x-text="indicators[filter].vacant_slots"></div>
+                    </div>
+
+                    <div class="bg-white border border-gray-100 rounded-lg p-4">
+                        <div class="text-sm text-gray-500">Serviços agendados</div>
+                        <div id="scheduled_stat" class="text-2xl font-semibold text-gray-900 mt-2" x-text="indicators[filter].scheduled"></div>
+                    </div>
+
+                    <div class="bg-white border border-gray-100 rounded-lg p-4">
+                        <div class="text-sm text-gray-500">Serviços concluídos</div>
+                        <div id="completed_stat" class="text-2xl font-semibold text-gray-900 mt-2" x-text="indicators[filter].completed"></div>
+                    </div>
+
+                    <div class="bg-white border border-gray-100 rounded-lg p-4">
+                        <div class="text-sm text-gray-500">Comissão alcançada</div>
+                        <div class="text-2xl font-semibold text-gray-900 mt-2">R$ <span id="commission_stat" x-text="(indicators[filter].commission).toFixed(2)"></span></div>
+                    </div>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-sm text-gray-500">Receita Total</span>
-                    <span class="text-sm font-medium text-gray-900">R$ {{ number_format($estatisticasUsuario['receita_total'], 2, ',', '.') }}</span>
-                </div>
+
+                {{-- indicators estão disponíveis em `indicators` no x-data --}}
+                <script>
+                    (function(){
+                        // fallback JS to update stats when buttons are clicked (works even if Alpine has issues)
+                        try {
+                            const indicators = @json($indicators);
+                            const container = document.getElementById('admin-stats-widget');
+                            if(!container) return;
+
+                            function updateStats(key){
+                                const data = indicators[key] || {vacant_slots:0, scheduled:0, completed:0, commission:0};
+                                const vacant = container.querySelector('#vacant_slots_stat');
+                                const scheduled = container.querySelector('#scheduled_stat');
+                                const completed = container.querySelector('#completed_stat');
+                                const commission = container.querySelector('#commission_stat');
+                                if(vacant) vacant.textContent = data.vacant_slots;
+                                if(scheduled) scheduled.textContent = data.scheduled;
+                                if(completed) completed.textContent = data.completed;
+                                if(commission) commission.textContent = parseFloat(data.commission || 0).toFixed(2);
+                            }
+
+                            container.querySelectorAll('[data-filter]').forEach(function(btn){
+                                btn.addEventListener('click', function(e){
+                                    const key = this.getAttribute('data-filter');
+                                    updateStats(key);
+                                });
+                            });
+
+                            // initialize with 'today'
+                            updateStats('today');
+                        } catch (err){
+                            console.error('Error initializing admin stats fallback:', err);
+                        }
+                    })();
+                </script>
             </div>
-        </div>
 
         <!-- Informações de Cadastro -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

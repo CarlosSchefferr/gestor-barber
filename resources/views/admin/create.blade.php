@@ -15,16 +15,16 @@
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <form action="{{ route('admin.store') }}" method="POST">
             @csrf
-            
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Informações Básicas -->
                 <div class="space-y-4">
                     <h3 class="text-lg font-medium text-gray-900">Informações Básicas</h3>
-                    
+
                     <div>
                         <label for="name" class="block text-sm font-medium text-gray-700">Nome Completo</label>
-                        <input type="text" id="name" name="name" value="{{ old('name') }}" 
-                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('name') border-red-300 @enderror" 
+                        <input type="text" id="name" name="name" value="{{ old('name') }}"
+                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('name') border-red-300 @enderror"
                                required>
                         @error('name')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -33,8 +33,8 @@
 
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700">E-mail</label>
-                        <input type="email" id="email" name="email" value="{{ old('email') }}" 
-                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('email') border-red-300 @enderror" 
+                        <input type="email" id="email" name="email" value="{{ old('email') }}"
+                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('email') border-red-300 @enderror"
                                required>
                         @error('email')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -43,8 +43,8 @@
 
                     <div>
                         <label for="role" class="block text-sm font-medium text-gray-700">Cargo</label>
-                        <select id="role" name="role" 
-                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('role') border-red-300 @enderror" 
+                        <select id="role" name="role"
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('role') border-red-300 @enderror"
                                 required>
                             <option value="">Selecione um cargo</option>
                             <option value="barber" {{ old('role') == 'barber' ? 'selected' : '' }}>Barbeiro</option>
@@ -54,16 +54,33 @@
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
+
+                    <div>
+                        <label for="date_of_birth" class="block text-sm font-medium text-gray-700">Data de Nascimento</label>
+                        <input type="date" id="date_of_birth" name="date_of_birth" value="{{ old('date_of_birth') }}"
+                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('date_of_birth') border-red-300 @enderror" required>
+                        @error('date_of_birth')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700">Telefone</label>
+                        <input type="text" name="phone" id="phone" value="{{ old('phone') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500" placeholder="(99) 99999-9999" required>
+                        @error('phone')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
 
                 <!-- Senha -->
                 <div class="space-y-4">
                     <h3 class="text-lg font-medium text-gray-900">Segurança</h3>
-                    
+
                     <div>
                         <label for="password" class="block text-sm font-medium text-gray-700">Senha</label>
-                        <input type="password" id="password" name="password" 
-                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('password') border-red-300 @enderror" 
+                        <input type="password" id="password" name="password"
+                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('password') border-red-300 @enderror"
                                required>
                         @error('password')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -72,8 +89,8 @@
 
                     <div>
                         <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Confirmar Senha</label>
-                        <input type="password" id="password_confirmation" name="password_confirmation" 
-                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500" 
+                        <input type="password" id="password_confirmation" name="password_confirmation"
+                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500"
                                required>
                     </div>
 

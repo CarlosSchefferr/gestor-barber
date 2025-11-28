@@ -20,7 +20,7 @@ class AgendamentoController extends Controller
         $query = Agendamento::query()->with(['cliente', 'barbeiro']);
 
         // If the logged user is a barber, show only their agendamentos
-        if (Auth::check() && Auth::user()->role === 'barber') {
+        if (Auth::check() && Auth::user()->isBarber()) {
             $query->where('barbeiro_id', Auth::id());
         }
 
@@ -76,6 +76,11 @@ class AgendamentoController extends Controller
 
     public function edit(Agendamento $agendamento)
     {
+        // Barbeiros só podem editar seus próprios agendamentos
+        if (Auth::user()->isBarber() && $agendamento->barbeiro_id !== Auth::id()) {
+            abort(403, 'Você só pode editar seus próprios agendamentos.');
+        }
+
         $clientes = Cliente::orderBy('nome')->get();
         $barbeiros = User::orderBy('name')->get();
         return view('agendamentos.edit', compact('agendamento', 'clientes', 'barbeiros'));
@@ -83,6 +88,11 @@ class AgendamentoController extends Controller
 
     public function update(Request $request, Agendamento $agendamento)
     {
+        // Barbeiros só podem atualizar seus próprios agendamentos
+        if (Auth::user()->isBarber() && $agendamento->barbeiro_id !== Auth::id()) {
+            abort(403, 'Você só pode atualizar seus próprios agendamentos.');
+        }
+
         $data = $request->validate([
             'cliente_id' => 'required|exists:clientes,id',
             'barbeiro_id' => 'required|exists:users,id',
@@ -101,6 +111,11 @@ class AgendamentoController extends Controller
 
     public function destroy(Agendamento $agendamento)
     {
+        // Barbeiros só podem deletar seus próprios agendamentos
+        if (Auth::user()->isBarber() && $agendamento->barbeiro_id !== Auth::id()) {
+            abort(403, 'Você só pode deletar seus próprios agendamentos.');
+        }
+
         $agendamento->delete();
         return redirect()->route('agendamentos.index')->with('success', 'Agendamento removido.');
     }
