@@ -19,7 +19,7 @@
 
     <div>
         <label class="block text-sm font-medium text-gray-700">Data e hora início</label>
-        <input type="datetime-local" name="starts_at" value="{{ old('starts_at') ?? (isset($agendamento) ? $agendamento->starts_at->format('Y-m-d\TH:i') : '') }}" class="mt-1 block w-full border-gray-300 rounded">
+        <input type="datetime-local" name="starts_at" value="{{ old('starts_at', request('date') ? request('date')."T09:00" : (isset($agendamento) ? $agendamento->starts_at->format('Y-m-d\\TH:i') : '')) }}" class="mt-1 block w-full border-gray-300 rounded">
     </div>
 
     <div>
@@ -29,12 +29,24 @@
 
     <div class="col-span-2">
         <label class="block text-sm font-medium text-gray-700">Serviço</label>
-        <input type="text" name="servico" value="{{ old('servico') ?? ($agendamento->servico ?? '') }}" class="mt-1 block w-full border-gray-300 rounded">
+        <select name="servico" class="mt-1 block w-full border-gray-300 rounded">
+            <option value="">Selecione um serviço</option>
+            @if(isset($services))
+                @foreach($services as $s)
+                    <option value="{{ $s->name }}" {{ (old('servico') ?? ($agendamento->servico ?? '')) == $s->name ? 'selected' : '' }}>{{ $s->name }}</option>
+                @endforeach
+            @endif
+        </select>
     </div>
 
     <div>
         <label class="block text-sm font-medium text-gray-700">Preço</label>
         <input type="number" step="0.01" name="price" value="{{ old('price') ?? ($agendamento->price ?? '') }}" class="mt-1 block w-full border-gray-300 rounded">
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700">Cor (para calendário)</label>
+        <input type="color" name="color" value="{{ old('color') ?? ($agendamento->color ?? '#3b82f6') }}" class="mt-1 h-10 w-16 p-0 border rounded">
     </div>
 
     <div class="col-span-2">

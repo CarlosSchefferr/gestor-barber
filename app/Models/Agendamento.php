@@ -17,6 +17,7 @@ class Agendamento extends Model
         'ends_at',
         'status',
         'servico',
+        'color',
         'price',
         'observacoes',
     ];

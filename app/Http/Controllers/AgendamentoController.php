@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Agendamento;
 use App\Models\Cliente;
 use App\Models\User;
+use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -42,17 +43,45 @@ class AgendamentoController extends Controller
 
         $agendamentos = $query->orderBy('starts_at')->paginate(20)->withQueryString();
 
+        // Para o calendário, usar a mesma query (aplicando os filtros) e gerar eventos
+        $calendarAgendamentos = (clone $query)->orderBy('starts_at')->get();
+        $calendarEvents = $calendarAgendamentos->map(function($a) {
+            return [
+                'id' => $a->id,
+                'title' => ($a->cliente? $a->cliente->nome : '') . ' - ' . ($a->servico ?? ''),
+                'start' => $a->starts_at ? $a->starts_at->toIso8601String() : null,
+                'end' => $a->ends_at ? $a->ends_at->toIso8601String() : null,
+                'backgroundColor' => $a->color ?? '#3b82f6',
+                'borderColor' => $a->color ?? '#3b82f6',
+                'textColor' => '#ffffff',
+                'extendedProps' => [
+                    'barbeiro' => $a->barbeiro? $a->barbeiro->name : '',
+                    'barbeiro_name' => $a->barbeiro? $a->barbeiro->name : '',
+                    'cliente_name' => $a->cliente? $a->cliente->nome : '',
+                    'cliente_phone' => $a->cliente? ($a->cliente->telefone ?? '') : '',
+                    'servico' => $a->servico ?? '',
+                    'price' => $a->price ?? null,
+                    'observacoes' => $a->observacoes ?? '',
+                    'color' => $a->color ?? null,
+                    'starts_at' => $a->starts_at ? $a->starts_at->toIso8601String() : null,
+                    'ends_at' => $a->ends_at ? $a->ends_at->toIso8601String() : null,
+                ],
+            ];
+        })->toArray();
+
         $clientes = Cliente::orderBy('nome')->get();
         $barbeiros = User::orderBy('name')->get();
+        $services = Service::orderBy('name')->get();
 
-        return view('agendamentos.index', compact('agendamentos', 'clientes', 'barbeiros'));
+        return view('agendamentos.index', compact('agendamentos', 'clientes', 'barbeiros', 'calendarAgendamentos', 'calendarEvents', 'services'));
     }
 
     public function create()
     {
         $clientes = Cliente::orderBy('nome')->get();
         $barbeiros = User::orderBy('name')->get();
-        return view('agendamentos.create', compact('clientes', 'barbeiros'));
+        $services = Service::orderBy('name')->get();
+        return view('agendamentos.create', compact('clientes', 'barbeiros', 'services'));
     }
 
     public function store(Request $request)
@@ -63,6 +92,7 @@ class AgendamentoController extends Controller
             'starts_at' => 'required|date',
             'ends_at' => 'nullable|date',
             'servico' => 'nullable|string|max:255',
+            'color' => ['nullable','regex:/^#[0-9A-Fa-f]{6}$/'],
             'price' => 'nullable|numeric',
             'observacoes' => 'nullable|string',
         ]);
@@ -83,7 +113,8 @@ class AgendamentoController extends Controller
 
         $clientes = Cliente::orderBy('nome')->get();
         $barbeiros = User::orderBy('name')->get();
-        return view('agendamentos.edit', compact('agendamento', 'clientes', 'barbeiros'));
+        $services = Service::orderBy('name')->get();
+        return view('agendamentos.edit', compact('agendamento', 'clientes', 'barbeiros', 'services'));
     }
 
     public function update(Request $request, Agendamento $agendamento)
@@ -99,6 +130,7 @@ class AgendamentoController extends Controller
             'starts_at' => 'required|date',
             'ends_at' => 'nullable|date',
             'servico' => 'nullable|string|max:255',
+            'color' => ['nullable','regex:/^#[0-9A-Fa-f]{6}$/'],
             'price' => 'nullable|numeric',
             'observacoes' => 'nullable|string',
             'status' => 'nullable|string',

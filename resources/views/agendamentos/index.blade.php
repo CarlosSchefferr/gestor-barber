@@ -12,9 +12,12 @@
         </a>
     </div>
 
+
+
     <!-- Filtros -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-        <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <form method="GET" id="filtersForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <input type="hidden" name="view" id="viewInput" value="{{ request('view', 'calendar') }}">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Cliente</label>
                 <select name="cliente_id" class="w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500">
@@ -49,6 +52,19 @@
                 <input type="date" name="to" value="{{ request('to') }}" class="w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500">
             </div>
 
+            <div class="col-span-full">
+                <div class="mt-4 border-t pt-4 flex items-center space-x-6">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" id="checkboxCalendar" class="form-checkbox h-4 w-4 text-barber-600">
+                        <span class="ml-2 text-sm">Calendário</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" id="checkboxList" class="form-checkbox h-4 w-4 text-barber-600">
+                        <span class="ml-2 text-sm">Listagem</span>
+                    </label>
+                </div>
+            </div>
+
             <div class="col-span-full flex justify-end space-x-3">
                 <button type="submit" class="bg-barber-600 text-white px-4 py-2 rounded-md hover:bg-barber-700 transition-colors">
                     Filtrar
@@ -60,8 +76,14 @@
         </form>
     </div>
 
+    <!-- Calendário -->
+    <div id="calendarContainer" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Calendário</h2>
+        <div id="calendar"></div>
+    </div>
+
     <!-- Tabela de Agendamentos -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div id="listContainer" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
@@ -121,6 +143,10 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end space-x-2">
+                                    <button onclick="showEventModal({{ $agendamento->id }})"
+                                            class="text-blue-600 hover:text-blue-900 transition-colors text-sm">
+                                        Ver
+                                    </button>
                                     <a href="{{ route('agendamentos.edit', $agendamento) }}"
                                        class="text-barber-600 hover:text-barber-900 transition-colors text-sm">
                                         Editar
@@ -230,3 +256,428 @@ document.getElementById('confirmModal').addEventListener('click', function(e) {
 });
 </script>
 @endsection
+
+@push('scripts')
+    <script>
+        (function(){
+            // Ensure FullCalendar CSS is present
+            function ensureCSS(href){
+                if(document.querySelector('link[href="'+href+'"]')) return;
+                var link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = href;
+                document.head.appendChild(link);
+            }
+
+            // Dynamically load a script and call cb on load/error
+            function loadScript(src, cb){
+                if(document.querySelector('script[src="'+src+'"]')){
+                    // already added; wait for FullCalendar
+                    return cb();
+                }
+                var s = document.createElement('script');
+                s.src = src;
+                s.onload = function(){ cb(); };
+                s.onerror = function(){ console.error('Falha ao carregar script', src); cb(); };
+                document.body.appendChild(s);
+            }
+
+            // Load script but non-fatal on error (silent)
+            function loadScriptSilent(src, cb){
+                if(document.querySelector('script[src="'+src+'"]')){
+                    return cb();
+                }
+                var s = document.createElement('script');
+                s.src = src;
+                s.onload = function(){ cb(); };
+                s.onerror = function(){ console.warn('Falha ao carregar (silent) script', src); cb(); };
+                document.body.appendChild(s);
+            }
+
+            // try multiple CDN/local sources for FullCalendar (CSS + JS)
+            // Try multiple versions and CDNs. We add FullCalendar v5 UMD bundle as most reliable single-file option,
+            // then v6 candidates and finally a local vendor fallback.
+            var cssCandidates = [
+                'https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css',
+                'https://unpkg.com/fullcalendar@5.11.3/main.min.css',
+                'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css',
+                'https://unpkg.com/@fullcalendar/core@6.1.8/main.min.css',
+                'https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/main.min.css',
+                '/vendor/fullcalendar/main.min.css'
+            ];
+            // JS candidates for FullCalendar (UMD bundles where available)
+            var jsCandidates = [
+                'https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js',
+                'https://unpkg.com/fullcalendar@5.11.3/main.min.js',
+                'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js',
+                '/vendor/fullcalendar/main.min.js'
+            ];
+
+            // Try loading candidates sequentially. If none load or FullCalendar isn't available,
+            // fallback to the simple calendar renderer.
+            function tryCandidate(i){
+                if(i >= jsCandidates.length){
+                    // no candidate loaded -> fallback
+                    _fallbackCalendar();
+                    return;
+                }
+
+                // ensure CSS for candidate index if available
+                try{
+                    var css = cssCandidates[i] || cssCandidates[0];
+                    ensureCSS(css);
+                }catch(e){}
+
+                loadScript(jsCandidates[i], function(){
+                    // give the script a tick to set globals
+                    setTimeout(function(){
+                        if(typeof FullCalendar !== 'undefined' || window.FullCalendar){
+                            try{ _createCalendar(); }catch(e){ console.error(e); _fallbackCalendar(); }
+                        } else {
+                            // try next candidate
+                            tryCandidate(i+1);
+                        }
+                    }, 50);
+                });
+            }
+            function initCalendar(){
+                tryCandidate(0);
+            }
+
+            // Fallback simple calendar renderer (no external libs)
+            function _fallbackCalendar(){
+                try{
+                    var container = document.getElementById('calendar');
+                    if(!container) return;
+                    // Clear and build a simple month grid
+                    container.innerHTML = '';
+
+                    var events = {!! json_encode($calendarEvents) !!};
+                    var eventsByDate = {};
+                    events.forEach(function(ev){
+                        try{
+                            var d = new Date(ev.start);
+                            var key = d.toISOString().slice(0,10);
+                            eventsByDate[key] = eventsByDate[key] || [];
+                            eventsByDate[key].push(ev);
+                        }catch(e){}
+                    });
+
+                    var now = new Date();
+                    var year = now.getFullYear();
+                    var month = now.getMonth();
+
+                    var first = new Date(year, month, 1);
+                    var startDay = first.getDay(); // 0-6 (Sun-Sat)
+                    var daysInMonth = new Date(year, month+1, 0).getDate();
+
+                    var title = document.createElement('div');
+                    title.className = 'mb-4 flex items-center justify-between';
+                    title.innerHTML = '<h3 class="text-lg font-medium text-gray-900">' + first.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }) + '</h3>';
+                    container.appendChild(title);
+
+                    var grid = document.createElement('div');
+                    grid.style.display = 'grid';
+                    grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
+                    grid.style.gap = '6px';
+
+                    var weekdays = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
+                    weekdays.forEach(function(w){
+                        var h = document.createElement('div');
+                        h.className = 'text-center text-xs font-medium text-gray-600';
+                        h.textContent = w;
+                        grid.appendChild(h);
+                    });
+
+                    for(var i=0;i<startDay;i++){
+                        var blank = document.createElement('div');
+                        blank.className = 'h-24 border rounded p-2 bg-gray-50';
+                        grid.appendChild(blank);
+                    }
+
+                    for(var day=1; day<=daysInMonth; day++){
+                        var date = new Date(year, month, day);
+                        var iso = date.toISOString().slice(0,10);
+                        var cell = document.createElement('div');
+                        cell.className = 'h-24 border rounded p-2 bg-white overflow-hidden';
+                        var daynum = document.createElement('div');
+                        daynum.className = 'text-sm font-medium text-gray-800';
+                        daynum.textContent = day;
+                        cell.appendChild(daynum);
+
+                            if(eventsByDate[iso]){
+                            var list = document.createElement('div');
+                            list.className = 'mt-1 text-xs text-gray-700 space-y-1 overflow-auto';
+                            eventsByDate[iso].forEach(function(ev){
+                                var evEl = document.createElement('div');
+                                evEl.className = 'px-1 py-0.5 rounded cursor-pointer';
+                                evEl.textContent = ev.title;
+                                // apply event color if provided
+                                try{
+                                    if(ev.backgroundColor){ evEl.style.backgroundColor = ev.backgroundColor; }
+                                    else if(ev.extendedProps && ev.extendedProps.color){ evEl.style.backgroundColor = ev.extendedProps.color; }
+                                    else { evEl.style.backgroundColor = '#e6f4ff'; }
+                                    evEl.style.color = (ev.textColor || '#ffffff');
+                                }catch(e){}
+                                // click event: open modal with details if id present
+                                if(ev.id){
+                                    evEl.addEventListener('click', function(e){
+                                        e.stopPropagation();
+                                        if(typeof showEventModal === 'function') showEventModal(ev.id);
+                                    });
+                                }
+                                list.appendChild(evEl);
+                            });
+                            cell.appendChild(list);
+                        }
+
+                        (function(diso){
+                            cell.style.cursor = 'pointer';
+                            cell.addEventListener('click', function(){
+                                window.location.href = "{{ route('agendamentos.create') }}" + '?date=' + diso;
+                            });
+                        })(iso);
+
+                        grid.appendChild(cell);
+                    }
+
+                    container.appendChild(grid);
+                }catch(e){
+                    console.error('Fallback calendar failed', e);
+                }
+            }
+
+            function _createCalendar(){
+                var calendarEl = document.getElementById('calendar');
+                if(!calendarEl) return;
+
+                // Clear previous content
+                calendarEl.innerHTML = '';
+
+                try{
+                    var calendar = new FullCalendar.Calendar(calendarEl, {
+                        initialView: 'dayGridMonth',
+                        height: 600,
+                        locale: 'pt-br',
+                        // fallback/overrides for Portuguese labels when locale file isn't loaded
+                        buttonText: {
+                            today: 'Hoje',
+                            month: 'Mês',
+                            week: 'Semana',
+                            day: 'Dia',
+                            list: 'Lista'
+                        },
+                        firstDay: 1,
+                        dayHeaderFormat: { weekday: 'short' },
+                        headerToolbar: {
+                            left: 'prev,next today',
+                            center: 'title',
+                            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                        },
+                        dateClick: function(info) {
+                            var dateStr = info.dateStr; // YYYY-MM-DD
+                            var url = "{{ route('agendamentos.create') }}" + '?date=' + dateStr;
+                            window.location.href = url;
+                        },
+                        eventClick: function(info){
+                                var id = info.event.id;
+                                if(id && typeof showEventModal === 'function'){
+                                    showEventModal(id);
+                                } else if(id){
+                                    window.location.href = '/agendamentos/' + id + '/edit';
+                                }
+                            },
+                        events: {!! json_encode($calendarEvents) !!}
+                    });
+                    calendar.render();
+                } catch(e){
+                    console.error('Erro ao inicializar FullCalendar', e);
+                }
+            }
+
+                    // Make a map of appointments for modal lookup
+                    var agendamentoMap = {};
+                    (function(){
+                        try{
+                            var evs = {!! json_encode($calendarEvents) !!};
+                            evs.forEach(function(e){
+                                agendamentoMap[e.id] = e;
+                            });
+                        }catch(e){ console.warn('agendamentoMap init failed', e); }
+                    })();
+
+                    // Show event details modal populated from agendamentoMap
+                    window.showEventModal = function(id){
+                        try{
+                            var ev = agendamentoMap[id];
+                            if(!ev) {
+                                // if not in map, redirect to edit
+                                window.location.href = '/agendamentos/' + id + '/edit';
+                                return;
+                            }
+
+                            var props = ev.extendedProps || {};
+
+                            // create modal if not exists
+                            if(!document.getElementById('eventModal')){
+                                var modalHtml = `
+                                <div id="eventModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50 flex items-start sm:items-center justify-center">
+                                    <div class="relative mt-20 sm:mt-0 mx-4 sm:mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white max-h-[80vh] overflow-y-auto">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h3 id="eventModalTitle" class="text-xl font-semibold text-gray-900">Detalhes do Serviço</h3>
+                                                <p id="eventModalWhen" class="text-sm text-gray-600 mt-1"></p>
+                                            </div>
+                                            <div>
+                                                <button id="eventModalCloseX" class="text-gray-500 hover:text-gray-700">&times;</button>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <p><span class="font-semibold">Cliente:</span> <span id="eventModalCliente" class="text-gray-900"></span></p>
+                                                <p><span class="font-semibold">Telefone:</span> <span id="eventModalTelefone" class="text-gray-900"></span></p>
+                                            </div>
+                                            <div>
+                                                <p><span class="font-semibold">Serviço:</span> <span id="eventModalServico" class="text-gray-900"></span></p>
+                                                 <p><span class="font-semibold">Barbeiro:</span> <span id="eventModalBarbeiro" class="text-gray-900"></span></p>
+                                                <p class="mt-2"><span class="font-semibold">Valor:</span> <span id="eventModalValor" class="text-gray-900"></span></p>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-4">
+                                            <p class="text-sm font-semibold">Observações</p>
+                                            <p id="eventModalObservacoes" class="text-sm text-gray-900"></p>
+                                        </div>
+
+                                        <div class="mt-6 flex justify-end space-x-3">
+                                            <button id="eventModalEdit" class="bg-barber-600 text-white px-4 py-2 rounded-md hover:bg-barber-700 transition-colors">Editar</button>
+                                            <button id="eventModalDelete" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors">Excluir</button>
+                                            <button id="eventModalClose2" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors">Fechar</button>
+                                        </div>
+                                    </div>
+                                </div>`;
+                                var wrapper = document.createElement('div');
+                                wrapper.innerHTML = modalHtml;
+                                document.body.appendChild(wrapper.firstElementChild);
+
+                                // attach close handlers
+                                document.getElementById('eventModalClose2').addEventListener('click', closeEventModal);
+                                document.getElementById('eventModalCloseX').addEventListener('click', closeEventModal);
+                                document.getElementById('eventModal').addEventListener('click', function(e){ if(e.target === this) closeEventModal(); });
+                            }
+
+                            // populate fields
+                            document.getElementById('eventModalTitle').textContent = ev.title || 'Agendamento';
+                            var whenText = '';
+                            if(ev.start){
+                                var s = new Date(ev.start);
+                                whenText += s.toLocaleDateString('pt-BR') + ' ' + s.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            }
+                            if(ev.end){
+                                var e = new Date(ev.end);
+                                whenText += ' - ' + e.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            }
+                            document.getElementById('eventModalWhen').textContent = whenText;
+
+                            document.getElementById('eventModalCliente').textContent = props.cliente_name || '';
+                            document.getElementById('eventModalTelefone').textContent = props.cliente_phone || '';
+                            document.getElementById('eventModalServico').textContent = props.servico || '';
+                            document.getElementById('eventModalBarbeiro').textContent = props.barbeiro_name || '';
+                            // Valor: tentar várias chaves possíveis
+                            var priceVal = (props.price || props.valor || ev.price || (ev.extendedProps && ev.extendedProps.price) || 0);
+                            var formattedPrice = 'R$ 0,00';
+                            try{
+                                formattedPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(priceVal));
+                            }catch(e){ /* fallback já definido */ }
+                            if(document.getElementById('eventModalValor')) document.getElementById('eventModalValor').textContent = formattedPrice;
+
+                            document.getElementById('eventModalObservacoes').textContent = props.observacoes || '';
+
+                            // edit/delete handlers
+                            document.getElementById('eventModalEdit').onclick = function(){ window.location.href = '/agendamentos/' + id + '/edit'; };
+                            document.getElementById('eventModalDelete').onclick = function(){ closeEventModal(); confirmDelete(id); };
+
+                            // show modal
+                            document.getElementById('eventModal').classList.remove('hidden');
+                        }catch(err){
+                            console.error('showEventModal error', err);
+                            window.location.href = '/agendamentos/' + id + '/edit';
+                        }
+                    };
+
+                    function closeEventModal(){
+                        var m = document.getElementById('eventModal');
+                        if(m) m.classList.add('hidden');
+                    }
+
+            if(document.readyState === 'loading'){
+                document.addEventListener('DOMContentLoaded', initCalendar);
+            } else {
+                initCalendar();
+            }
+
+            // --- view toggle script (kept here) ---
+            (function(){
+                try{
+                    function getViewParam(){
+                        const params = new URLSearchParams(window.location.search);
+                        return params.get('view') || (document.getElementById('viewInput') ? document.getElementById('viewInput').value : 'calendar');
+                    }
+
+                    function setViewParam(view){
+                        try{
+                            const params = new URLSearchParams(window.location.search);
+                            params.set('view', view);
+                            // Setting search will reload the page with the chosen view
+                            window.location.search = params.toString();
+                        }catch(err){ console.warn('setViewParam failed', err); }
+                    }
+
+                    const chkCal = document.getElementById('checkboxCalendar');
+                    const chkList = document.getElementById('checkboxList');
+                    const calendarContainer = document.getElementById('calendarContainer');
+                    const listContainer = document.getElementById('listContainer');
+                    const viewInput = document.getElementById('viewInput');
+
+                    function applyView(view){
+                        try{
+                            if(view === 'list'){
+                                if(calendarContainer) calendarContainer.style.display = 'none';
+                                if(listContainer) listContainer.style.display = 'block';
+                                if(chkList) chkList.checked = true;
+                                if(chkCal) chkCal.checked = false;
+                            } else {
+                                if(calendarContainer) calendarContainer.style.display = 'block';
+                                if(listContainer) listContainer.style.display = 'none';
+                                if(chkCal) chkCal.checked = true;
+                                if(chkList) chkList.checked = false;
+                            }
+                            if(viewInput) viewInput.value = view;
+                        }catch(err){ console.warn('applyView failed', err); }
+                    }
+
+                    // Apply initial view after a tick to ensure elements exist
+                    setTimeout(function(){
+                        const initialView = getViewParam();
+                        applyView(initialView);
+                    }, 0);
+
+                    if(chkCal) chkCal.addEventListener('change', function(){ if(this.checked){ setViewParam('calendar'); } else { setViewParam('list'); } });
+                    if(chkList) chkList.addEventListener('change', function(){ if(this.checked){ setViewParam('list'); } else { setViewParam('calendar'); } });
+
+                    const filtersForm = document.getElementById('filtersForm');
+                    if(filtersForm){
+                        filtersForm.addEventListener('submit', function(){ if(viewInput) viewInput.value = getViewParam(); });
+                    }
+                }catch(e){
+                    console.error('View toggle init failed', e);
+                    // As a fallback, try to set sensible defaults
+                    try{ if(document.getElementById('calendarContainer')) document.getElementById('calendarContainer').style.display = 'block'; }catch(e){}
+                    try{ if(document.getElementById('listContainer')) document.getElementById('listContainer').style.display = 'none'; }catch(e){}
+                }
+            })();
+
+        })();
+    </script>
+@endpush

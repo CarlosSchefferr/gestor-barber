@@ -15,13 +15,13 @@
     <div class="max-w-4xl mx-auto">
         <form action="{{ route('agendamentos.store') }}" method="POST" class="space-y-6">
             @csrf
-            
+
             <!-- Informações do Cliente e Barbeiro -->
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">
                     Informações Básicas
                 </h3>
-                
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -64,14 +64,14 @@
                 <h3 class="text-lg font-medium text-gray-900 mb-4">
                     Data e Horário
                 </h3>
-                
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             Data e Hora de Início <span class="text-red-500">*</span>
                         </label>
-                        <input type="datetime-local" name="starts_at" required 
-                               value="{{ old('starts_at') }}"
+                           <input type="datetime-local" name="starts_at" required
+                               value="{{ old('starts_at', request('date') ? request('date')."T09:00" : '') }}"
                                class="w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('starts_at') border-red-300 @enderror">
                         @error('starts_at')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -82,7 +82,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             Data e Hora de Fim
                         </label>
-                        <input type="datetime-local" name="ends_at" 
+                        <input type="datetime-local" name="ends_at"
                                value="{{ old('ends_at') }}"
                                class="w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('ends_at') border-red-300 @enderror">
                         @error('ends_at')
@@ -98,16 +98,18 @@
                 <h3 class="text-lg font-medium text-gray-900 mb-4">
                     Serviço e Valor
                 </h3>
-                
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             Serviço <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" name="servico" required 
-                               value="{{ old('servico') }}"
-                               placeholder="Ex: Corte de cabelo, Barba, etc."
-                               class="w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('servico') border-red-300 @enderror">
+                        <select name="servico" required class="w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('servico') border-red-300 @enderror">
+                            <option value="">Selecione um serviço</option>
+                            @foreach($services as $service)
+                                <option value="{{ $service->name }}" {{ old('servico') == $service->name ? 'selected' : '' }}>{{ $service->name }}</option>
+                            @endforeach
+                        </select>
                         @error('servico')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -117,7 +119,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             Preço (R$)
                         </label>
-                        <input type="number" step="0.01" name="price" 
+                        <input type="number" step="0.01" name="price"
                                value="{{ old('price') }}"
                                placeholder="0,00"
                                class="w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('price') border-red-300 @enderror">
@@ -133,12 +135,12 @@
                 <h3 class="text-lg font-medium text-gray-900 mb-4">
                     Observações
                 </h3>
-                
+
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         Observações Adicionais
                     </label>
-                    <textarea name="observacoes" rows="4" 
+                    <textarea name="observacoes" rows="4"
                               placeholder="Informações adicionais sobre o agendamento..."
                               class="w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('observacoes') border-red-300 @enderror">{{ old('observacoes') }}</textarea>
                     @error('observacoes')
@@ -149,11 +151,11 @@
 
             <!-- Botões de Ação -->
             <div class="flex justify-end space-x-4 pt-6">
-                <a href="{{ route('agendamentos.index') }}" 
+                <a href="{{ route('agendamentos.index') }}"
                    class="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors">
                     Cancelar
                 </a>
-                <button type="submit" 
+                <button type="submit"
                         class="bg-barber-600 text-white px-6 py-3 rounded-lg hover:bg-barber-700 transition-colors shadow-sm">
                     Salvar Agendamento
                 </button>

@@ -105,10 +105,12 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             Serviço <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" name="servico" required
-                               value="{{ old('servico', $agendamento->servico) }}"
-                               placeholder="Ex: Corte de cabelo, Barba, etc."
-                               class="w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('servico') border-red-300 @enderror">
+                        <select name="servico" required class="w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('servico') border-red-300 @enderror">
+                            <option value="">Selecione um serviço</option>
+                            @foreach($services as $service)
+                                <option value="{{ $service->name }}" {{ (old('servico', $agendamento->servico) == $service->name) ? 'selected' : '' }}>{{ $service->name }}</option>
+                            @endforeach
+                        </select>
                         @error('servico')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror

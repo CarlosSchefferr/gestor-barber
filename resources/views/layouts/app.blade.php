@@ -28,6 +28,8 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
+        @stack('styles')
+
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
@@ -102,45 +104,31 @@
                     document.getElementById('brasilia-time').textContent = timeString;
                 }
 
-                // Função para obter a localização do usuário
+                // Função para obter a localização do usuário (sem chamadas externas para evitar CORS)
+                // Esta versão usa apenas a geolocalização do navegador para indicar presença,
+                // mas não faz reverse-geocoding remoto. Evita bloqueios por CORS.
                 function getUserLocation() {
+                    const el = document.getElementById('user-location');
+                    if (!el) return;
+
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition(
                             function(position) {
-                                // Usar API de geocodificação reversa para obter a cidade
-                                const lat = position.coords.latitude;
-                                const lon = position.coords.longitude;
-
-                                // Usar API gratuita do OpenStreetMap (Nominatim)
-                                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        if (data.address) {
-                                            const city = data.address.city || data.address.town || data.address.village || data.address.municipality || 'Localização';
-                                            const state = data.address.state || '';
-                                            const locationText = state ? `${city}, ${state}` : city;
-                                            document.getElementById('user-location').textContent = locationText;
-                                        } else {
-                                            document.getElementById('user-location').textContent = 'Localização';
-                                        }
-                                    })
-                                    .catch(error => {
-                                        console.log('Erro ao obter localização:', error);
-                                        document.getElementById('user-location').textContent = 'Localização';
-                                    });
+                                // Apenas indicar que a localização foi detectada localmente
+                                el.textContent = 'Localização detectada';
                             },
                             function(error) {
                                 console.log('Erro de geolocalização:', error);
-                                document.getElementById('user-location').textContent = 'Localização';
+                                el.textContent = 'Localização';
                             },
                             {
                                 enableHighAccuracy: false,
-                                timeout: 10000,
+                                timeout: 5000,
                                 maximumAge: 300000 // 5 minutos
                             }
                         );
                     } else {
-                        document.getElementById('user-location').textContent = 'Localização';
+                        el.textContent = 'Localização';
                     }
                 }
 
