@@ -30,6 +30,32 @@
 
         @stack('styles')
 
+        <style>
+            /* Tooltip for icon-action component */
+            .icon-action { position: relative; }
+            .icon-action::after {
+                content: attr(data-tooltip);
+                position: absolute;
+                bottom: calc(100% + 8px);
+                left: 50%;
+                transform: translateX(-50%) translateY(6px);
+                background: rgba(0,0,0,0.75);
+                color: #fff;
+                padding: 6px 10px;
+                border-radius: 6px;
+                font-size: 12px;
+                white-space: nowrap;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.12s ease, transform 0.12s ease;
+                z-index: 50;
+            }
+            .icon-action:hover::after, .icon-action:focus::after {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        </style>
+
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>

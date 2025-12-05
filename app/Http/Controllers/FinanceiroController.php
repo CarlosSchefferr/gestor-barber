@@ -135,7 +135,7 @@ class FinanceiroController extends Controller
             ->orderBy('data', 'desc')
             ->get()
             ->map(function ($t) {
-                return (object) [
+                return [
                     'data' => $t->data,
                     'descricao' => $t->descricao,
                     'tipo' => $t->tipo,
@@ -150,7 +150,7 @@ class FinanceiroController extends Controller
             ->orderBy('starts_at', 'desc')
             ->get()
             ->map(function ($agendamento) {
-                return (object) [
+                return [
                     'data' => $agendamento->starts_at,
                     'descricao' => $agendamento->servico ?: 'Serviço - ' . $agendamento->cliente->nome,
                     'tipo' => 'receita',
@@ -162,7 +162,8 @@ class FinanceiroController extends Controller
         // Merge and sort by date desc, then limit 10
         $transacoes = $transacoesModel->merge($transacoesAgend)
             ->sortByDesc(function ($t) {
-                return strtotime($t->data);
+                $date = is_array($t) ? ($t['data'] ?? null) : ($t->data ?? null);
+                return $date ? strtotime($date) : 0;
             })->values()->slice(0, 10);
 
         // Dados para gráficos

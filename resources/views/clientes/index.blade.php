@@ -128,18 +128,23 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end space-x-2">
-                                    <a href="{{ route('clientes.edit', $cliente) }}"
-                                       class="text-barber-600 hover:text-barber-900 transition-colors text-sm">
-                                        Editar
-                                    </a>
-                                    <a href="{{ route('agendamentos.create', ['cliente_id' => $cliente->id]) }}"
-                                       class="text-green-600 hover:text-green-900 transition-colors text-sm">
-                                        Agendar
-                                    </a>
-                                    <button onclick="confirmDelete({{ $cliente->id }})"
-                                            class="text-red-600 hover:text-red-900 transition-colors text-sm">
-                                        Remover
-                                    </button>
+                                    <x-icon-action href="{{ route('clientes.edit', $cliente) }}" title="Editar cliente" color="bg-white">
+                                        <svg class="w-5 h-5 text-barber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h6M4 21l4-4 9-9a2.828 2.828 0 10-4-4L4 13v8z"></path>
+                                        </svg>
+                                    </x-icon-action>
+
+                                    <x-icon-action href="{{ route('agendamentos.create', ['cliente_id' => $cliente->id]) }}" title="Agendar" color="bg-white">
+                                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </x-icon-action>
+
+                                    <x-icon-action href="#" title="Remover" color="bg-white" onclick="confirmDelete({{ $cliente->id }})">
+                                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3"></path>
+                                        </svg>
+                                    </x-icon-action>
                                 </div>
                             </td>
                         </tr>

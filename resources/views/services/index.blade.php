@@ -19,7 +19,7 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comissão</th>
-                    <th class="px-6 py-3"></th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -30,11 +30,20 @@
                     <td class="px-6 py-4 whitespace-nowrap">R$ {{ number_format($service->price ?? 0, 2, ',', '.') }}</td>
                     <td class="px-6 py-4 whitespace-nowrap">R$ {{ number_format($service->commission ?? 0, 2, ',', '.') }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-right">
-                        <a href="{{ route('admin.services.edit', $service) }}" class="text-barber-600 hover:underline mr-3">Editar</a>
-                        <form action="{{ route('admin.services.destroy', $service) }}" method="POST" class="inline-block" onsubmit="return confirm('Remover este serviço?');">
+                        <x-icon-action href="{{ route('admin.services.edit', $service) }}" title="Editar" color="bg-white">
+                            <svg class="w-5 h-5 text-barber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h6M4 21l4-4 9-9a2.828 2.828 0 10-4-4L4 13v8z"></path>
+                            </svg>
+                        </x-icon-action>
+
+                        <form id="delete-service-{{ $service->id }}" action="{{ route('admin.services.destroy', $service) }}" method="POST" class="inline-block" onsubmit="return confirm('Remover este serviço?');">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="text-red-600">Remover</button>
+                            <button type="submit" class="icon-action inline-flex items-center justify-center w-10 h-10 rounded-lg bg-white hover:opacity-95 focus:outline-none" data-tooltip="Remover" aria-label="Remover">
+                                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3"></path>
+                                </svg>
+                            </button>
                         </form>
                     </td>
                 </tr>

@@ -232,20 +232,20 @@
                     @forelse($transacoes as $transacao)
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ \Carbon\Carbon::parse($transacao->data)->format('d/m/Y') }}
+                                {{ \Carbon\Carbon::parse($transacao['data'])->format('d/m/Y') }}
                             </td>
-                            <td class="px-6 py-4 text-sm text-gray-900">{{ $transacao->descricao }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900">{{ $transacao['descricao'] }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $transacao->tipo == 'receita' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ ucfirst($transacao->tipo) }}
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $transacao['tipo'] == 'receita' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                    {{ ucfirst($transacao['tipo']) }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium {{ $transacao->tipo == 'receita' ? 'text-green-600' : 'text-red-600' }}">
-                                {{ $transacao->tipo == 'receita' ? '+' : '-' }}R$ {{ number_format($transacao->valor, 2, ',', '.') }}
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium {{ $transacao['tipo'] == 'receita' ? 'text-green-600' : 'text-red-600' }}">
+                                {{ $transacao['tipo'] == 'receita' ? '+' : '-' }}R$ {{ number_format($transacao['valor'], 2, ',', '.') }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                    {{ $transacao->status }}
+                                    {{ $transacao['status'] }}
                                 </span>
                             </td>
                         </tr>
