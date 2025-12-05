@@ -1,20 +1,29 @@
 <div class="grid grid-cols-2 gap-4">
     <div>
         <label class="block text-sm font-medium text-gray-700">Cliente</label>
-        <select name="cliente_id" class="mt-1 block w-full border-gray-300 rounded">
-            @foreach($clientes as $c)
-                <option value="{{ $c->id }}" {{ (old('cliente_id') ?? ($agendamento->cliente_id ?? '')) == $c->id ? 'selected' : '' }}>{{ $c->nome }}</option>
-            @endforeach
-        </select>
+        <div class="flex items-center space-x-2">
+            <select name="cliente_id" class="mt-1 block flex-1 border-gray-300 rounded">
+                @foreach($clientes as $c)
+                    <option value="{{ $c->id }}" {{ (old('cliente_id') ?? ($agendamento->cliente_id ?? '')) == $c->id ? 'selected' : '' }}>{{ $c->nome }}</option>
+                @endforeach
+            </select>
+            <button type="button" id="addClienteBtnInline" class="inline-flex items-center px-3 py-2 rounded-md bg-barber-600 text-white hover:bg-barber-700">+</button>
+        </div>
     </div>
 
     <div>
         <label class="block text-sm font-medium text-gray-700">Barbeiro</label>
-        <select name="barbeiro_id" class="mt-1 block w-full border-gray-300 rounded">
-            @foreach($barbeiros as $b)
-                <option value="{{ $b->id }}" {{ (old('barbeiro_id') ?? ($agendamento->barbeiro_id ?? '')) == $b->id ? 'selected' : '' }}>{{ $b->name }}</option>
-            @endforeach
-        </select>
+        @if(auth()->check() && auth()->user()->isBarber())
+            <select name="barbeiro_id" class="mt-1 block w-full border-gray-300 rounded">
+                <option value="{{ auth()->id() }}" selected>{{ auth()->user()->name }}</option>
+            </select>
+        @else
+            <select name="barbeiro_id" class="mt-1 block w-full border-gray-300 rounded">
+                @foreach($barbeiros as $b)
+                    <option value="{{ $b->id }}" {{ (old('barbeiro_id') ?? ($agendamento->barbeiro_id ?? '')) == $b->id ? 'selected' : '' }}>{{ $b->name }}</option>
+                @endforeach
+            </select>
+        @endif
     </div>
 
     <div>
@@ -29,14 +38,19 @@
 
     <div class="col-span-2">
         <label class="block text-sm font-medium text-gray-700">Serviço</label>
-        <select name="servico" class="mt-1 block w-full border-gray-300 rounded">
-            <option value="">Selecione um serviço</option>
-            @if(isset($services))
-                @foreach($services as $s)
-                    <option value="{{ $s->name }}" {{ (old('servico') ?? ($agendamento->servico ?? '')) == $s->name ? 'selected' : '' }}>{{ $s->name }}</option>
-                @endforeach
+        <div class="flex items-center space-x-2">
+            <select name="servico" class="mt-1 block flex-1 w-full border-gray-300 rounded">
+                <option value="">Selecione um serviço</option>
+                @if(isset($services))
+                    @foreach($services as $s)
+                        <option value="{{ $s->name }}" {{ (old('servico') ?? ($agendamento->servico ?? '')) == $s->name ? 'selected' : '' }}>{{ $s->name }}</option>
+                    @endforeach
+                @endif
+            </select>
+            @if(auth()->check() && auth()->user()->isOwner())
+                <button type="button" id="addServiceBtnInline" class="inline-flex items-center px-3 py-2 rounded-md bg-barber-600 text-white hover:bg-barber-700">+</button>
             @endif
-        </select>
+        </div>
     </div>
 
     <div>
@@ -54,3 +68,62 @@
         <textarea name="observacoes" class="mt-1 block w-full border-gray-300 rounded">{{ old('observacoes') ?? ($agendamento->observacoes ?? '') }}</textarea>
     </div>
 </div>
+
+@push('scripts')
+    <script>
+        // wire up inline buttons in partials
+        document.addEventListener('DOMContentLoaded', function(){
+            var addClienteBtnInline = document.getElementById('addClienteBtnInline');
+            if(addClienteBtnInline){
+                addClienteBtnInline.addEventListener('click', function(){
+                    // reuse modal from create view if present
+                    var ev = new Event('click');
+                    var mainBtn = document.getElementById('addClienteBtn');
+                    if(mainBtn){ mainBtn.dispatchEvent(ev); return; }
+                    // otherwise open a simple prompt fallback
+                    var nome = prompt('Nome do cliente');
+                    if(!nome) return;
+                    fetch("{{ route('clientes.inline.store') }}",{
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ nome: nome })
+                    }).then(r=>r.json()).then(function(data){
+                        if(data && data.id){
+                            var sel = document.querySelector('select[name="cliente_id"]');
+                            if(sel){ var opt = document.createElement('option'); opt.value = data.id; opt.text = data.nome; opt.selected = true; sel.appendChild(opt); }
+                        } else alert('Erro ao criar cliente');
+                    }).catch(function(){ alert('Erro ao criar cliente'); });
+                });
+            }
+
+            var addServiceBtnInline = document.getElementById('addServiceBtnInline');
+            if(addServiceBtnInline){
+                addServiceBtnInline.addEventListener('click', function(){
+                    var ev = new Event('click');
+                    var mainBtn = document.getElementById('addServiceBtn');
+                    if(mainBtn){ mainBtn.dispatchEvent(ev); return; }
+                    var nome = prompt('Nome do serviço');
+                    if(!nome) return;
+                    fetch("{{ route('admin.services.inline.store') }}",{
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ name: nome })
+                    }).then(r=>r.json()).then(function(data){
+                        if(data && data.id){
+                            var sel = document.querySelector('select[name="servico"]');
+                            if(sel){ var opt = document.createElement('option'); opt.value = data.name; opt.text = data.name; opt.selected = true; sel.appendChild(opt); }
+                        } else alert('Erro ao criar serviço');
+                    }).catch(function(){ alert('Erro ao criar serviço'); });
+                });
+            }
+        });
+    </script>
+@endpush

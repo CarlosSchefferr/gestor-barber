@@ -36,6 +36,23 @@ class ClienteController extends Controller
         return redirect()->route('clientes.index')->with('success', 'Cliente criado.');
     }
 
+    /**
+     * Store cliente via AJAX from other screens (inline creation)
+     */
+    public function storeInline(Request $request)
+    {
+        $data = $request->validate([
+            'nome' => 'required|string|max:255',
+            'email' => 'nullable|email',
+            'telefone' => 'nullable|string|max:50',
+            'observacoes' => 'nullable|string',
+        ]);
+
+        $cliente = Cliente::create($data);
+
+        return response()->json(['id' => $cliente->id, 'nome' => $cliente->nome]);
+    }
+
     public function edit(Cliente $cliente)
     {
         return view('clientes.edit', compact('cliente'));

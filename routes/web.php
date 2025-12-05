@@ -18,6 +18,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile/settings', [ProfileController::class, 'updateSettings'])->name('profile.settings.update');
     Route::resource('agendamentos', App\Http\Controllers\AgendamentoController::class);
 
+    // Inline endpoint to allow authenticated users to create clientes from other screens
+    Route::post('clientes/inline', [App\Http\Controllers\ClienteController::class, 'storeInline'])->name('clientes.inline.store');
+
     // Rotas restritas apenas para proprietários
     Route::middleware('owner')->group(function () {
         Route::resource('clientes', App\Http\Controllers\ClienteController::class);
@@ -38,6 +41,8 @@ Route::middleware('auth')->group(function () {
         Route::prefix('admin')->name('admin.')->group(function () {
             Route::resource('services', App\Http\Controllers\ServiceController::class);
             Route::resource('products', App\Http\Controllers\ProductController::class);
+            // Inline service creation for owners via AJAX
+            Route::post('services/inline', [App\Http\Controllers\ServiceController::class, 'storeInline'])->name('services.inline.store');
         });
     });
 });

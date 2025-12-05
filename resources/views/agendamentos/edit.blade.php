@@ -45,14 +45,20 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             Barbeiro <span class="text-red-500">*</span>
                         </label>
-                        <select name="barbeiro_id" required class="w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('barbeiro_id') border-red-300 @enderror">
-                            <option value="">Selecione um barbeiro</option>
-                            @foreach($barbeiros as $barbeiro)
-                                <option value="{{ $barbeiro->id }}" {{ old('barbeiro_id', $agendamento->barbeiro_id) == $barbeiro->id ? 'selected' : '' }}>
-                                    {{ $barbeiro->name }}
-                                </option>
-                            @endforeach
-                        </select>
+                        @if(auth()->check() && auth()->user()->isBarber())
+                            <select name="barbeiro_id" required class="w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('barbeiro_id') border-red-300 @enderror">
+                                <option value="{{ auth()->id() }}" selected>{{ auth()->user()->name }}</option>
+                            </select>
+                        @else
+                            <select name="barbeiro_id" required class="w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('barbeiro_id') border-red-300 @enderror">
+                                <option value="">Selecione um barbeiro</option>
+                                @foreach($barbeiros as $barbeiro)
+                                    <option value="{{ $barbeiro->id }}" {{ old('barbeiro_id', $agendamento->barbeiro_id) == $barbeiro->id ? 'selected' : '' }}>
+                                        {{ $barbeiro->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        @endif
                         @error('barbeiro_id')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror

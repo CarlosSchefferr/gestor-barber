@@ -34,11 +34,17 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">Barbeiro</label>
                 <select name="barbeiro_id" class="w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500">
                     <option value="">Todos os barbeiros</option>
-                    @foreach($barbeiros as $barbeiro)
-                        <option value="{{ $barbeiro->id }}" {{ request('barbeiro_id') == $barbeiro->id ? 'selected' : '' }}>
-                            {{ $barbeiro->name }}
+                    @if(auth()->check() && auth()->user()->isBarber())
+                        <option value="{{ auth()->id() }}" {{ request('barbeiro_id') == auth()->id() ? 'selected' : '' }}>
+                            {{ auth()->user()->name }}
                         </option>
-                    @endforeach
+                    @else
+                        @foreach($barbeiros as $barbeiro)
+                            <option value="{{ $barbeiro->id }}" {{ request('barbeiro_id') == $barbeiro->id ? 'selected' : '' }}>
+                                {{ $barbeiro->name }}
+                            </option>
+                        @endforeach
+                    @endif
                 </select>
             </div>
 
