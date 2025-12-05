@@ -32,6 +32,18 @@
                         <textarea name="description" rows="4" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('description') border-red-300 @enderror">{{ old('description', $service->description) }}</textarea>
                         @error('description')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Preço (R$)</label>
+                        <input type="number" step="0.01" name="price" value="{{ old('price', $service->price ?? '0.00') }}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('price') border-red-300 @enderror">
+                        @error('price')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Comissão (R$)</label>
+                        <input type="number" step="0.01" name="commission" value="{{ old('commission', $service->commission ?? '0.00') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('commission') border-red-300 @enderror">
+                        @error('commission')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
                 </div>
             </div>
 

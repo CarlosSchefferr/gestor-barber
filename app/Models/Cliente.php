@@ -14,11 +14,13 @@ class Cliente extends Model
         'email',
         'telefone',
         'observacoes',
+        'active',
         'last_appointment_at',
     ];
 
     protected $casts = [
         'last_appointment_at' => 'datetime',
+        'active' => 'boolean',
     ];
 
     public function agendamentos()

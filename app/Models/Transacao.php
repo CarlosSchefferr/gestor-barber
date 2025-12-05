@@ -5,20 +5,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Service extends Model
+class Transacao extends Model
 {
     use HasFactory;
 
+    protected $table = 'transacoes';
+
     protected $fillable = [
-        'name',
-        'description',
-        'price',
-        'commission',
+        'descricao',
+        'tipo',
+        'valor',
+        'data',
+        'status',
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
-        'commission' => 'decimal:2',
+        'data' => 'date',
+        'valor' => 'decimal:2',
     ];
-
 }

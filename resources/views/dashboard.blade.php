@@ -102,6 +102,44 @@
                 </div>
             </div>
 
+            <!-- Metas de Crescimento (visíveis conforme permissão) -->
+            @if(isset($metas) && $metas->count() > 0)
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Metas de Crescimento</h3>
+                </div>
+
+                <div class="space-y-4">
+                    @forelse($metas as $meta)
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div class="flex-1">
+                                <h4 class="font-medium text-gray-900">{{ $meta->nome }}</h4>
+                                <p class="text-sm text-gray-600">{{ $meta->descricao }}</p>
+                                <div class="mt-2">
+                                    <div class="flex items-center">
+                                        <div class="flex-1 bg-gray-200 rounded-full h-2">
+                                            <div class="bg-green-500 h-2 rounded-full" style="width: {{ $meta->valor_meta > 0 ? min(100, ($meta->valor_atual / $meta->valor_meta) * 100) : 0 }}%"></div>
+                                        </div>
+                                        <span class="ml-2 text-sm text-gray-600">{{ number_format($meta->valor_meta > 0 ? ($meta->valor_meta > 0 ? (($meta->valor_atual / $meta->valor_meta) * 100) : 0) : 0, 1) }}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-600">R$ {{ number_format($meta->valor_atual, 2, ',', '.') }} / R$ {{ number_format($meta->valor_meta, 2, ',', '.') }}</p>
+                                @if($meta->data_limite)
+                                    <p class="text-xs text-gray-500">Prazo: {{ \Carbon\Carbon::parse($meta->data_limite)->format('d/m/Y') }}</p>
+                                @endif
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center py-8">
+                            <p class="text-gray-500">Nenhuma meta disponível</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+            @endif
+
             <!-- Cards de Serviços Populares -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 @forelse($servicosSemana->take(6) as $servico)

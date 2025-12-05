@@ -11,7 +11,7 @@ class DashboardController extends Controller
     public function index()
     {
         $user = auth()->user();
-        
+
         if ($user->isOwner()) {
             // Dados completos para proprietários
             $total = Agendamento::count();
@@ -59,6 +59,18 @@ class DashboardController extends Controller
             }
         }
 
-        return view('dashboard', compact('total', 'today', 'clientesInativos', 'agendamentosHoje', 'servicosSemana', 'agendamentosPorDia'));
+        // carregar metas visíveis para o usuário
+        $user = auth()->user();
+        $allMetas = \App\Models\Meta::orderBy('created_at', 'desc')->get();
+        $metas = $allMetas->filter(function($meta) use ($user) {
+            if ($meta->quem_tem_acesso === 'all') return true;
+            if ($meta->quem_tem_acesso === 'current') return $meta->created_by == $user->id;
+            if ($meta->quem_tem_acesso === 'barbers') return $user->isBarber();
+            if ($meta->quem_tem_acesso === 'owners') return $user->isOwner();
+            if ($meta->quem_tem_acesso === 'attendants') return $user->role === 'attendant';
+            return false;
+        })->values();
+
+        return view('dashboard', compact('total', 'today', 'clientesInativos', 'agendamentosHoje', 'servicosSemana', 'agendamentosPorDia', 'metas'));
     }
 }

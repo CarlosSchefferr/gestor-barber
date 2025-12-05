@@ -118,7 +118,7 @@
                             <select name="servico" required class="flex-1 border-gray-300 rounded-md shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('servico') border-red-300 @enderror">
                                 <option value="">Selecione um serviço</option>
                                 @foreach($services as $service)
-                                    <option value="{{ $service->name }}" {{ old('servico') == $service->name ? 'selected' : '' }}>{{ $service->name }}</option>
+                                    <option value="{{ $service->name }}" data-price="{{ $service->price ?? '0.00' }}" {{ old('servico') == $service->name ? 'selected' : '' }}>{{ $service->name }}</option>
                                 @endforeach
                             </select>
                             @if(auth()->check() && auth()->user()->isOwner())
@@ -272,9 +272,13 @@
                                 </div>
                                 <div class="px-6 py-4">
                                     <div id="serviceInlineError" class="text-sm text-red-600 mb-2"></div>
-                                    <div class="space-y-3">
+                                        <div class="space-y-3">
                                         <input id="service_name" class="w-full border border-gray-300 rounded px-3 py-2" placeholder="Nome do serviço" />
                                         <textarea id="service_description" class="w-full border border-gray-300 rounded px-3 py-2" placeholder="Descrição (opcional)"></textarea>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <input id="service_price" type="number" step="0.01" class="w-full border border-gray-300 rounded px-3 py-2" placeholder="Preço (R$)" value="0.00" />
+                                            <input id="service_commission" type="number" step="0.01" class="w-full border border-gray-300 rounded px-3 py-2" placeholder="Comissão (R$)" value="0.00" />
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="px-6 py-4 border-t flex justify-end space-x-3">
@@ -289,9 +293,12 @@
                         document.getElementById('serviceSave').addEventListener('click', function(){
                             var name = document.getElementById('service_name').value.trim();
                             var description = document.getElementById('service_description').value.trim();
+                            var price = document.getElementById('service_price').value.trim();
+                            var commission = document.getElementById('service_commission').value.trim();
                             var errEl = document.getElementById('serviceInlineError');
                             errEl.textContent = '';
                             if(!name){ errEl.textContent = 'Nome é obrigatório.'; return; }
+                            if(price === '' || isNaN(parseFloat(price))){ errEl.textContent = 'Preço é obrigatório e deve ser um número.'; return; }
 
                             fetch("{{ route('admin.services.inline.store') }}",{
                                 method: 'POST',
@@ -300,7 +307,7 @@
                                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                                     'Accept': 'application/json'
                                 },
-                                body: JSON.stringify({ name: name, description: description })
+                                body: JSON.stringify({ name: name, description: description, price: price, commission: commission })
                             }).then(function(res){
                                 return res.json();
                             }).then(function(data){
@@ -310,9 +317,14 @@
                                         var opt = document.createElement('option');
                                         opt.value = data.name;
                                         opt.text = data.name;
+                                        if(data.price) opt.setAttribute('data-price', data.price);
+                                        if(data.commission) opt.setAttribute('data-commission', data.commission);
                                         opt.selected = true;
                                         sel.appendChild(opt);
                                     }
+                                    // fill appointment price input if present
+                                    var priceInput = document.querySelector('input[name="price"]');
+                                    if(priceInput && data.price){ priceInput.value = parseFloat(data.price).toFixed(2); }
                                     document.getElementById('modalAddService').classList.add('hidden');
                                 } else {
                                     errEl.textContent = (data.message || 'Erro ao criar serviço.');
@@ -322,6 +334,21 @@
                     }
                     document.getElementById('modalAddService').classList.remove('hidden');
                 });
+            }
+
+            // when selecting a service, set the price input
+            var servicoSelectMain = document.querySelector('select[name="servico"]');
+            var priceInputMain = document.querySelector('input[name="price"]');
+            function applyMainServicePrice(){
+                if(!servicoSelectMain || !priceInputMain) return;
+                var opt = servicoSelectMain.options[servicoSelectMain.selectedIndex];
+                if(opt && opt.dataset && opt.dataset.price){
+                    priceInputMain.value = parseFloat(opt.dataset.price || 0).toFixed(2);
+                }
+            }
+            if(servicoSelectMain){
+                servicoSelectMain.addEventListener('change', applyMainServicePrice);
+                if(priceInputMain && (priceInputMain.value === '' || priceInputMain.value === null)) applyMainServicePrice();
             }
         });
     </script>

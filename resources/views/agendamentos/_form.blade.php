@@ -43,7 +43,7 @@
                 <option value="">Selecione um serviço</option>
                 @if(isset($services))
                     @foreach($services as $s)
-                        <option value="{{ $s->name }}" {{ (old('servico') ?? ($agendamento->servico ?? '')) == $s->name ? 'selected' : '' }}>{{ $s->name }}</option>
+                        <option value="{{ $s->name }}" data-price="{{ $s->price ?? '0.00' }}" {{ (old('servico') ?? ($agendamento->servico ?? '')) == $s->name ? 'selected' : '' }}>{{ $s->name }}</option>
                     @endforeach
                 @endif
             </select>
@@ -108,6 +108,7 @@
                     if(mainBtn){ mainBtn.dispatchEvent(ev); return; }
                     var nome = prompt('Nome do serviço');
                     if(!nome) return;
+                    // fallback minimal create: send defaults for price/commission
                     fetch("{{ route('admin.services.inline.store') }}",{
                         method: 'POST',
                         headers: {
@@ -115,14 +116,44 @@
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',
                             'Accept': 'application/json'
                         },
-                        body: JSON.stringify({ name: nome })
+                        body: JSON.stringify({ name: nome, price: 0.00, commission: 0.00 })
                     }).then(r=>r.json()).then(function(data){
                         if(data && data.id){
                             var sel = document.querySelector('select[name="servico"]');
-                            if(sel){ var opt = document.createElement('option'); opt.value = data.name; opt.text = data.name; opt.selected = true; sel.appendChild(opt); }
+                            if(sel){
+                                var opt = document.createElement('option');
+                                opt.value = data.name;
+                                opt.text = data.name;
+                                if(data.price) opt.setAttribute('data-price', data.price);
+                                opt.selected = true;
+                                sel.appendChild(opt);
+                            }
+                            // set appointment price if returned
+                            if(data && data.price){
+                                var priceInput = document.querySelector('input[name="price"]');
+                                if(priceInput){ priceInput.value = parseFloat(data.price).toFixed(2); }
+                            }
                         } else alert('Erro ao criar serviço');
                     }).catch(function(){ alert('Erro ao criar serviço'); });
                 });
+            }
+
+            // when service select changes, set price input
+            var servicoSel = document.querySelector('select[name="servico"]');
+            var priceInput = document.querySelector('input[name="price"]');
+            function applyServicePrice(){
+                if(!servicoSel || !priceInput) return;
+                var opt = servicoSel.options[servicoSel.selectedIndex];
+                if(opt && opt.dataset && opt.dataset.price){
+                    priceInput.value = parseFloat(opt.dataset.price || 0).toFixed(2);
+                }
+            }
+            if(servicoSel){
+                servicoSel.addEventListener('change', applyServicePrice);
+                // apply on load only if price field is empty
+                if(priceInput && (priceInput.value === '' || priceInput.value === null)){
+                    applyServicePrice();
+                }
             }
         });
     </script>

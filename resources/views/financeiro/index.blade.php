@@ -60,6 +60,27 @@
         </form>
     </div>
 
+    <!-- Mensagens -->
+    @if(session('success'))
+        <div class="mb-6">
+            <div class="bg-green-50 border-l-4 border-green-400 p-4">
+                <p class="text-sm text-green-700">{{ session('success') }}</p>
+            </div>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="mb-6">
+            <div class="bg-red-50 border-l-4 border-red-400 p-4">
+                <ul class="text-sm text-red-700 list-disc pl-5">
+                    @foreach($errors->all() as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    @endif
+
     <!-- Indicadores Principais -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -165,18 +186,22 @@
                     <div class="flex-1">
                         <h4 class="font-medium text-gray-900">{{ $meta->nome }}</h4>
                         <p class="text-sm text-gray-600">{{ $meta->descricao }}</p>
-                        <div class="mt-2">
-                            <div class="flex items-center">
-                                <div class="flex-1 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-green-500 h-2 rounded-full" style="width: {{ min(100, ($meta->valor_atual / $meta->valor_meta) * 100) }}%"></div>
-                                </div>
-                                <span class="ml-2 text-sm text-gray-600">{{ number_format(($meta->valor_atual / $meta->valor_meta) * 100, 1) }}%</span>
-                            </div>
-                        </div>
+                                    <div class="mt-2">
+                                        <div class="flex items-center">
+                                            <div class="flex-1 bg-gray-200 rounded-full h-2">
+                                                <div class="bg-green-500 h-2 rounded-full" style="width: {{ $meta->percent }}%"></div>
+                                            </div>
+                                            <span class="ml-2 text-sm text-gray-600">{{ number_format($meta->percent, 1) }}%</span>
+                                        </div>
+                                    </div>
                     </div>
                     <div class="text-right">
-                        <p class="text-sm text-gray-600">R$ {{ number_format($meta->valor_atual, 2, ',', '.') }} / R$ {{ number_format($meta->valor_meta, 2, ',', '.') }}</p>
-                        <p class="text-xs text-gray-500">Prazo: {{ \Carbon\Carbon::parse($meta->data_limite)->format('d/m/Y') }}</p>
+                                    @if($meta->tipo === 'novos_clientes')
+                                        <p class="text-sm text-gray-600">{{ $meta->valor_atual }} / {{ intval($meta->valor_meta) }} clientes</p>
+                                    @else
+                                        <p class="text-sm text-gray-600">R$ {{ number_format($meta->valor_atual, 2, ',', '.') }} / R$ {{ number_format($meta->valor_meta, 2, ',', '.') }}</p>
+                                    @endif
+                                    <p class="text-xs text-gray-500">Prazo: {{ $meta->data_limite ? \Carbon\Carbon::parse($meta->data_limite)->format('d/m/Y') : '-' }}</p>
                     </div>
                 </div>
             @empty
@@ -238,7 +263,7 @@
 </div>
 
 <!-- Modal para Nova Meta -->
-<div id="metaModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div id="metaModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
     <div class="relative top-20 mx-auto p-6 border w-full max-w-md shadow-lg rounded-lg bg-white">
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-xl font-semibold text-gray-900">Nova Meta de Crescimento</h3>
@@ -249,25 +274,57 @@
             </button>
         </div>
 
-        <form class="space-y-4">
+        <form action="{{ route('metas.store') }}" method="POST" class="space-y-4">
+            @csrf
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Nome da Meta <span class="text-red-500">*</span></label>
-                <input type="text" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500" placeholder="Ex: Aumentar receita em 20%">
+                <input type="text" name="nome" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500" placeholder="Ex: Aumentar receita em 20%">
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
-                <textarea class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500" rows="3" placeholder="Descreva a meta..."></textarea>
+                <textarea name="descricao" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500" rows="3" placeholder="Descreva a meta..."></textarea>
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Valor da Meta (R$) <span class="text-red-500">*</span></label>
-                <input type="number" step="0.01" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500" placeholder="0,00">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                        <label id="label_valor_meta" class="block text-sm font-medium text-gray-700 mb-2">Valor da Meta (R$) <span class="text-red-500">*</span></label>
+                        <input id="valor_meta" type="number" name="valor_meta" step="0.01" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500" placeholder="0,00">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Data Inicial</label>
+                    <input type="date" name="data_inicio" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500">
+                </div>
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Data Limite <span class="text-red-500">*</span></label>
-                <input type="date" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Data Limite <span class="text-red-500">*</span></label>
+                    <input type="date" name="data_limite" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Quem tem acesso</label>
+                    <select name="quem_tem_acesso" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500">
+                        <option value="all">Todos usuários</option>
+                        <option value="current">Usuário atual</option>
+                        <option value="barbers">Barbeiros</option>
+                        <option value="owners">Administradores</option>
+                        <option value="attendants">Atendentes</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de meta</label>
+                <select name="tipo" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500">
+                    <option value="reducao_despesas">Redução de despesas</option>
+                    <option value="aumentar_receita">Aumentar receita</option>
+                    <option value="novos_clientes">Novos clientes</option>
+                    <option value="meta_mensal">Meta mensal</option>
+                    <option value="outro">Outro</option>
+                </select>
             </div>
 
             <div class="flex justify-end space-x-3 pt-4">
@@ -294,10 +351,11 @@
             </button>
         </div>
 
-        <form class="space-y-4">
+        <form action="{{ route('transacoes.store') }}" method="POST" class="space-y-4">
+            @csrf
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Tipo <span class="text-red-500">*</span></label>
-                <select required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500">
+                <select name="tipo" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500">
                     <option value="">Selecione o tipo</option>
                     <option value="receita">Receita</option>
                     <option value="despesa">Despesa</option>
@@ -306,17 +364,17 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Descrição <span class="text-red-500">*</span></label>
-                <input type="text" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500" placeholder="Ex: Corte de cabelo">
+                <input type="text" name="descricao" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500" placeholder="Ex: Corte de cabelo">
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Valor (R$) <span class="text-red-500">*</span></label>
-                <input type="number" step="0.01" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500" placeholder="0,00">
+                <input type="number" name="valor" step="0.01" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500" placeholder="0,00">
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Data <span class="text-red-500">*</span></label>
-                <input type="date" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500">
+                <input type="date" name="data" required value="{{ old('data', date('Y-m-d')) }}" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500">
             </div>
 
             <div class="flex justify-end space-x-3 pt-4">
@@ -357,14 +415,15 @@ new Chart(receitaCtx, {
     }
 });
 
-// Gráfico de Metas
+// Gráfico de Metas (usa contagens reais passadas pelo controller)
 const metasCtx = document.getElementById('metasChart').getContext('2d');
+const metasData = {!! json_encode($metaStatusCounts ?? [0,0,0]) !!};
 new Chart(metasCtx, {
     type: 'doughnut',
     data: {
         labels: ['Concluído', 'Em Andamento', 'Pendente'],
         datasets: [{
-            data: [60, 30, 10],
+            data: metasData,
             backgroundColor: ['#10B981', '#F59E0B', '#EF4444']
         }]
     },
@@ -381,7 +440,39 @@ new Chart(metasCtx, {
 // Modais
 function openMetaModal() {
     document.getElementById('metaModal').classList.remove('hidden');
+    // ajustar campo ao abrir
+    setTimeout(setMetaValorField, 50);
 }
+
+// ajustar campo Valor da Meta conforme tipo selecionado
+function setMetaValorField() {
+    const tipo = document.querySelector('#metaModal select[name="tipo"]');
+    const label = document.getElementById('label_valor_meta');
+    const input = document.getElementById('valor_meta');
+    if (!tipo || !label || !input) return;
+    const val = tipo.value;
+    if (val === 'novos_clientes') {
+        label.textContent = 'Quantidade (clientes) *';
+        input.step = 1;
+        input.min = 0;
+        input.placeholder = '0';
+        input.value = '';
+    } else {
+        label.textContent = 'Valor da Meta (R$) *';
+        input.step = 0.01;
+        input.min = 0;
+        input.placeholder = '0,00';
+        input.value = '';
+    }
+}
+
+// ligar evento quando o select mudar
+document.addEventListener('DOMContentLoaded', function () {
+    const tipoSelect = document.querySelector('#metaModal select[name="tipo"]');
+    if (tipoSelect) {
+        tipoSelect.addEventListener('change', setMetaValorField);
+    }
+});
 
 function closeMetaModal() {
     document.getElementById('metaModal').classList.add('hidden');

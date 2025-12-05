@@ -11,6 +11,11 @@ Route::get('/', function () {
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+    // Clientes index acessível para usuários autenticados (inclui barbers)
+    Route::get('clientes', [App\Http\Controllers\ClienteController::class, 'index'])->name('clientes.index');
+    // Toggle ativo/inativo para clientes (permitido por usuários autenticados; controller checa permissões)
+    Route::patch('clientes/{cliente}/toggle-status', [App\Http\Controllers\ClienteController::class, 'toggleStatus'])->name('clientes.toggleStatus');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -23,7 +28,8 @@ Route::middleware('auth')->group(function () {
 
     // Rotas restritas apenas para proprietários
     Route::middleware('owner')->group(function () {
-        Route::resource('clientes', App\Http\Controllers\ClienteController::class);
+        // Clientes CRUD for owners (index is exposed separately for barbers/auth users)
+        Route::resource('clientes', App\Http\Controllers\ClienteController::class)->except(['index']);
         Route::get('financeiro', [App\Http\Controllers\FinanceiroController::class, 'index'])->name('financeiro.index');
 
         // Rotas de Admin (apenas para proprietários)
@@ -44,6 +50,11 @@ Route::middleware('auth')->group(function () {
             // Inline service creation for owners via AJAX
             Route::post('services/inline', [App\Http\Controllers\ServiceController::class, 'storeInline'])->name('services.inline.store');
         });
+
+        // Transações financeiras (criar)
+        Route::post('transacoes', [App\Http\Controllers\TransacaoController::class, 'store'])->name('transacoes.store');
+        // Metas
+        Route::post('metas', [App\Http\Controllers\MetaController::class, 'store'])->name('metas.store');
     });
 });
 

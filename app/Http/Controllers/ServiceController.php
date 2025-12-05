@@ -28,7 +28,14 @@ class ServiceController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'price' => 'required|numeric|min:0',
+            'commission' => 'nullable|numeric|min:0',
         ]);
+
+        // Ensure commission has a default
+        if (!isset($data['commission']) || $data['commission'] === null || $data['commission'] === '') {
+            $data['commission'] = 0;
+        }
 
         Service::create($data);
 
@@ -43,11 +50,22 @@ class ServiceController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'price' => 'required|numeric|min:0',
+            'commission' => 'nullable|numeric|min:0',
         ]);
+
+        if (!isset($data['commission']) || $data['commission'] === null || $data['commission'] === '') {
+            $data['commission'] = 0;
+        }
 
         $service = Service::create($data);
 
-        return response()->json(['id' => $service->id, 'name' => $service->name]);
+        return response()->json([
+            'id' => $service->id,
+            'name' => $service->name,
+            'price' => $service->price,
+            'commission' => $service->commission,
+        ]);
     }
 
     public function show(Service $service)
@@ -65,7 +83,13 @@ class ServiceController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'price' => 'required|numeric|min:0',
+            'commission' => 'nullable|numeric|min:0',
         ]);
+
+        if (!isset($data['commission']) || $data['commission'] === null || $data['commission'] === '') {
+            $data['commission'] = 0;
+        }
 
         $service->update($data);
 
