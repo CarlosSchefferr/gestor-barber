@@ -141,34 +141,7 @@
             @endif
 
             <!-- Cards de Serviços Populares -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                @forelse($servicosSemana->take(6) as $servico)
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <h4 class="text-lg font-semibold text-gray-900">{{ $servico->servico }}</h4>
-                                <p class="text-sm text-gray-500 mt-1">{{ $servico->quantidade }} atendimentos</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-xl font-bold text-barber-600">R$ {{ number_format($servico->receita, 2, ',', '.') }}</p>
-                                <p class="text-xs text-gray-500">receita</p>
-                            </div>
-                        </div>
-                        <div class="mt-4">
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-barber-500 h-2 rounded-full" style="width: {{ ($servico->quantidade / $servicosSemana->max('quantidade')) * 100 }}%"></div>
-                            </div>
-                        </div>
-                    </div>
-                @empty
-                    <div class="col-span-full bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-                        <p class="text-gray-500">Nenhum serviço registrado esta semana</p>
-                        <a href="{{ route('agendamentos.create') }}" class="mt-4 inline-flex items-center px-4 py-2 bg-barber-600 text-white rounded-md hover:bg-barber-700 transition-colors">
-                            + Criar Primeiro Agendamento
-                        </a>
-                    </div>
-                @endforelse
-            </div>
+
 
             <!-- Resumo Financeiro -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -286,7 +259,9 @@
                     <a href="{{ route('agendamentos.create') }}" class="flex items-center p-4 bg-barber-50 rounded-lg hover:bg-barber-100 transition-colors">
                         <div class="flex-shrink-0">
                             <div class="w-8 h-8 bg-barber-100 rounded-lg flex items-center justify-center">
-                                <span class="text-barber-600 font-semibold">📅</span>
+                                <svg class="w-5 h-5 text-barber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
                             </div>
                         </div>
                         <div class="ml-3">
@@ -298,7 +273,9 @@
                     <a href="{{ route('clientes.create') }}" class="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
                         <div class="flex-shrink-0">
                             <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <span class="text-blue-600 font-semibold">👤</span>
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
                             </div>
                         </div>
                         <div class="ml-3">
@@ -310,7 +287,10 @@
                     <a href="{{ route('agendamentos.index') }}" class="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
                         <div class="flex-shrink-0">
                             <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                <span class="text-green-600 font-semibold">📋</span>
+                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5h6a2 2 0 012 2v12a2 2 0 01-2 2H9a2 2 0 01-2-2V7a2 2 0 012-2z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v4h6V3"></path>
+                                </svg>
                             </div>
                         </div>
                         <div class="ml-3">
@@ -322,7 +302,10 @@
                     <a href="{{ route('clientes.index') }}" class="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
                         <div class="flex-shrink-0">
                             <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <span class="text-purple-600 font-semibold">👥</span>
+                                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M9 20H4v-2a4 4 0 014-4h0a4 4 0 014 4v2z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                </svg>
                             </div>
                         </div>
                         <div class="ml-3">

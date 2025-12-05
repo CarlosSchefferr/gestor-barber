@@ -71,6 +71,47 @@ class DashboardController extends Controller
             return false;
         })->values();
 
+        // Recalcular valor_atual e percent para cada meta (mesma lógica do financeiro)
+        foreach ($metas as $meta) {
+            $valorAtual = 0;
+            $mFrom = $meta->data_inicio ? $meta->data_inicio->format('Y-m-d') : null;
+            $mTo = $meta->data_limite ? $meta->data_limite->format('Y-m-d') : null;
+
+            if ($meta->tipo === 'reducao_despesas') {
+                $q = \App\Models\Transacao::where('tipo', 'despesa');
+                if ($mFrom && $mTo) {
+                    $q->whereBetween('data', [$mFrom, $mTo]);
+                }
+                $valorAtual = $q->sum('valor');
+            } elseif ($meta->tipo === 'aumentar_receita' || $meta->tipo === 'meta_mensal') {
+                $receitas = 0;
+                $tq = \App\Models\Transacao::where('tipo', 'receita');
+                if ($mFrom && $mTo) {
+                    $tq->whereBetween('data', [$mFrom, $mTo]);
+                }
+                $receitas += $tq->sum('valor');
+
+                $aq = Agendamento::whereNotNull('price');
+                if ($mFrom && $mTo) {
+                    $aq->whereBetween('starts_at', [$mFrom, $mTo]);
+                }
+                $receitas += $aq->sum('price');
+
+                $valorAtual = $receitas;
+            } elseif ($meta->tipo === 'novos_clientes') {
+                $cq = Cliente::query();
+                if ($mFrom && $mTo) {
+                    $cq->whereBetween('created_at', [$mFrom, $mTo]);
+                }
+                $valorAtual = $cq->count();
+            } else {
+                $valorAtual = $meta->valor_atual ?? 0;
+            }
+
+            $meta->valor_atual = $valorAtual;
+            $meta->percent = ($meta->valor_meta > 0) ? min(100, ($valorAtual / $meta->valor_meta) * 100) : 0;
+        }
+
         return view('dashboard', compact('total', 'today', 'clientesInativos', 'agendamentosHoje', 'servicosSemana', 'agendamentosPorDia', 'metas'));
     }
 }
