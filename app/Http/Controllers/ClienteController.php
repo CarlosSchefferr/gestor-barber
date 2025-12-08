@@ -21,7 +21,7 @@ class ClienteController extends Controller
         $statusFilter = $request->get('status');
         $days = $request->get('days', 30);
 
-        $query = Cliente::query();
+        $query = Cliente::query()->with('lastAgendamento');
 
         // Only active clients by default
         $query->when($statusFilter == 'active', function ($q) { $q->where('active', true); });
@@ -48,6 +48,13 @@ class ClienteController extends Controller
         }
 
         $clientes = $query->paginate(20)->withQueryString();
+
+        // Preencher dinamicamente last_appointment_at para exibição quando não houver valor salvo
+        foreach ($clientes as $cliente) {
+            if (empty($cliente->last_appointment_at) && $cliente->lastAgendamento) {
+                $cliente->last_appointment_at = $cliente->lastAgendamento->starts_at;
+            }
+        }
 
         // Indicators (apply same barber filter where relevant)
         $clientQueryForIndicators = Cliente::query();

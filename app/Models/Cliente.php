@@ -27,4 +27,12 @@ class Cliente extends Model
     {
         return $this->hasMany(Agendamento::class);
     }
+
+    /**
+     * Último agendamento (relation helper)
+     */
+    public function lastAgendamento()
+    {
+        return $this->hasOne(Agendamento::class)->latestOfMany('starts_at');
+    }
 }

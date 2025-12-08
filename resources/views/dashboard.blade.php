@@ -55,7 +55,7 @@
                         </div>
                         <div class="ml-4">
                             <p class="text-sm font-medium text-gray-500">Clientes Ativos</p>
-                            <p class="text-2xl font-bold text-gray-900">{{ App\Models\Cliente::where('last_appointment_at', '>=', now()->subDays(30))->count() }}</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ \App\Models\Agendamento::whereBetween('starts_at', [now()->subDays(30)->startOfDay(), now()->endOfDay()])->distinct()->count('cliente_id') }}</p>
                         </div>
                     </div>
                 </div>
