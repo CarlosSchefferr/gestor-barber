@@ -1,47 +1,58 @@
 <x-guest-layout>
-       <div class="text-center mb-6">
-            <!-- Logo -->
-            <img src="{{ asset('images/logo.png') }}" alt="Logo" class="mx-auto h-20 w-auto mb-2">
+    @php
+        $inputClass = 'mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20';
+    @endphp
 
-        </div>
-    <div class="mb-4 text-sm text-gray-600">
-        {{ __('Esqueceu sua senha? Sem problemas. Basta informar seu endereço de e-mail e nós enviaremos um link para redefinir sua senha.') }}
+    <div class="mb-8">
+        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-barber-500">Recuperar acesso</p>
+        <h1 class="mt-3 text-3xl font-bold leading-tight text-zinc-900">Esqueceu sua senha?</h1>
+        <p class="mt-2 text-sm text-zinc-600">Informe seu e-mail e enviaremos um link para redefinição.</p>
     </div>
 
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+    @if (session('status'))
+        <div class="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <p class="text-sm font-medium text-emerald-700">{{ session('status') }}</p>
+        </div>
+    @endif
 
-    {{-- Form com Alpine para loading e animação --}}
-    <form x-data="{ sending: false, dots: '', dotInterval: null }" x-init="$watch('sending', value => { if (value && !dotInterval) { dotInterval = setInterval(() => { dots = dots.length < 3 ? dots + '.' : ''; }, 400); } })" @submit.prevent="sending = true; $el.submit()" method="POST" action="{{ route('password.email') }}">
+    <form
+        x-data="{ sending: false }"
+        @submit="sending = true"
+        method="POST"
+        action="{{ route('password.email') }}"
+    >
         @csrf
 
-        <!-- Email Address -->
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus />
+            <label for="email" class="text-sm font-semibold text-zinc-700">E-mail</label>
+            <input
+                id="email"
+                type="email"
+                name="email"
+                value="{{ old('email') }}"
+                required
+                autofocus
+                autocomplete="username"
+                class="{{ $inputClass }}"
+                placeholder="seu@email.com"
+            >
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
-        <div class="flex items-center justify-center mt-4 relative">
-            <x-primary-button :disabled="false" x-bind:disabled="sending" class="flex items-center gap-3">
-                <template x-if="!sending">
-                    <span>{{ __('Enviar link de redefinição de senha') }}</span>
-                </template>
-                <template x-if="sending">
-                    <span class="flex items-center gap-2">
-                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
-                        <span>Enviando link<span x-text="dots"></span></span>
-                    </span>
-                </template>
-            </x-primary-button>
-
-
-        </div>
-
-        <div class="mt-4 text-center text-sm text-gray-600">
-            <a href="{{ route('login') }}" class="text-barber-500 hover:underline font-semibold">
-                {{ __('Voltar') }}
-            </a>
-        </div>
+        <button
+            type="submit"
+            x-bind:disabled="sending"
+            class="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-barber-500 px-4 py-3 text-sm font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600 focus:outline-none focus:ring-2 focus:ring-barber-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-80"
+        >
+            <svg x-show="sending" x-cloak class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+            <span x-text="sending ? 'Enviando link...' : 'Enviar link de redefinição'"></span>
+        </button>
     </form>
+
+    <p class="mt-6 text-center text-sm text-zinc-600">
+        <a href="{{ route('login') }}" class="font-semibold text-barber-600 transition hover:text-barber-700">Voltar para login</a>
+    </p>
 </x-guest-layout>

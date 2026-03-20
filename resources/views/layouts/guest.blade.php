@@ -30,12 +30,53 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+        <style>
+            [x-cloak] { display: none !important; }
+        </style>
     </head>
     <body class="font-sans text-gray-900 antialiased">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-50" style="background-image: url('{{ asset('images/fundo.png') }}'); background-size: cover; background-position: center;">
+        <div class="min-h-screen bg-gray-100">
+            <div class="flex min-h-screen flex-col lg:flex-row">
+                <aside
+                    class="relative hidden overflow-hidden lg:block lg:w-[48%] xl:w-[46%]"
+                    x-data="{
+                        currentImage: 0,
+                        images: [
+                            '{{ asset('images/fundo.png') }}',
+                            '{{ asset('images/fundo-2.jpg') }}',
+                            '{{ asset('images/fundo-3.jpg') }}',
+                            '{{ asset('images/fundo-4.png') }}',
+                            '{{ asset('images/fundo-5.jpg') }}',
+                            '{{ asset('images/fundo-6.jpg') }}'
+                        ]
+                    }"
+                    x-init="setInterval(() => { currentImage = (currentImage + 1) % images.length }, 5000)"
+                >
+                    <template x-for="(image, index) in images" :key="index">
+                        <div
+                            class="absolute inset-0 bg-cover bg-center transition-opacity duration-700"
+                            :style="'background-image: url(' + image + ')'"
+                            :class="currentImage === index ? 'opacity-100' : 'opacity-0'"
+                        ></div>
+                    </template>
+                    <div class="absolute inset-0 bg-black/20"></div>
+                </aside>
 
-            <div class="w-full sm:max-w-md mt-4 px-6 py-6 bg-white text-black shadow-sm overflow-hidden sm:rounded-lg">
-                {{ $slot }}
+                <main class="relative z-10 flex flex-1 items-center justify-center bg-white px-4 py-10 sm:px-8 lg:-ml-10 lg:rounded-l-[2.5rem] lg:px-12 lg:shadow-[-20px_0_40px_-28px_rgba(0,0,0,0.45)]">
+                    <div class="w-full max-w-md">
+                        <div class="mb-8 flex justify-center">
+                            <a href="{{ url('/') }}" aria-label="Ir para o inicio">
+                                <img
+                                    src="{{ asset('images/logo.png') }}"
+                                    alt="GestorBarber"
+                                    class="h-20 w-auto"
+                                >
+                            </a>
+                        </div>
+                        {{ $slot }}
+                    </div>
+                </main>
             </div>
         </div>
     </body>
