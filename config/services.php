@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    'ai' => [
+        'openai_api_key' => env('OPENAI_API_KEY'),
+        'openai_endpoint' => env('OPENAI_ENDPOINT', 'https://api.openai.com/v1'),
+        'openai_model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
+    ],
+
+    'browsershot' => [
+        'node_binary' => env('BROWSERSHOT_NODE_BINARY'),
+        'npm_binary' => env('BROWSERSHOT_NPM_BINARY'),
+        'chrome_path' => env('BROWSERSHOT_CHROME_PATH'),
+        'no_sandbox' => env('BROWSERSHOT_NO_SANDBOX', false),
+        'timeout' => env('BROWSERSHOT_TIMEOUT', 90),
+    ],
+
 ];

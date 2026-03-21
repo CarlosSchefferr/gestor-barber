@@ -55,6 +55,12 @@ Route::middleware('auth')->group(function () {
         Route::post('transacoes', [App\Http\Controllers\TransacaoController::class, 'store'])->name('transacoes.store');
         // Metas
         Route::post('metas', [App\Http\Controllers\MetaController::class, 'store'])->name('metas.store');
+
+        // Apresentação mensal financeira
+        Route::get('financeiro/apresentacao/mensal', [App\Http\Controllers\FinanceiroPresentationController::class, 'preview'])
+            ->name('financeiro.presentation.monthly.preview');
+        Route::get('financeiro/apresentacao/mensal/pdf', [App\Http\Controllers\FinanceiroPresentationController::class, 'downloadPdf'])
+            ->name('financeiro.presentation.monthly.pdf');
     });
 });
 

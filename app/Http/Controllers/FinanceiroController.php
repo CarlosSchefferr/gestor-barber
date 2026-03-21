@@ -142,7 +142,8 @@ class FinanceiroController extends Controller
                     'valor' => $t->valor,
                     'status' => $t->status,
                 ];
-            });
+            })
+            ->toBase();
 
         $transacoesAgend = Agendamento::with(['cliente', 'barbeiro'])
             ->whereBetween('starts_at', [$from, $to])
@@ -157,7 +158,8 @@ class FinanceiroController extends Controller
                     'valor' => $agendamento->price,
                     'status' => 'Confirmado'
                 ];
-            });
+            })
+            ->toBase();
 
         // Merge and sort by date desc, then limit 10
         $transacoes = $transacoesModel->merge($transacoesAgend)

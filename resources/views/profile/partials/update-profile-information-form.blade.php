@@ -1,97 +1,78 @@
-<div class="max-w-4xl">
-    <!-- Header do Perfil -->
-    <div class="bg-gradient-to-r from-barber-50 to-barber-100 rounded-lg p-6 mb-8">
-        <div class="flex items-center gap-6">
-            <div class="w-20 h-20 rounded-full overflow-hidden bg-white border-4 border-barber-500 flex items-center justify-center shadow-lg">
-                @if($user->avatar)
-                    <img src="{{ asset('storage/' . $user->avatar) }}" alt="avatar" class="w-full h-full object-cover">
-                @else
-                    <div class="text-2xl font-bold text-barber-700">{{ strtoupper(substr($user->name,0,1)) }}</div>
-                @endif
-            </div>
+@php
+    $inputClass = 'mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20';
+@endphp
 
-            <div class="flex-1">
-                <h3 class="text-2xl font-bold text-gray-900">{{ $user->name }}</h3>
-                <p class="text-gray-600 mb-2">{{ $user->email }}</p>
-                <div class="flex items-center gap-3">
-                    <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full {{ $user->role === 'owner' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' }}">
-                        {{ $user->role === 'owner' ? 'Proprietário' : 'Barbeiro' }}
-                    </span>
-                    <span class="text-sm text-gray-500">
-                        Membro desde {{ $user->created_at->format('M/Y') }}
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
+<form id="send-verification" method="post" action="{{ route('verification.send') }}">
+    @csrf
+</form>
 
-    <form id="send-verification" method="post" action="{{ route('verification.send') }}">
-        @csrf
-    </form>
+<form method="post" action="{{ route('profile.update') }}" class="space-y-6" enctype="multipart/form-data">
+    @csrf
+    @method('patch')
 
-    <form method="post" action="{{ route('profile.update') }}" class="space-y-6" enctype="multipart/form-data">
-        @csrf
-        @method('patch')
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <label for="avatar" class="block text-sm font-medium text-gray-700 mb-2">Foto de Perfil</label>
-                <input id="avatar" name="avatar" type="file" class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500" accept="image/*">
-                <p class="mt-1 text-sm text-gray-500">PNG, JPG ou GIF até 2MB</p>
-                @error('avatar')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div>
-                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Nome Completo <span class="text-red-500">*</span></label>
-                <input id="name" name="name" type="text" value="{{ old('name', $user->name) }}" required autofocus autocomplete="name" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('name') border-red-300 @enderror">
-                @error('name')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-        </div>
-
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div>
-            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">E-mail <span class="text-red-500">*</span></label>
-            <input id="email" name="email" type="email" value="{{ old('email', $user->email) }}" required autocomplete="username" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('email') border-red-300 @enderror">
-            @error('email')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            <label for="avatar" class="text-sm font-semibold text-zinc-700">Foto de perfil</label>
+            <input id="avatar" name="avatar" type="file" class="{{ $inputClass }} file:mr-4 file:rounded-xl file:border-0 file:bg-barber-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-barber-700 hover:file:bg-barber-100" accept="image/*">
+            <p class="mt-2 text-xs text-zinc-500">PNG, JPG ou GIF ate 2MB</p>
+            @error('avatar')
+                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
             @enderror
         </div>
 
-        @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <h3 class="text-sm font-medium text-yellow-800">E-mail não verificado</h3>
-                        <div class="mt-2 text-sm text-yellow-700">
-                            <p>Seu e-mail não foi verificado. Verifique sua caixa de entrada ou spam.</p>
-                            <button form="send-verification" class="mt-2 text-sm font-medium text-yellow-800 hover:text-yellow-900 underline">Reenviar e-mail de verificação</button>
-                        </div>
-                        @if (session('status') === 'verification-link-sent')
-                            <p class="mt-2 font-medium text-sm text-green-600">Um novo link de verificação foi enviado.</p>
-                        @endif
-                    </div>
+        <div>
+            <label for="name" class="text-sm font-semibold text-zinc-700">Nome completo <span class="text-red-500">*</span></label>
+            <input id="name" name="name" type="text" value="{{ old('name', $user->name) }}" required autofocus autocomplete="name" class="{{ $inputClass }} @error('name') !border-red-300 @enderror">
+            @error('name')
+                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+    </div>
+
+    <div>
+        <label for="email" class="text-sm font-semibold text-zinc-700">E-mail <span class="text-red-500">*</span></label>
+        <input id="email" name="email" type="email" value="{{ old('email', $user->email) }}" required autocomplete="username" class="{{ $inputClass }} @error('email') !border-red-300 @enderror">
+        @error('email')
+            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+        @enderror
+    </div>
+
+    @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
+        <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+            <div class="flex gap-3">
+                <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-amber-100">
+                    <svg class="h-5 w-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-amber-800">E-mail nao verificado</h4>
+                    <p class="mt-1 text-sm text-amber-700">Verifique sua caixa de entrada ou spam.</p>
+                    <button form="send-verification" class="mt-2 text-sm font-semibold text-amber-800 underline hover:text-amber-900">Reenviar e-mail de verificacao</button>
+                    @if (session('status') === 'verification-link-sent')
+                        <p class="mt-2 text-sm font-medium text-emerald-600">Um novo link foi enviado.</p>
+                    @endif
                 </div>
             </div>
-        @endif
-
-        <div class="flex justify-end">
-            <button type="submit" class="bg-barber-600 text-white px-6 py-3 rounded-lg hover:bg-barber-700 transition-colors shadow-sm">
-                Salvar Alterações
-            </button>
         </div>
+    @endif
 
-        @if (session('status') === 'profile-updated')
-            <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 3000)" class="fixed top-20 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg z-50">
-                Perfil atualizado com sucesso!
+    <div class="flex justify-end pt-4">
+        <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">
+            Salvar alteracoes
+        </button>
+    </div>
+
+    @if (session('status') === 'profile-updated')
+        <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 3000)" class="fixed bottom-6 right-6 z-50 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 shadow-lg">
+            <div class="flex items-center gap-3">
+                <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100">
+                    <svg class="h-4 w-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <span class="text-sm font-semibold text-emerald-800">Perfil atualizado com sucesso!</span>
             </div>
-        @endif
-    </form>
-</div>
+        </div>
+    @endif
+</form>

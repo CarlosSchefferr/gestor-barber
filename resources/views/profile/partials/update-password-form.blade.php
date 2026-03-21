@@ -1,49 +1,56 @@
-<div class="max-w-2xl">
-    <div class="mb-6">
-        <h3 class="text-lg font-medium text-gray-900">Atualizar Senha</h3>
-        <p class="mt-1 text-sm text-gray-600">
-            Mantenha sua conta segura usando uma senha forte e única.
-        </p>
-    </div>
+@php
+    $inputClass = 'mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20';
+@endphp
 
-    <form method="post" action="{{ route('password.update') }}" class="space-y-6">
+<div class="max-w-xl">
+    <p class="text-sm text-zinc-600 mb-6">
+        Mantenha sua conta segura usando uma senha forte e unica.
+    </p>
+
+    <form method="post" action="{{ route('password.update') }}" class="space-y-5">
         @csrf
         @method('put')
 
         <div>
-            <label for="update_password_current_password" class="block text-sm font-medium text-gray-700 mb-2">Senha Atual <span class="text-red-500">*</span></label>
-            <input id="update_password_current_password" name="current_password" type="password" autocomplete="current-password" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('current_password', 'updatePassword') border-red-300 @enderror">
+            <label for="update_password_current_password" class="text-sm font-semibold text-zinc-700">Senha atual <span class="text-red-500">*</span></label>
+            <input id="update_password_current_password" name="current_password" type="password" autocomplete="current-password" class="{{ $inputClass }} @error('current_password', 'updatePassword') !border-red-300 @enderror" placeholder="Digite sua senha atual">
             @error('current_password', 'updatePassword')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
             @enderror
         </div>
 
         <div>
-            <label for="update_password_password" class="block text-sm font-medium text-gray-700 mb-2">Nova Senha <span class="text-red-500">*</span></label>
-            <input id="update_password_password" name="password" type="password" autocomplete="new-password" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('password', 'updatePassword') border-red-300 @enderror">
-            <p class="mt-1 text-sm text-gray-500">Mínimo de 8 caracteres</p>
+            <label for="update_password_password" class="text-sm font-semibold text-zinc-700">Nova senha <span class="text-red-500">*</span></label>
+            <input id="update_password_password" name="password" type="password" autocomplete="new-password" class="{{ $inputClass }} @error('password', 'updatePassword') !border-red-300 @enderror" placeholder="Minimo de 8 caracteres">
             @error('password', 'updatePassword')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
             @enderror
         </div>
 
         <div>
-            <label for="update_password_password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">Confirmar Nova Senha <span class="text-red-500">*</span></label>
-            <input id="update_password_password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-barber-500 focus:ring-barber-500 @error('password_confirmation', 'updatePassword') border-red-300 @enderror">
+            <label for="update_password_password_confirmation" class="text-sm font-semibold text-zinc-700">Confirmar nova senha <span class="text-red-500">*</span></label>
+            <input id="update_password_password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" class="{{ $inputClass }} @error('password_confirmation', 'updatePassword') !border-red-300 @enderror" placeholder="Repita a nova senha">
             @error('password_confirmation', 'updatePassword')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
             @enderror
         </div>
 
-        <div class="flex justify-end">
-            <button type="submit" class="bg-barber-600 text-white px-6 py-3 rounded-lg hover:bg-barber-700 transition-colors shadow-sm">
-                Atualizar Senha
+        <div class="flex justify-end pt-2">
+            <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">
+                Atualizar senha
             </button>
         </div>
 
         @if (session('status') === 'password-updated')
-            <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 3000)" class="fixed top-20 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg z-50">
-                Senha atualizada com sucesso!
+            <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 3000)" class="fixed bottom-6 right-6 z-50 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 shadow-lg">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100">
+                        <svg class="h-4 w-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-semibold text-emerald-800">Senha atualizada com sucesso!</span>
+                </div>
             </div>
         @endif
     </form>
