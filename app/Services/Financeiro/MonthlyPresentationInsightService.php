@@ -28,6 +28,11 @@ class MonthlyPresentationInsightService
                 $prompts['mensagem_motivacional'],
                 $this->fallbackMotivationalMessage($metrics)
             ),
+            'insight_metas' => $this->fallbackMetasInsight($metrics),
+            'insight_clientes' => $this->fallbackClientesInsight($metrics),
+            'insight_equipe' => $this->fallbackEquipeInsight($metrics),
+            'insight_operacao' => $this->fallbackOperacaoInsight($metrics),
+            'insight_lucro' => $this->fallbackLucroInsight($metrics),
         ];
     }
 
@@ -145,5 +150,100 @@ class MonthlyPresentationInsightService
     private function money(float $value): string
     {
         return 'R$ ' . number_format($value, 2, ',', '.');
+    }
+
+    private function fallbackMetasInsight(array $metrics): string
+    {
+        $metas = $metrics['metas'] ?? [];
+        $total = $metas['total'] ?? 0;
+        $concluidas = $metas['concluidas'] ?? 0;
+        $taxa = $metas['taxa_conclusao'] ?? 0;
+
+        if ($total === 0) {
+            return 'Nenhuma meta definida para o periodo. Considere estabelecer objetivos claros para o proximo mes.';
+        }
+
+        if ($taxa >= 80) {
+            return "Excelente! {$concluidas} de {$total} metas alcancadas ({$taxa}%). O time esta superando expectativas.";
+        }
+
+        if ($taxa >= 50) {
+            return "Bom progresso! {$concluidas} de {$total} metas concluidas. Vamos manter o ritmo para fechar todas.";
+        }
+
+        return "Atencao: apenas {$concluidas} de {$total} metas finalizadas. Hora de revisar estrategias e acelerar.";
+    }
+
+    private function fallbackClientesInsight(array $metrics): string
+    {
+        $novos = $metrics['novos_clientes'] ?? 0;
+        $novosAnterior = $metrics['novos_clientes_anterior'] ?? 0;
+        $ativos = $metrics['clientes_ativos'] ?? 0;
+
+        if ($novos > $novosAnterior && $novosAnterior > 0) {
+            $crescimento = round((($novos - $novosAnterior) / $novosAnterior) * 100);
+            return "{$novos} novos clientes neste mes, {$crescimento}% a mais que o anterior. A captacao esta funcionando!";
+        }
+
+        if ($novos > 0) {
+            return "{$novos} novos clientes conquistados e {$ativos} clientes ativos no periodo.";
+        }
+
+        return "Nenhum novo cliente registrado. Invista em acoes de marketing e indicacoes.";
+    }
+
+    private function fallbackEquipeInsight(array $metrics): string
+    {
+        $ranking = $metrics['ranking_barbeiros'] ?? [];
+        $destaque = $metrics['barbeiro_destaque'] ?? [];
+
+        if (empty($ranking)) {
+            return 'Sem dados de desempenho da equipe no periodo.';
+        }
+
+        $totalBarbeiros = count($ranking);
+        $nomeDestaque = $destaque['nome'] ?? 'o destaque do mes';
+        $faturamentoDestaque = $this->money($destaque['faturamento'] ?? 0);
+
+        if ($totalBarbeiros === 1) {
+            return "Parabens {$nomeDestaque}! Faturamento individual de {$faturamentoDestaque}.";
+        }
+
+        return "{$totalBarbeiros} profissionais em atividade. Destaque: {$nomeDestaque} com {$faturamentoDestaque}.";
+    }
+
+    private function fallbackOperacaoInsight(array $metrics): string
+    {
+        $diaPico = $metrics['dia_pico'] ?? [];
+        $horaPico = $metrics['hora_pico'] ?? [];
+
+        $dia = $diaPico['nome'] ?? 'Desconhecido';
+        $totalDia = $diaPico['total'] ?? 0;
+        $hora = $horaPico['hora'] ?? 'Desconhecido';
+
+        if ($dia === 'Sem dados' || $totalDia === 0) {
+            return 'Dados insuficientes para analise de picos operacionais.';
+        }
+
+        return "{$dia} e o dia mais movimentado ({$totalDia} atendimentos), com pico as {$hora}.";
+    }
+
+    private function fallbackLucroInsight(array $metrics): string
+    {
+        $faturamento = $metrics['faturamento_total'] ?? 0;
+        $despesas = $metrics['despesas'] ?? 0;
+        $lucro = $metrics['lucro_liquido'] ?? 0;
+
+        if ($faturamento === 0) {
+            return 'Sem faturamento registrado no periodo.';
+        }
+
+        $margem = $faturamento > 0 ? round(($lucro / $faturamento) * 100, 1) : 0;
+
+        if ($lucro > 0) {
+            return "Lucro liquido de {$this->money($lucro)} com margem de {$margem}%. Saude financeira positiva.";
+        }
+
+        return "Prejuizo de {$this->money(abs($lucro))}. Necessario revisar despesas ({$this->money($despesas)}) ou aumentar receita.";
     }
 }

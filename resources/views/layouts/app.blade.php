@@ -103,15 +103,7 @@
                                 <span class="font-medium">{{ now()->setTimezone('America/Sao_Paulo')->format('d/m/Y') }}</span>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 text-sm text-zinc-500">
-                            <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-100">
-                                <svg class="h-3.5 w-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                </svg>
-                            </div>
-                            <span id="user-location" class="font-medium">Carregando...</span>
-                        </div>
+                       
                     </div>
                 </div>
             </footer>
@@ -129,33 +121,10 @@
                     document.getElementById('brasilia-time').textContent = timeString;
                 }
 
-                function getUserLocation() {
-                    const el = document.getElementById('user-location');
-                    if (!el) return;
 
-                    if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(
-                            function(position) {
-                                el.textContent = 'Localização detectada';
-                            },
-                            function(error) {
-                                console.log('Erro de geolocalização:', error);
-                                el.textContent = 'Localização';
-                            },
-                            {
-                                enableHighAccuracy: false,
-                                timeout: 5000,
-                                maximumAge: 300000
-                            }
-                        );
-                    } else {
-                        el.textContent = 'Localização';
-                    }
-                }
 
                 setInterval(updateBrasiliaTime, 1000);
                 updateBrasiliaTime();
-                getUserLocation();
             </script>
         </div>
         @stack('scripts')

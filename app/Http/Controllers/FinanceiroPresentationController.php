@@ -6,12 +6,24 @@ use App\Services\Financeiro\MonthlyPresentationDataService;
 use App\Services\Financeiro\MonthlyPresentationInsightService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
-use RuntimeException;
+use Illuminate\Support\Facades\View;
+use Spatie\Browsershot\Browsershot;
 
 class FinanceiroPresentationController extends Controller
 {
+    private const ALL_SECTIONS = [
+        'capa',
+        'resumo',
+        'faturamento',
+        'atendimentos',
+        'metas',
+        'equipe',
+        'servicos',
+        'clientes',
+        'operacao',
+        'encerramento',
+    ];
+
     public function __construct(
         private MonthlyPresentationDataService $dataService,
         private MonthlyPresentationInsightService $insightService
@@ -21,67 +33,38 @@ class FinanceiroPresentationController extends Controller
     public function preview(Request $request)
     {
         [$referenceDate, $barbeariaNome] = $this->resolveInput($request);
+        $sections = $this->resolveSections($request);
 
-        $payload = $this->buildPayload($referenceDate, $barbeariaNome);
+        $payload = $this->buildPayload($referenceDate, $barbeariaNome, $sections);
 
         return view('financeiro.presentation.monthly', $payload);
     }
 
-    public function downloadPdf(Request $request)
+    public function downloadPDF(Request $request)
     {
         [$referenceDate, $barbeariaNome] = $this->resolveInput($request);
+        $sections = $this->resolveSections($request);
 
-        $payload = $this->buildPayload($referenceDate, $barbeariaNome);
-        $html = view('financeiro.presentation.monthly', $payload)->render();
+        $payload = $this->buildPayload($referenceDate, $barbeariaNome, $sections);
 
-        $historyDir = storage_path('app/presentations/' . $referenceDate->format('Y/m'));
-        File::ensureDirectoryExists($historyDir);
+        // Renderizar HTML otimizado para PDF
+        $html = View::make('financeiro.presentation.pdf', $payload)->render();
 
-        $safeBarbershop = Str::slug($barbeariaNome ?: 'barbearia');
-        $fileName = sprintf(
-            'apresentacao-mensal-%s-%s.pdf',
-            $safeBarbershop,
-            $referenceDate->format('Y-m')
-        );
-
-        $pdfPath = $historyDir . DIRECTORY_SEPARATOR . $fileName;
-
-        $browserClass = 'Spatie\\Browsershot\\Browsershot';
-        if (!class_exists($browserClass)) {
-            throw new RuntimeException('Pacote spatie/browsershot nao instalado. Execute: composer install.');
-        }
-
-        $browsershot = $browserClass::html($html)
-            ->showBackground()
+        // Converter para PDF em paisagem
+        $pdf = Browsershot::html($html)
+            ->landscape()
+            ->margins(0, 0, 0, 0)
             ->format('A4')
-            ->margins(10, 10, 10, 10)
-            ->waitUntilNetworkIdle()
-            ->timeout((int) config('services.browsershot.timeout', 90));
+            ->pdf();
 
-        if (config('services.browsershot.no_sandbox', false)) {
-            $browsershot->noSandbox();
-        }
+        $fileName = 'apresentacao-' . $barbeariaNome . '-' . $referenceDate->format('Y-m-d') . '.pdf';
 
-        if ($nodeBinary = config('services.browsershot.node_binary')) {
-            $browsershot->setNodeBinary((string) $nodeBinary);
-        }
-
-        if ($npmBinary = config('services.browsershot.npm_binary')) {
-            $browsershot->setNpmBinary((string) $npmBinary);
-        }
-
-        if ($chromePath = config('services.browsershot.chrome_path')) {
-            $browsershot->setChromePath((string) $chromePath);
-        }
-
-        $browsershot->savePdf($pdfPath);
-
-        return response()->download($pdfPath, $fileName, [
-            'Content-Type' => 'application/pdf',
-        ]);
+        return response($pdf, 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="' . $fileName . '"');
     }
 
-    private function buildPayload(Carbon $referenceDate, string $barbeariaNome): array
+    private function buildPayload(Carbon $referenceDate, string $barbeariaNome, array $sections): array
     {
         $metrics = $this->dataService->build($referenceDate);
         $insights = $this->insightService->generate($metrics);
@@ -90,6 +73,8 @@ class FinanceiroPresentationController extends Controller
             'barbeariaNome' => $barbeariaNome,
             'metrics' => $metrics,
             'insights' => $insights,
+            'sections' => $sections,
+            'allSections' => self::ALL_SECTIONS,
             'generatedAt' => now(),
         ];
     }
@@ -109,5 +94,19 @@ class FinanceiroPresentationController extends Controller
         $barbeariaNome = $validated['barbearia_nome'] ?? (string) config('app.name', 'Barbearia Premium');
 
         return [$referenceDate, $barbeariaNome];
+    }
+
+    private function resolveSections(Request $request): array
+    {
+        $sectionsParam = $request->input('sections');
+
+        if (empty($sectionsParam)) {
+            return self::ALL_SECTIONS;
+        }
+
+        $requested = array_map('trim', explode(',', $sectionsParam));
+        $valid = array_intersect($requested, self::ALL_SECTIONS);
+
+        return !empty($valid) ? array_values($valid) : self::ALL_SECTIONS;
     }
 }

@@ -59,7 +59,7 @@ Route::middleware('auth')->group(function () {
         // Apresentação mensal financeira
         Route::get('financeiro/apresentacao/mensal', [App\Http\Controllers\FinanceiroPresentationController::class, 'preview'])
             ->name('financeiro.presentation.monthly.preview');
-        Route::get('financeiro/apresentacao/mensal/pdf', [App\Http\Controllers\FinanceiroPresentationController::class, 'downloadPdf'])
+        Route::get('financeiro/apresentacao/mensal/pdf', [App\Http\Controllers\FinanceiroPresentationController::class, 'downloadPDF'])
             ->name('financeiro.presentation.monthly.pdf');
     });
 });

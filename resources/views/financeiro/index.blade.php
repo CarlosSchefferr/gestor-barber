@@ -15,12 +15,12 @@
                 <h1 class="mt-2 text-3xl font-bold leading-tight text-zinc-900 sm:text-4xl">Resumo e performance</h1>
             </div>
             <div class="flex flex-wrap items-center gap-3">
-                <a href="{{ route('financeiro.presentation.monthly.preview') }}" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">
-                    Ver apresentação
-                </a>
-                <a href="{{ route('financeiro.presentation.monthly.pdf') }}" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">
-                    Baixar PDF mensal
-                </a>
+                <button type="button" onclick="openApresentacaoModal()" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">
+                    <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                    </svg>
+                    Gerar Apresentacao
+                </button>
                 <button type="button" onclick="openMetaModal()" class="inline-flex items-center justify-center rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-emerald-700 transition hover:bg-emerald-100">
                     Nova meta
                 </button>
@@ -244,18 +244,119 @@
     </div>
 </div>
 
+<div id="apresentacaoModal" class="fixed inset-0 z-50 hidden h-full w-full overflow-y-auto bg-zinc-900/60 backdrop-blur-[2px]">
+    <div class="relative top-10 mx-auto w-full max-w-2xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-xl sm:p-8">
+        <div class="mb-6">
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-barber-500">Personalize</p>
+            <h3 class="mt-2 text-2xl font-bold text-zinc-900">Gerar Apresentacao</h3>
+            <p class="mt-1 text-sm text-zinc-500">Escolha as secoes que deseja incluir</p>
+        </div>
+
+        <div class="mb-4 flex items-center justify-between">
+            <button type="button" onclick="toggleAllSections(true)" class="text-sm font-medium text-barber-600 hover:text-barber-700">Selecionar todas</button>
+            <button type="button" onclick="toggleAllSections(false)" class="text-sm font-medium text-zinc-500 hover:text-zinc-700">Desmarcar todas</button>
+        </div>
+
+        <div class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+            <label class="flex items-start gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 cursor-pointer hover:bg-zinc-100 transition">
+                <input type="checkbox" name="sections[]" value="capa" checked class="mt-0.5 h-5 w-5 rounded border-zinc-300 text-barber-500 focus:ring-barber-500">
+                <div>
+                    <p class="font-semibold text-zinc-900">Capa</p>
+                    <p class="text-sm text-zinc-500">Titulo, periodo e faturamento em destaque</p>
+                </div>
+            </label>
+
+            <label class="flex items-start gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 cursor-pointer hover:bg-zinc-100 transition">
+                <input type="checkbox" name="sections[]" value="resumo" checked class="mt-0.5 h-5 w-5 rounded border-zinc-300 text-barber-500 focus:ring-barber-500">
+                <div>
+                    <p class="font-semibold text-zinc-900">Resumo Executivo</p>
+                    <p class="text-sm text-zinc-500">Principais indicadores do periodo em cards</p>
+                </div>
+            </label>
+
+            <label class="flex items-start gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 cursor-pointer hover:bg-zinc-100 transition">
+                <input type="checkbox" name="sections[]" value="faturamento" checked class="mt-0.5 h-5 w-5 rounded border-zinc-300 text-barber-500 focus:ring-barber-500">
+                <div>
+                    <p class="font-semibold text-zinc-900">Faturamento</p>
+                    <p class="text-sm text-zinc-500">Receita, despesas e lucro liquido</p>
+                </div>
+            </label>
+
+            <label class="flex items-start gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 cursor-pointer hover:bg-zinc-100 transition">
+                <input type="checkbox" name="sections[]" value="atendimentos" checked class="mt-0.5 h-5 w-5 rounded border-zinc-300 text-barber-500 focus:ring-barber-500">
+                <div>
+                    <p class="font-semibold text-zinc-900">Atendimentos</p>
+                    <p class="text-sm text-zinc-500">Volume e ticket medio com comparativo</p>
+                </div>
+            </label>
+
+            <label class="flex items-start gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 cursor-pointer hover:bg-zinc-100 transition">
+                <input type="checkbox" name="sections[]" value="metas" checked class="mt-0.5 h-5 w-5 rounded border-zinc-300 text-barber-500 focus:ring-barber-500">
+                <div>
+                    <p class="font-semibold text-zinc-900">Metas do Mes</p>
+                    <p class="text-sm text-zinc-500">Progresso das metas e taxa de conclusao</p>
+                </div>
+            </label>
+
+            <label class="flex items-start gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 cursor-pointer hover:bg-zinc-100 transition">
+                <input type="checkbox" name="sections[]" value="equipe" checked class="mt-0.5 h-5 w-5 rounded border-zinc-300 text-barber-500 focus:ring-barber-500">
+                <div>
+                    <p class="font-semibold text-zinc-900">Ranking da Equipe</p>
+                    <p class="text-sm text-zinc-500">Desempenho dos barbeiros e destaque do mes</p>
+                </div>
+            </label>
+
+            <label class="flex items-start gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 cursor-pointer hover:bg-zinc-100 transition">
+                <input type="checkbox" name="sections[]" value="servicos" checked class="mt-0.5 h-5 w-5 rounded border-zinc-300 text-barber-500 focus:ring-barber-500">
+                <div>
+                    <p class="font-semibold text-zinc-900">Servicos Mais Vendidos</p>
+                    <p class="text-sm text-zinc-500">Ranking de servicos por demanda e valor</p>
+                </div>
+            </label>
+
+            <label class="flex items-start gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 cursor-pointer hover:bg-zinc-100 transition">
+                <input type="checkbox" name="sections[]" value="clientes" checked class="mt-0.5 h-5 w-5 rounded border-zinc-300 text-barber-500 focus:ring-barber-500">
+                <div>
+                    <p class="font-semibold text-zinc-900">Clientes</p>
+                    <p class="text-sm text-zinc-500">Novos clientes e clientes ativos no periodo</p>
+                </div>
+            </label>
+
+            <label class="flex items-start gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 cursor-pointer hover:bg-zinc-100 transition">
+                <input type="checkbox" name="sections[]" value="operacao" checked class="mt-0.5 h-5 w-5 rounded border-zinc-300 text-barber-500 focus:ring-barber-500">
+                <div>
+                    <p class="font-semibold text-zinc-900">Operacao</p>
+                    <p class="text-sm text-zinc-500">Dias e horarios de pico de atendimento</p>
+                </div>
+            </label>
+
+            <label class="flex items-start gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 cursor-pointer hover:bg-zinc-100 transition">
+                <input type="checkbox" name="sections[]" value="encerramento" checked class="mt-0.5 h-5 w-5 rounded border-zinc-300 text-barber-500 focus:ring-barber-500">
+                <div>
+                    <p class="font-semibold text-zinc-900">Encerramento</p>
+                    <p class="text-sm text-zinc-500">Evolucao percentual e mensagem motivacional</p>
+                </div>
+            </label>
+        </div>
+
+        <div class="mt-6 flex justify-center gap-3">
+            <button type="button" onclick="closeApresentacaoModal()" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">Cancelar</button>
+            <button type="button" onclick="gerarApresentacao()" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-6 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">
+                <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+                Ver Apresentacao
+            </button>
+        </div>
+    </div>
+</div>
+
 <div id="metaModal" class="fixed inset-0 z-50 hidden h-full w-full overflow-y-auto bg-zinc-900/60 backdrop-blur-[2px]">
     <div class="relative top-10 mx-auto w-full max-w-2xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-xl sm:p-8">
-        <div class="mb-6 flex items-center justify-between">
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-barber-500">Cadastro</p>
-                <h3 class="mt-2 text-2xl font-bold text-zinc-900">Nova meta de crescimento</h3>
-            </div>
-            <button type="button" onclick="closeMetaModal()" class="rounded-xl p-2 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-600">
-                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
+        <div class="mb-6">
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-barber-500">Cadastro</p>
+            <h3 class="mt-2 text-2xl font-bold text-zinc-900">Nova meta de crescimento</h3>
         </div>
 
         <form action="{{ route('metas.store') }}" method="POST" class="space-y-4">
@@ -320,9 +421,9 @@
                 </div>
             </div>
 
-            <div class="flex justify-end gap-3 pt-2">
-                <button type="button" onclick="closeMetaModal()" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">Cancelar</button>
-                <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-emerald-700">Salvar meta</button>
+            <div class="flex justify-center gap-3 pt-2">
+                <button type="button" onclick="closeMetaModal()" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">Cancelar</button>
+                <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-emerald-700">Salvar meta</button>
             </div>
         </form>
     </div>
@@ -330,16 +431,9 @@
 
 <div id="transacaoModal" class="fixed inset-0 z-50 hidden h-full w-full overflow-y-auto bg-zinc-900/60 backdrop-blur-[2px]">
     <div class="relative top-10 mx-auto w-full max-w-xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-xl sm:p-8">
-        <div class="mb-6 flex items-center justify-between">
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-barber-500">Cadastro</p>
-                <h3 class="mt-2 text-2xl font-bold text-zinc-900">Nova transacao</h3>
-            </div>
-            <button type="button" onclick="closeTransacaoModal()" class="rounded-xl p-2 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-600">
-                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
+        <div class="mb-6">
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-barber-500">Cadastro</p>
+            <h3 class="mt-2 text-2xl font-bold text-zinc-900">Nova transacao</h3>
         </div>
 
         <form action="{{ route('transacoes.store') }}" method="POST" class="space-y-4">
@@ -375,9 +469,9 @@
                 </div>
             </div>
 
-            <div class="flex justify-end gap-3 pt-2">
-                <button type="button" onclick="closeTransacaoModal()" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">Cancelar</button>
-                <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">Salvar transacao</button>
+            <div class="flex justify-center gap-3 pt-2">
+                <button type="button" onclick="closeTransacaoModal()" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">Cancelar</button>
+                <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">Salvar transacao</button>
             </div>
         </form>
     </div>
@@ -495,6 +589,45 @@ if (transacaoModal) {
     transacaoModal.addEventListener('click', function (e) {
         if (e.target === this) {
             closeTransacaoModal();
+        }
+    });
+}
+
+// Modal de Apresentacao
+function openApresentacaoModal() {
+    document.getElementById('apresentacaoModal').classList.remove('hidden');
+}
+
+function closeApresentacaoModal() {
+    document.getElementById('apresentacaoModal').classList.add('hidden');
+}
+
+function toggleAllSections(checked) {
+    const checkboxes = document.querySelectorAll('#apresentacaoModal input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = checked);
+}
+
+function gerarApresentacao() {
+    const checkboxes = document.querySelectorAll('#apresentacaoModal input[type="checkbox"]:checked');
+    const sections = Array.from(checkboxes).map(cb => cb.value);
+
+    if (sections.length === 0) {
+        alert('Selecione pelo menos uma secao para gerar a apresentacao.');
+        return;
+    }
+
+    const url = new URL('{{ route("financeiro.presentation.monthly.preview") }}');
+    url.searchParams.set('sections', sections.join(','));
+
+    window.open(url.toString(), '_blank');
+    closeApresentacaoModal();
+}
+
+const apresentacaoModal = document.getElementById('apresentacaoModal');
+if (apresentacaoModal) {
+    apresentacaoModal.addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeApresentacaoModal();
         }
     });
 }

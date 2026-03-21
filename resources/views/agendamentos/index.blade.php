@@ -8,7 +8,6 @@
 
 <div id="agenda-page" x-data="{
     viewMode: localStorage.getItem('agendaView') || 'calendar',
-    showFilters: false,
     calendarView: localStorage.getItem('calendarViewMode') || 'month',
     currentDate: new Date()
 }" x-init="$watch('viewMode', v => localStorage.setItem('agendaView', v)); $watch('calendarView', v => localStorage.setItem('calendarViewMode', v));" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -21,14 +20,6 @@
                 <h1 class="mt-1 text-2xl font-bold leading-tight text-zinc-900 sm:text-3xl">Agendamentos</h1>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-                <!-- Toggle Filtros -->
-                <button @click="showFilters = !showFilters" class="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
-                    </svg>
-                    <span x-text="showFilters ? 'Ocultar filtros' : 'Filtros'"></span>
-                </button>
-
                 <!-- Toggle Vista -->
                 <div class="inline-flex rounded-xl border border-zinc-200 bg-white p-1">
                     <button @click="viewMode = 'calendar'" :class="viewMode === 'calendar' ? 'bg-barber-500 text-white' : 'text-zinc-600 hover:bg-zinc-50'" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition">
@@ -46,18 +37,21 @@
                 </div>
 
                 <!-- Botao Novo -->
-                <a href="{{ route('agendamentos.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-barber-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-barber-600">
+                <button type="button" onclick="openNovoAgendamentoModal()" class="inline-flex items-center gap-2 rounded-xl bg-barber-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-barber-600">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
                     Novo
-                </a>
+                </button>
             </div>
         </div>
     </div>
 
     <!-- Filtros -->
-    <div x-show="showFilters" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" class="{{ $cardClass }} mb-6 p-5" style="display: none;">
+    <div class="{{ $cardClass }} mb-6 p-5">
+        <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-base font-bold text-zinc-900">Filtros</h2>
+        </div>
         <form method="GET" id="filtersForm" class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <input type="hidden" name="view" id="viewInput" value="{{ request('view', 'calendar') }}">
 
@@ -85,13 +79,13 @@
                 <input type="date" name="to" value="{{ request('to') }}" class="{{ $inputClass }}">
             </div>
 
-            <div class="lg:col-span-4 flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-zinc-100">
-                <a href="{{ route('agendamentos.index') }}" class="inline-flex items-center rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50">
-                    Limpar
-                </a>
-                <button type="submit" class="inline-flex items-center rounded-xl bg-barber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-barber-600">
+            <div class="lg:col-span-4 flex flex-wrap items-center justify-center gap-3 pt-2 border-t border-zinc-100">
+                <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">
                     Aplicar filtros
                 </button>
+                <a href="{{ route('agendamentos.index') }}" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">
+                    Limpar
+                </a>
             </div>
         </form>
     </div>
@@ -200,11 +194,11 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                         </svg>
                                     </button>
-                                    <a href="{{ route('agendamentos.edit', $agendamento) }}" class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition hover:bg-zinc-50 hover:text-barber-600" title="Editar">
+                                    <button type="button" onclick="openEditarAgendamentoModal({{ $agendamento->id }})" class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition hover:bg-zinc-50 hover:text-barber-600" title="Editar">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h6M4 21l4-4 9-9a2.828 2.828 0 10-4-4L4 13v8z"></path>
                                         </svg>
-                                    </a>
+                                    </button>
                                     <button type="button" onclick="confirmDelete({{ $agendamento->id }})" class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition hover:bg-red-50 hover:text-red-600" title="Remover">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3"></path>
@@ -223,9 +217,9 @@
                                 </div>
                                 <h3 class="text-sm font-bold text-zinc-900">Nenhum agendamento encontrado</h3>
                                 <p class="mt-1 text-sm text-zinc-500">Comece criando um novo agendamento.</p>
-                                <a href="{{ route('agendamentos.create') }}" class="mt-4 inline-flex items-center justify-center rounded-2xl bg-barber-500 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">
+                                <button type="button" onclick="openNovoAgendamentoModal()" class="mt-4 inline-flex items-center justify-center rounded-2xl bg-barber-500 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">
                                     Novo agendamento
-                                </a>
+                                </button>
                             </td>
                         </tr>
                     @endforelse
@@ -238,6 +232,195 @@
                 {{ $agendamentos->links() }}
             </div>
         @endif
+    </div>
+</div>
+
+<!-- Modal Novo Agendamento -->
+<div id="novoAgendamentoModal" class="fixed inset-0 z-50 hidden h-full w-full overflow-y-auto bg-zinc-900/60 backdrop-blur-[2px]">
+    <div class="relative top-10 mx-auto mb-10 w-full max-w-2xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-xl sm:p-8">
+        <div class="mb-6">
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-barber-500">Cadastro</p>
+            <h3 class="mt-2 text-2xl font-bold text-zinc-900">Novo agendamento</h3>
+            <p class="mt-1 text-sm text-zinc-500">Preencha os dados para criar um novo agendamento</p>
+        </div>
+
+        <form action="{{ route('agendamentos.store') }}" method="POST" class="space-y-4">
+            @csrf
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                    <label class="text-sm font-semibold text-zinc-700">Cliente <span class="text-red-500">*</span></label>
+                    <x-custom-select
+                        name="cliente_id"
+                        :options="$clientes->pluck('nome', 'id')->toArray()"
+                        :value="old('cliente_id')"
+                        placeholder="Selecione um cliente"
+                        required
+                    />
+                </div>
+
+                <div>
+                    <label class="text-sm font-semibold text-zinc-700">Barbeiro <span class="text-red-500">*</span></label>
+                    @if(auth()->check() && auth()->user()->isBarber())
+                        <x-custom-select
+                            name="barbeiro_id"
+                            :options="[auth()->id() => auth()->user()->name]"
+                            :value="auth()->id()"
+                            placeholder="Selecione o barbeiro"
+                            required
+                        />
+                    @else
+                        <x-custom-select
+                            name="barbeiro_id"
+                            :options="$barbeiros->pluck('name', 'id')->toArray()"
+                            :value="old('barbeiro_id')"
+                            placeholder="Selecione o barbeiro"
+                            required
+                        />
+                    @endif
+                </div>
+
+                <div>
+                    <label class="text-sm font-semibold text-zinc-700">Data e Hora Inicio <span class="text-red-500">*</span></label>
+                    <input type="datetime-local" name="starts_at" required
+                           value="{{ old('starts_at', date('Y-m-d\TH:i')) }}"
+                           class="{{ $inputClass }}">
+                </div>
+
+                <div>
+                    <label class="text-sm font-semibold text-zinc-700">Data e Hora Fim</label>
+                    <input type="datetime-local" name="ends_at"
+                           value="{{ old('ends_at') }}"
+                           class="{{ $inputClass }}">
+                </div>
+
+                <div>
+                    <label class="text-sm font-semibold text-zinc-700">Servico <span class="text-red-500">*</span></label>
+                    <x-custom-select
+                        name="servico"
+                        id="modalServicoSelect"
+                        :options="collect($services ?? [])->pluck('name', 'name')->toArray()"
+                        :value="old('servico')"
+                        placeholder="Selecione um servico"
+                        required
+                    />
+                </div>
+
+                <div>
+                    <label class="text-sm font-semibold text-zinc-700">Preco (R$)</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-zinc-400">R$</span>
+                        <input type="number" step="0.01" name="price" id="modalPriceInput"
+                               value="{{ old('price') }}"
+                               placeholder="0,00"
+                               class="{{ $inputClass }} !pl-10">
+                    </div>
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label class="text-sm font-semibold text-zinc-700">Observacoes</label>
+                    <textarea name="observacoes" rows="3"
+                              placeholder="Digite aqui observacoes importantes sobre o agendamento..."
+                              class="{{ $inputClass }} resize-none">{{ old('observacoes') }}</textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-center gap-3 pt-4">
+                <button type="button" onclick="closeNovoAgendamentoModal()" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">Cancelar</button>
+                <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">Salvar agendamento</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Editar Agendamento -->
+<div id="editarAgendamentoModal" class="fixed inset-0 z-50 hidden h-full w-full overflow-y-auto bg-zinc-900/60 backdrop-blur-[2px]">
+    <div class="relative top-10 mx-auto mb-10 w-full max-w-2xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-xl sm:p-8">
+        <div class="mb-6">
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-barber-500">Edicao</p>
+            <h3 class="mt-2 text-2xl font-bold text-zinc-900">Editar agendamento</h3>
+            <p class="mt-1 text-sm text-zinc-500">Atualize os dados do agendamento</p>
+        </div>
+
+        <form id="editarAgendamentoForm" method="POST" class="space-y-4">
+            @csrf
+            @method('PUT')
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                    <label class="text-sm font-semibold text-zinc-700">Cliente <span class="text-red-500">*</span></label>
+                    <x-custom-select
+                        name="cliente_id"
+                        id="editClienteSelect"
+                        :options="$clientes->pluck('nome', 'id')->toArray()"
+                        :value="old('cliente_id')"
+                        placeholder="Selecione um cliente"
+                        required
+                    />
+                </div>
+
+                <div>
+                    <label class="text-sm font-semibold text-zinc-700">Barbeiro <span class="text-red-500">*</span></label>
+                    @if(auth()->check() && auth()->user()->isBarber())
+                        <x-custom-select
+                            name="barbeiro_id"
+                            id="editBarbeiroSelect"
+                            :options="[auth()->id() => auth()->user()->name]"
+                            :value="auth()->id()"
+                            placeholder="Selecione o barbeiro"
+                            required
+                        />
+                    @else
+                        <x-custom-select
+                            name="barbeiro_id"
+                            id="editBarbeiroSelect"
+                            :options="$barbeiros->pluck('name', 'id')->toArray()"
+                            :value="old('barbeiro_id')"
+                            placeholder="Selecione o barbeiro"
+                            required
+                        />
+                    @endif
+                </div>
+
+                <div>
+                    <label class="text-sm font-semibold text-zinc-700">Data e Hora Inicio <span class="text-red-500">*</span></label>
+                    <input type="datetime-local" name="starts_at" id="editStartsAt" required class="{{ $inputClass }}">
+                </div>
+
+                <div>
+                    <label class="text-sm font-semibold text-zinc-700">Data e Hora Fim</label>
+                    <input type="datetime-local" name="ends_at" id="editEndsAt" class="{{ $inputClass }}">
+                </div>
+
+                <div>
+                    <label class="text-sm font-semibold text-zinc-700">Servico <span class="text-red-500">*</span></label>
+                    <x-custom-select
+                        name="servico"
+                        id="editServicoSelect"
+                        :options="collect($services ?? [])->pluck('name', 'name')->toArray()"
+                        :value="old('servico')"
+                        placeholder="Selecione um servico"
+                        required
+                    />
+                </div>
+
+                <div>
+                    <label class="text-sm font-semibold text-zinc-700">Preco (R$)</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-zinc-400">R$</span>
+                        <input type="number" step="0.01" name="price" id="editPriceInput" placeholder="0,00" class="{{ $inputClass }} !pl-10">
+                    </div>
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label class="text-sm font-semibold text-zinc-700">Observacoes</label>
+                    <textarea name="observacoes" id="editObservacoes" rows="3" placeholder="Digite aqui observacoes importantes sobre o agendamento..." class="{{ $inputClass }} resize-none"></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-center gap-3 pt-4">
+                <button type="button" onclick="closeEditarAgendamentoModal()" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">Cancelar</button>
+                <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">Salvar alteracoes</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -610,9 +793,7 @@ function renderDayView(container) {
 }
 
 function openNewAppointment(dateStr, hour) {
-    let url = "{{ route('agendamentos.create') }}?date=" + dateStr;
-    if (hour !== undefined) url += "&hour=" + hour;
-    window.location.href = url;
+    openNovoAgendamentoModal(dateStr, hour);
 }
 
 function confirmDelete(id) {
@@ -654,17 +835,12 @@ window.showEventModal = function(id) {
             var modalHtml = `
             <div id="eventModal" class="fixed inset-0 z-50 hidden h-full w-full overflow-y-auto bg-zinc-900/60 backdrop-blur-[2px]">
                 <div class="relative top-10 mx-auto w-full max-w-lg rounded-3xl border border-zinc-200 bg-white p-6 shadow-xl sm:p-8">
-                    <div class="flex items-start justify-between">
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-barber-500">Detalhes do agendamento</p>
-                            <h3 id="eventModalTitle" class="mt-2 text-xl font-bold text-zinc-900">Agendamento</h3>
-                        </div>
-                        <button id="eventModalCloseX" class="rounded-xl p-2 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-600">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
+                    <div class="mb-6">
+                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-barber-500">Detalhes do agendamento</p>
+                        <h3 id="eventModalTitle" class="mt-2 text-xl font-bold text-zinc-900">Agendamento</h3>
                     </div>
 
-                    <div class="mt-5 space-y-4">
+                    <div class="space-y-4">
                         <div class="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
                             <div class="flex h-12 w-12 items-center justify-center rounded-full bg-barber-100">
                                 <svg class="h-6 w-6 text-barber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
@@ -704,10 +880,10 @@ window.showEventModal = function(id) {
                         </div>
                     </div>
 
-                    <div class="mt-6 flex justify-end gap-2">
-                        <button id="eventModalClose2" class="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50">Fechar</button>
-                        <button id="eventModalEdit" class="inline-flex items-center justify-center rounded-xl bg-barber-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-barber-600">Editar</button>
-                        <button id="eventModalDelete" class="inline-flex items-center justify-center rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700">Excluir</button>
+                    <div class="mt-6 flex justify-center gap-3">
+                        <button id="eventModalClose2" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">Cancelar</button>
+                        <button id="eventModalEdit" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-barber-600">Editar</button>
+                        <button id="eventModalDelete" class="inline-flex items-center justify-center rounded-2xl bg-red-600 px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-red-700">Excluir</button>
                     </div>
                 </div>
             </div>`;
@@ -715,7 +891,6 @@ window.showEventModal = function(id) {
             wrapper.innerHTML = modalHtml;
             document.body.appendChild(wrapper.firstElementChild);
             document.getElementById('eventModalClose2').addEventListener('click', closeEventModal);
-            document.getElementById('eventModalCloseX').addEventListener('click', closeEventModal);
             document.getElementById('eventModal').addEventListener('click', function(e) { if (e.target === this) closeEventModal(); });
         }
 
@@ -741,7 +916,7 @@ window.showEventModal = function(id) {
         document.getElementById('eventModalValor').textContent = formattedPrice;
         document.getElementById('eventModalObservacoes').textContent = props.observacoes || 'Nenhuma observacao.';
 
-        document.getElementById('eventModalEdit').onclick = function() { window.location.href = '/agendamentos/' + id + '/edit'; };
+        document.getElementById('eventModalEdit').onclick = function() { closeEventModal(); openEditarAgendamentoModal(id); };
         document.getElementById('eventModalDelete').onclick = function() { closeEventModal(); confirmDelete(id); };
         document.getElementById('eventModal').classList.remove('hidden');
     } catch (err) {
@@ -753,6 +928,154 @@ window.showEventModal = function(id) {
 function closeEventModal() {
     var m = document.getElementById('eventModal');
     if (m) m.classList.add('hidden');
+}
+
+// Modal Novo Agendamento
+function openNovoAgendamentoModal(dateStr, hour) {
+    var modal = document.getElementById('novoAgendamentoModal');
+    if (modal) {
+        // Se tiver data especifica, preencher o campo
+        if (dateStr) {
+            var startsAtInput = modal.querySelector('input[name="starts_at"]');
+            if (startsAtInput) {
+                var hourStr = hour !== undefined ? String(hour).padStart(2, '0') : '09';
+                startsAtInput.value = dateStr + 'T' + hourStr + ':00';
+            }
+        }
+        modal.classList.remove('hidden');
+    }
+}
+
+function closeNovoAgendamentoModal() {
+    var modal = document.getElementById('novoAgendamentoModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+// Auto-preencher preco ao selecionar servico na modal
+var servicePriceMap = {!! json_encode(collect($services ?? [])->pluck('price', 'name')->toArray()) !!};
+var modalPriceInput = document.getElementById('modalPriceInput');
+var novoAgendamentoModal = document.getElementById('novoAgendamentoModal');
+
+if (novoAgendamentoModal && modalPriceInput) {
+    // O custom-select usa input hidden com name="servico"
+    var hiddenInput = novoAgendamentoModal.querySelector('input[name="servico"]');
+    if (hiddenInput) {
+        hiddenInput.addEventListener('change', function() {
+            var selectedServico = this.value;
+            if (selectedServico && servicePriceMap[selectedServico] !== undefined) {
+                modalPriceInput.value = parseFloat(servicePriceMap[selectedServico] || 0).toFixed(2);
+            }
+        });
+    }
+}
+
+// Fechar modal ao clicar fora
+if (novoAgendamentoModal) {
+    novoAgendamentoModal.addEventListener('click', function(e) {
+        if (e.target === this) closeNovoAgendamentoModal();
+    });
+}
+
+// Modal Editar Agendamento
+var agendamentosData = {!! json_encode($agendamentos->map(function($a) {
+    return [
+        'id' => $a->id,
+        'cliente_id' => $a->cliente_id,
+        'barbeiro_id' => $a->barbeiro_id,
+        'starts_at' => $a->starts_at->format('Y-m-d\TH:i'),
+        'ends_at' => $a->ends_at ? $a->ends_at->format('Y-m-d\TH:i') : '',
+        'servico' => $a->servico,
+        'price' => $a->price,
+        'observacoes' => $a->observacoes
+    ];
+})->keyBy('id')) !!};
+
+// Mapa de opcoes para os custom-selects
+var clientesMap = {!! json_encode($clientes->pluck('nome', 'id')->toArray()) !!};
+var barbeirosMap = {!! json_encode($barbeiros->pluck('name', 'id')->toArray()) !!};
+var servicosMap = {!! json_encode(collect($services ?? [])->pluck('name', 'name')->toArray()) !!};
+
+function updateCustomSelectText(wrapper, value, optionsMap) {
+    if (!wrapper) return;
+
+    // Encontrar o label dentro do trigger
+    var triggerText = wrapper.querySelector('.cs-trigger-text');
+    if (triggerText && optionsMap[value]) {
+        triggerText.textContent = optionsMap[value];
+    }
+
+    // Encontrar o input hidden e atualizar
+    var input = wrapper.querySelector('input[type="hidden"]');
+    if (input) {
+        input.value = value;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+}
+
+function openEditarAgendamentoModal(id) {
+    var data = agendamentosData[id];
+    if (!data) return;
+
+    var modal = document.getElementById('editarAgendamentoModal');
+    var form = document.getElementById('editarAgendamentoForm');
+
+    if (modal && form) {
+        // Atualizar action da form
+        form.action = '/agendamentos/' + id;
+
+        // Preencher campos de data
+        document.getElementById('editStartsAt').value = data.starts_at;
+        document.getElementById('editEndsAt').value = data.ends_at;
+        document.getElementById('editPriceInput').value = data.price || '';
+        document.getElementById('editObservacoes').value = data.observacoes || '';
+
+        // Mostrar modal primeiro
+        modal.classList.remove('hidden');
+
+        // Usar um delay para garantir que elementos estão renderizados
+        setTimeout(function() {
+            // Atualizar cliente - encontrar o wrapper do custom-select
+            var clienteWrappers = form.querySelectorAll('.cs-wrapper');
+            clienteWrappers.forEach(function(wrapper, index) {
+                var input = wrapper.querySelector('input[type="hidden"]');
+                if (input && input.name === 'cliente_id') {
+                    updateCustomSelectText(wrapper, data.cliente_id, clientesMap);
+                }
+                if (input && input.name === 'barbeiro_id') {
+                    updateCustomSelectText(wrapper, data.barbeiro_id, barbeirosMap);
+                }
+                if (input && input.name === 'servico') {
+                    updateCustomSelectText(wrapper, data.servico, servicosMap);
+                }
+            });
+        }, 50);
+    }
+}
+
+function closeEditarAgendamentoModal() {
+    var modal = document.getElementById('editarAgendamentoModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+// Auto-preencher preco ao selecionar servico na modal de edicao
+var editarAgendamentoModal = document.getElementById('editarAgendamentoModal');
+if (editarAgendamentoModal) {
+    var editServicoInput = editarAgendamentoModal.querySelector('input[name="servico"]');
+    var editPriceInput = document.getElementById('editPriceInput');
+
+    if (editServicoInput && editPriceInput) {
+        editServicoInput.addEventListener('change', function() {
+            var selectedServico = this.value;
+            if (selectedServico && servicePriceMap[selectedServico] !== undefined) {
+                editPriceInput.value = parseFloat(servicePriceMap[selectedServico] || 0).toFixed(2);
+            }
+        });
+    }
+
+    // Fechar modal ao clicar fora
+    editarAgendamentoModal.addEventListener('click', function(e) {
+        if (e.target === this) closeEditarAgendamentoModal();
+    });
 }
 
 // Init
