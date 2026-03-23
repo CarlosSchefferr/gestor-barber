@@ -32,6 +32,13 @@ Route::middleware('auth')->group(function () {
         Route::resource('clientes', App\Http\Controllers\ClienteController::class)->except(['index']);
         Route::get('financeiro', [App\Http\Controllers\FinanceiroController::class, 'index'])->name('financeiro.index');
 
+        // Agenda Configurações
+        Route::get('agenda/configuracoes', [App\Http\Controllers\AgendaConfigController::class, 'index'])->name('agenda.config.index');
+        Route::put('agenda/configuracoes', [App\Http\Controllers\AgendaConfigController::class, 'update'])->name('agenda.config.update');
+        Route::post('agenda/imagens', [App\Http\Controllers\AgendaConfigController::class, 'uploadImages'])->name('agenda.imagens.upload');
+        Route::delete('agenda/imagens/{imagem}', [App\Http\Controllers\AgendaConfigController::class, 'deleteImage'])->name('agenda.imagens.delete');
+        Route::patch('agenda/imagens/reorder', [App\Http\Controllers\AgendaConfigController::class, 'reorderImages'])->name('agenda.imagens.reorder');
+
         // Rotas de Admin (apenas para proprietários)
         Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/', [App\Http\Controllers\AdminController::class, 'index'])->name('index');
@@ -63,5 +70,10 @@ Route::middleware('auth')->group(function () {
             ->name('financeiro.presentation.monthly.pdf');
     });
 });
+
+// Rotas públicas de agendamento (sem autenticação)
+Route::get('t/{public_token}', [App\Http\Controllers\PublicAgendamentoController::class, 'show'])->name('public.agendamento.show');
+Route::get('t/{public_token}/api/config', [App\Http\Controllers\PublicAgendamentoController::class, 'getAgendaConfig'])->name('public.agendamento.config');
+Route::post('t/{public_token}/api/submit', [App\Http\Controllers\PublicAgendamentoController::class, 'submitAgendamento'])->name('public.agendamento.submit');
 
 require __DIR__.'/auth.php';

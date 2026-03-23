@@ -44,6 +44,38 @@
             </div>
         </div>
 
+        @if(auth()->user()->isOwner())
+        <!-- Configurações da Agenda -->
+        <div class="{{ $cardClass }} overflow-hidden">
+            <div class="border-b border-zinc-200 px-6 py-4">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-barber-100">
+                        <svg class="h-5 w-5 text-barber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-zinc-900">Configuracoes da Agenda</h3>
+                        <p class="text-sm text-zinc-500">Personalize sua página de agendamento pública</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 sm:p-7">
+                <div class="space-y-4">
+                    <p class="text-sm text-zinc-600">
+                        Gerencie as informações da sua barbearia, horários de atendimento e imagens que serão exibidas na página pública de agendamento.
+                    </p>
+                    <a href="{{ route('agenda.config.index') }}" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-barber-500 px-6 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        Acessar Configurações
+                    </a>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <!-- Zona de Perigo -->
         <div class="rounded-3xl border border-red-200 bg-white/95 shadow-sm overflow-hidden">
             <div class="border-b border-red-200 bg-red-50 px-6 py-4">
