@@ -62,13 +62,19 @@ class AgendaConfigController extends Controller
             'descricao' => 'nullable|string',
             'telefone' => 'nullable|string|max:20',
             'endereco' => 'nullable|string|max:255',
-            'horario_inicio' => 'required|date_format:H:i',
-            'horario_fim' => 'required|date_format:H:i',
+            'horario_inicio' => 'required|regex:/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/',
+            'horario_fim' => 'required|regex:/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/',
             'intervalo_slots' => 'required|integer|min:15|max:120',
-            'dias_atendimento' => 'required|array|min:1',
+            'dias_atendimento' => 'nullable|array',
             'dias_atendimento.*' => 'string|in:segunda,terca,quarta,quinta,sexta,sabado,domingo',
             'ativa' => 'boolean',
         ]);
+
+        // Validar que pelo menos um dia foi selecionado
+        if (empty($validated['dias_atendimento'])) {
+            return redirect()->route('agenda.config.index')
+                ->withErrors(['dias_atendimento' => 'Selecione pelo menos um dia de atendimento.']);
+        }
 
         $agendaConfig = AgendaConfig::where('user_id', $request->user()->id)->first();
 
@@ -92,7 +98,7 @@ class AgendaConfigController extends Controller
     public function uploadImages(Request $request): RedirectResponse
     {
         $request->validate([
-            'imagens.*' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'imagens.*' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
         ]);
 
         $agendaConfig = AgendaConfig::where('user_id', $request->user()->id)->firstOrFail();
