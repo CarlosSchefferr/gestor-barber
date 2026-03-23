@@ -62,8 +62,8 @@ class AgendaConfigController extends Controller
             'descricao' => 'nullable|string',
             'telefone' => 'nullable|string|max:20',
             'endereco' => 'nullable|string|max:255',
-            'horario_inicio' => 'required|regex:/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/',
-            'horario_fim' => 'required|regex:/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/',
+            'horario_inicio' => 'required|string|regex:/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/',
+            'horario_fim' => 'required|string|regex:/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/',
             'intervalo_slots' => 'required|integer|min:15|max:120',
             'dias_atendimento' => 'nullable|array',
             'dias_atendimento.*' => 'string|in:segunda,terca,quarta,quinta,sexta,sabado,domingo',
@@ -71,10 +71,13 @@ class AgendaConfigController extends Controller
         ]);
 
         // Validar que pelo menos um dia foi selecionado
-        if (empty($validated['dias_atendimento'])) {
+        $dias = collect($validated['dias_atendimento'] ?? [])->filter()->all();
+        if (empty($dias)) {
             return redirect()->route('agenda.config.index')
                 ->withErrors(['dias_atendimento' => 'Selecione pelo menos um dia de atendimento.']);
         }
+
+        $validated['dias_atendimento'] = $dias;
 
         $agendaConfig = AgendaConfig::where('user_id', $request->user()->id)->first();
 
