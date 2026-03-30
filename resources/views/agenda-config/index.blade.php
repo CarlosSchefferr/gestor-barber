@@ -131,64 +131,6 @@
                 </div>
             </div>
 
-            <!-- Seção 3: Imagens do Carrossel -->
-            <div class="{{ $cardClass }} overflow-hidden">
-                <div class="border-b border-zinc-200 px-6 py-4">
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-barber-100">
-                            <svg class="h-5 w-5 text-barber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-bold text-zinc-900">Imagens do Carrossel</h3>
-                            <p class="text-sm text-zinc-500">Adicione fotos da sua barbearia para a página pública</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="p-6 sm:p-7">
-                    <div class="space-y-6">
-                        <!-- Upload -->
-                        <form action="{{ route('agenda.imagens.upload') }}" method="POST" enctype="multipart/form-data" id="imagemUploadForm">
-                            @csrf
-                            <div class="rounded-2xl border-2 border-dashed border-zinc-300 bg-zinc-50 p-6 text-center hover:bg-zinc-100 transition cursor-pointer" onclick="document.getElementById('imagemInput').click()">
-                                <input type="file" name="imagens[]" multiple accept="image/*" class="hidden" id="imagemInput" onchange="document.getElementById('imagemUploadForm').submit()">
-                                <svg class="mx-auto h-12 w-12 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                </svg>
-                                <p class="mt-2 text-sm font-medium text-zinc-700">Clique para selecionar imagens</p>
-                                <p class="text-xs text-zinc-500">ou arraste para esta área</p>
-                            </div>
-                        </form>
-
-                        <!-- Galeria de Imagens -->
-                        @if($agendaConfig->imagens()->count())
-                            <div class="mt-8">
-                                <h4 class="font-semibold text-zinc-900 mb-4">{{ $agendaConfig->imagens()->count() }} imagem(ns) adicionada(s)</h4>
-                                <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-                                    @foreach($agendaConfig->imagens as $imagem)
-                                        <div class="group relative rounded-lg overflow-hidden bg-zinc-100">
-                                            <img src="{{ asset('storage/' . $imagem->caminho_imagem) }}" alt="Imagem" class="h-32 w-full object-cover">
-                                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
-                                                <form action="{{ route('agenda.imagens.delete', $imagem) }}" method="POST" class="inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-red-600 text-white hover:bg-red-700 transition" onclick="return confirm('Tem certeza que deseja remover?')">
-                                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                        </svg>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-
             <!-- Seção 4: Link Compartilhável -->
             <div class="{{ $cardClass }} overflow-hidden">
                 <div class="border-b border-zinc-200 px-6 py-4">
@@ -276,6 +218,64 @@
             </div>
         </div>
     </form>
+
+    <!-- SEÇÃO DE IMAGENS - FORMULÁRIO ISOLADO (FORA DO FORM PRINCIPAL!) -->
+    <div class="{{ $cardClass }} overflow-hidden">
+        <div class="border-b border-zinc-200 px-6 py-4">
+            <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-barber-100">
+                    <svg class="h-5 w-5 text-barber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-zinc-900">Imagens do Carrossel</h3>
+                    <p class="text-sm text-zinc-500">Adicione fotos da sua barbearia para a página pública</p>
+                </div>
+            </div>
+        </div>
+        <div class="p-6 sm:p-7">
+            <div class="space-y-6">
+                <!-- Upload -->
+                <form action="{{ route('agenda.imagens.upload') }}" method="POST" enctype="multipart/form-data" id="imagemUploadForm">
+                    @csrf
+                    <div class="rounded-2xl border-2 border-dashed border-zinc-300 bg-zinc-50 p-6 text-center hover:bg-zinc-100 transition cursor-pointer" onclick="document.getElementById('imagemInput').click()">
+                        <input type="file" name="imagens[]" multiple accept="image/*" class="hidden" id="imagemInput" onchange="document.getElementById('imagemUploadForm').submit()">
+                        <svg class="mx-auto h-12 w-12 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        <p class="mt-2 text-sm font-medium text-zinc-700">Clique para selecionar imagens</p>
+                        <p class="text-xs text-zinc-500">ou arraste para esta área</p>
+                    </div>
+                </form>
+
+                <!-- Galeria de Imagens -->
+                @if($agendaConfig->imagens()->count())
+                    <div class="mt-8">
+                        <h4 class="font-semibold text-zinc-900 mb-4">{{ $agendaConfig->imagens()->count() }} imagem(ns) adicionada(s)</h4>
+                        <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                            @foreach($agendaConfig->imagens as $imagem)
+                                <div class="group relative rounded-lg overflow-hidden bg-zinc-100">
+                                    <img src="{{ asset('storage/' . $imagem->caminho_imagem) }}" alt="Imagem" class="h-32 w-full object-cover">
+                                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
+                                        <form action="{{ route('agenda.imagens.delete', $imagem) }}" method="POST" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-red-600 text-white hover:bg-red-700 transition" onclick="return confirm('Tem certeza que deseja remover?')">
+                                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
