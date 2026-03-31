@@ -4,6 +4,15 @@
 @php
     $inputClass = 'mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20';
     $cardClass = 'rounded-3xl border border-zinc-200 bg-white/95 shadow-sm';
+    $clientesJs = $clientes->keyBy('id')->map(function ($cliente) {
+        return [
+            'id' => $cliente->id,
+            'nome' => $cliente->nome,
+            'email' => $cliente->email,
+            'telefone' => $cliente->telefone,
+            'observacoes' => $cliente->observacoes,
+        ];
+    })->toArray();
 @endphp
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -15,9 +24,9 @@
                 <h1 class="mt-2 text-3xl font-bold leading-tight text-zinc-900 sm:text-4xl">Clientes</h1>
             </div>
             <div class="flex flex-wrap items-center gap-3">
-                <a href="{{ route('clientes.create') }}" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">
+                <button type="button" onclick="abrirModalNovoCliente()" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">
                     Novo cliente
-                </a>
+                </button>
                 <a href="{{ route('agendamentos.create') }}" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">
                     Novo agendamento
                 </a>
@@ -25,11 +34,50 @@
         </div>
     </div>
 
+    @if(session('success'))
+        <div class="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <p class="text-sm font-medium text-emerald-700">{{ session('success') }}</p>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+            <ul class="list-disc pl-5 text-sm text-red-700">
+                @foreach($errors->all() as $erro)
+                    <li>{{ $erro }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="{{ $cardClass }} p-5">
+            <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Total de clientes</p>
+            <p class="mt-3 text-3xl font-bold text-zinc-900">{{ $clientes->total() }}</p>
+            <p class="mt-1 text-sm text-zinc-500">Base cadastrada</p>
+        </div>
+        <div class="{{ $cardClass }} p-5">
+            <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Sem atendimento</p>
+            <p class="mt-3 text-3xl font-bold text-zinc-900">{{ $clientsWithoutAppointment ?? 0 }}</p>
+            <p class="mt-1 text-sm text-zinc-500">Acima de {{ $days ?? 30 }} dias</p>
+        </div>
+        <div class="{{ $cardClass }} p-5">
+            <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Mais atendido</p>
+            <p class="mt-3 text-xl font-bold text-zinc-900">{{ $mostAttended->cliente ?? 'Sem dados' }}</p>
+            <p class="mt-1 text-sm text-zinc-500">{{ $mostAttended->count ?? 0 }} atendimentos</p>
+        </div>
+        <div class="{{ $cardClass }} p-5">
+            <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Maior faturamento</p>
+            <p class="mt-3 text-xl font-bold text-zinc-900">{{ $mostProfitable->cliente ?? 'Sem dados' }}</p>
+            <p class="mt-1 text-sm text-zinc-500">R$ {{ number_format($mostProfitable->valor ?? 0, 2, ',', '.') }}</p>
+        </div>
+    </div>
+
     <!-- Filtros -->
     <div class="{{ $cardClass }} mb-8 p-6 sm:p-7">
         <div class="mb-5 flex items-center justify-between">
             <h2 class="text-lg font-bold text-zinc-900">Filtros</h2>
-            <span class="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">Busca avancada</span>
+            <span class="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">Busca avançada</span>
         </div>
 
         <form method="GET" class="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -50,7 +98,7 @@
                         'last_appointment_at' => 'Ultimo atendimento',
                     ]"
                     :value="request('sort', 'nome')"
-                    placeholder="Selecione a ordenacao"
+                    placeholder="Selecione a ordenação"
                 />
             </div>
 
@@ -92,9 +140,9 @@
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Cliente</th>
                         <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Contato</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Ultimo atendimento</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Último atendimento</th>
                         <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Status</th>
-                        <th class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wide text-zinc-500">Acoes</th>
+                        <th class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wide text-zinc-500">Ações</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-100 bg-white">
@@ -109,7 +157,6 @@
                                     </div>
                                     <div class="ml-4">
                                         <div class="text-sm font-semibold text-zinc-900">{{ $cliente->nome }}</div>
-                                        <div class="text-xs text-zinc-500">ID: {{ $cliente->id }}</div>
                                     </div>
                                 </div>
                             </td>
@@ -149,11 +196,11 @@
                             </td>
                             <td class="whitespace-nowrap px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
-                                    <a href="{{ route('clientes.edit', $cliente) }}" class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition hover:bg-zinc-50 hover:text-barber-600" title="Editar">
+                                    <button type="button" onclick="abrirModalEditarCliente({{ $cliente->id }})" class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition hover:bg-zinc-50 hover:text-barber-600" title="Editar">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h6M4 21l4-4 9-9a2.828 2.828 0 10-4-4L4 13v8z"></path>
                                         </svg>
-                                    </a>
+                                    </button>
                                     <a href="{{ route('agendamentos.create', ['cliente_id' => $cliente->id]) }}" class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition hover:bg-emerald-50 hover:text-emerald-600" title="Agendar">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -177,9 +224,9 @@
                                 </div>
                                 <h3 class="text-sm font-bold text-zinc-900">Nenhum cliente encontrado</h3>
                                 <p class="mt-1 text-sm text-zinc-500">Comece cadastrando um novo cliente.</p>
-                                <a href="{{ route('clientes.create') }}" class="mt-4 inline-flex items-center justify-center rounded-2xl bg-barber-500 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">
+                                <button type="button" onclick="abrirModalNovoCliente()" class="mt-4 inline-flex items-center justify-center rounded-2xl bg-barber-500 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">
                                     Novo cliente
-                                </a>
+                                </button>
                             </td>
                         </tr>
                     @endforelse
@@ -195,6 +242,77 @@
     </div>
 </div>
 
+<div id="modalNovoCliente" class="fixed inset-0 z-50 hidden pointer-events-none h-full w-full overflow-y-auto bg-zinc-900/60 backdrop-blur-[2px]">
+    <div class="relative top-10 mx-auto mb-10 w-full max-w-2xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-xl sm:p-8">
+        <div class="mb-6">
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-barber-500">Cadastro</p>
+            <h3 class="mt-2 text-2xl font-bold text-zinc-900">Novo cliente</h3>
+            <p class="mt-1 text-sm text-zinc-500">Preencha os dados para cadastrar o cliente</p>
+        </div>
+        <form action="{{ route('clientes.store') }}" method="POST" class="space-y-4">
+            @csrf
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div class="sm:col-span-2">
+                    <label class="text-sm font-semibold text-zinc-700">Nome <span class="text-red-500">*</span></label>
+                    <input type="text" name="nome" required class="{{ $inputClass }}" placeholder="Nome completo do cliente">
+                </div>
+                <div>
+                    <label class="text-sm font-semibold text-zinc-700">E-mail</label>
+                    <input type="email" name="email" class="{{ $inputClass }}" placeholder="cliente@email.com">
+                </div>
+                <div>
+                    <label class="text-sm font-semibold text-zinc-700">Telefone</label>
+                    <input type="text" name="telefone" class="{{ $inputClass }}" placeholder="(11) 99999-9999">
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="text-sm font-semibold text-zinc-700">Observações</label>
+                    <textarea name="observacoes" rows="3" class="{{ $inputClass }} resize-none" placeholder="Anote preferências ou observações importantes..."></textarea>
+                </div>
+            </div>
+            <div class="flex justify-center gap-3 pt-3">
+                <button type="button" onclick="fecharModalNovoCliente()" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">Cancelar</button>
+                <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">Salvar cliente</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="modalEditarCliente" class="fixed inset-0 z-50 hidden pointer-events-none h-full w-full overflow-y-auto bg-zinc-900/60 backdrop-blur-[2px]">
+    <div class="relative top-10 mx-auto mb-10 w-full max-w-2xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-xl sm:p-8">
+        <div class="mb-6">
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-barber-500">Edição</p>
+            <h3 class="mt-2 text-2xl font-bold text-zinc-900">Editar cliente</h3>
+            <p class="mt-1 text-sm text-zinc-500">Atualize os dados do cliente</p>
+        </div>
+        <form id="formEditarCliente" method="POST" class="space-y-4">
+            @csrf
+            @method('PUT')
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div class="sm:col-span-2">
+                    <label class="text-sm font-semibold text-zinc-700">Nome <span class="text-red-500">*</span></label>
+                    <input id="editarClienteNome" type="text" name="nome" required class="{{ $inputClass }}">
+                </div>
+                <div>
+                    <label class="text-sm font-semibold text-zinc-700">E-mail</label>
+                    <input id="editarClienteEmail" type="email" name="email" class="{{ $inputClass }}">
+                </div>
+                <div>
+                    <label class="text-sm font-semibold text-zinc-700">Telefone</label>
+                    <input id="editarClienteTelefone" type="text" name="telefone" class="{{ $inputClass }}">
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="text-sm font-semibold text-zinc-700">Observações</label>
+                    <textarea id="editarClienteObservacoes" name="observacoes" rows="3" class="{{ $inputClass }} resize-none"></textarea>
+                </div>
+            </div>
+            <div class="flex justify-center gap-3 pt-3">
+                <button type="button" onclick="fecharModalEditarCliente()" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">Cancelar</button>
+                <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">Salvar alterações</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Modal de Confirmacao -->
 <div id="confirmModal" class="fixed inset-0 z-50 hidden h-full w-full overflow-y-auto bg-zinc-900/60 backdrop-blur-[2px]">
     <div class="relative top-20 mx-auto w-full max-w-md rounded-3xl border border-zinc-200 bg-white p-6 shadow-xl sm:p-8">
@@ -204,12 +322,12 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
                 </svg>
             </div>
-            <h3 class="mt-5 text-xl font-bold text-zinc-900">Confirmar exclusao</h3>
+            <h3 class="mt-5 text-xl font-bold text-zinc-900">Confirmar exclusão</h3>
             <p class="mt-2 text-sm text-zinc-500">
-                Tem certeza que deseja excluir este cliente? Esta acao nao pode ser desfeita.
+                Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.
             </p>
             <div class="mt-6 flex justify-center gap-3">
-                <button onclick="closeModal()" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">
+                <button type="button" onclick="closeModal()" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">
                     Cancelar
                 </button>
                 <button id="confirmDeleteBtn" class="inline-flex items-center justify-center rounded-2xl bg-red-600 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-red-700">
@@ -222,6 +340,33 @@
 
 <script>
 let clienteIdToDelete = null;
+const clientes = @json($clientesJs);
+
+function abrirModalNovoCliente() {
+    document.getElementById('modalNovoCliente').classList.remove('hidden', 'pointer-events-none');
+}
+
+function fecharModalNovoCliente() {
+    document.getElementById('modalNovoCliente').classList.add('hidden', 'pointer-events-none');
+}
+
+function abrirModalEditarCliente(id) {
+    const cliente = clientes[id];
+    if (!cliente) return;
+
+    const form = document.getElementById('formEditarCliente');
+    form.action = `/clientes/${id}`;
+    document.getElementById('editarClienteNome').value = cliente.nome ?? '';
+    document.getElementById('editarClienteEmail').value = cliente.email ?? '';
+    document.getElementById('editarClienteTelefone').value = cliente.telefone ?? '';
+    document.getElementById('editarClienteObservacoes').value = cliente.observacoes ?? '';
+
+    document.getElementById('modalEditarCliente').classList.remove('hidden', 'pointer-events-none');
+}
+
+function fecharModalEditarCliente() {
+    document.getElementById('modalEditarCliente').classList.add('hidden', 'pointer-events-none');
+}
 
 function confirmDelete(id) {
     clienteIdToDelete = id;
@@ -260,6 +405,14 @@ document.getElementById('confirmModal').addEventListener('click', function(e) {
     if (e.target === this) {
         closeModal();
     }
+});
+
+document.getElementById('modalNovoCliente').addEventListener('click', function(e) {
+    if (e.target === this) fecharModalNovoCliente();
+});
+
+document.getElementById('modalEditarCliente').addEventListener('click', function(e) {
+    if (e.target === this) fecharModalEditarCliente();
 });
 </script>
 @endsection

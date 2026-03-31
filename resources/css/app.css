@@ -244,6 +244,11 @@
 
 /* Custom Select Component - cs-* prefix */
 @layer components {
+	/* Evita captura de clique por modais ocultos */
+	.fixed.inset-0.z-50.hidden {
+		pointer-events: none !important;
+	}
+
 	.cs-wrapper {
 		@apply w-full;
 	}
