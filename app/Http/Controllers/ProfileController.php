@@ -84,6 +84,24 @@ class ProfileController extends Controller
     }
 
     /**
+     * Update user interface preferences.
+     */
+    public function updatePreferences(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'navigation_layout' => ['required', 'in:top,sidebar'],
+            'sidebar_collapsed' => ['nullable', 'boolean'],
+        ]);
+
+        $request->user()->update([
+            'navigation_layout' => $data['navigation_layout'],
+            'sidebar_collapsed' => $request->boolean('sidebar_collapsed'),
+        ]);
+
+        return Redirect::route('profile.settings')->with('status', 'preferences-updated');
+    }
+
+    /**
      * Delete the user's account.
      */
     public function destroy(Request $request): RedirectResponse

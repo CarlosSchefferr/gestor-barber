@@ -21,6 +21,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/profile/settings', [ProfileController::class, 'settings'])->name('profile.settings');
     Route::patch('/profile/settings', [ProfileController::class, 'updateSettings'])->name('profile.settings.update');
+    Route::patch('/profile/preferences', [ProfileController::class, 'updatePreferences'])->name('profile.preferences.update');
     Route::resource('agendamentos', App\Http\Controllers\AgendamentoController::class);
 
     // Inline endpoint to allow authenticated users to create clientes from other screens

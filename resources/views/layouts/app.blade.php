@@ -27,8 +27,22 @@
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <!-- Icons -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
         @stack('styles')
+
+        <script>
+            // Evita "piscar" o layout ao navegar: aplica o estado do sidebar antes do render.
+            (function () {
+                try {
+                    var saved = localStorage.getItem('sidebar-collapsed');
+                    if (saved === null) return;
+                    var collapsed = saved === '1';
+                    document.documentElement.style.setProperty('--sidebar-width', collapsed ? '5.5rem' : '17.5rem');
+                } catch (e) {}
+            })();
+        </script>
 
         <style>
             /* Tooltip for icon-action component */
@@ -60,8 +74,14 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="v2-shell font-sans antialiased">
-        <div class="min-h-screen flex flex-col">
+        @php
+            $useSidebarLayout = auth()->check() && auth()->user()->navigation_layout === 'sidebar';
+        @endphp
+
+        <div class="{{ $useSidebarLayout ? 'layout-with-sidebar min-h-screen' : 'min-h-screen flex flex-col' }}">
             @include('layouts.navigation')
+
+            <div class="{{ $useSidebarLayout ? 'layout-content min-h-screen flex flex-col' : '' }}">
 
             <!-- Page Heading -->
             @isset($header)
@@ -126,6 +146,7 @@
                 setInterval(updateBrasiliaTime, 1000);
                 updateBrasiliaTime();
             </script>
+            </div>
         </div>
         @stack('scripts')
     </body>
