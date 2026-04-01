@@ -341,11 +341,30 @@
             <!-- Aba Servicos -->
             <div x-show="abaAtiva === 'servicos'" class="space-y-4 max-h-[60vh] overflow-y-auto">
                 <p class="text-sm text-zinc-600">Quando nenhum serviço estiver cadastrado, será utilizado o tempo, valor e comissão do cadastro do serviço.</p>
-                <div class="mb-4 flex gap-2">
-                    <select id="servico-select" class="flex-1 mt-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
-                        <option value="">Selecione um serviço</option>
-                    </select>
-                    <button type="button" onclick="adicionarServico('novo')" class="mt-2 inline-flex items-center justify-center rounded-2xl bg-barber-500 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">
+                <div class="mb-4 flex gap-2" x-data="{ selectOpen: false, selectValue: '' }">
+                    <div class="flex-1 relative">
+                        <button type="button" @click="selectOpen = !selectOpen" class="cs-trigger w-full">
+                            <span class="cs-trigger-text" :class="{ 'cs-trigger-placeholder': !selectValue }">
+                                <span x-show="!selectValue">Selecione um serviço</span>
+                                <span x-show="selectValue" x-text="servicosDisponiveis.find(s => s.id == selectValue)?.name"></span>
+                            </span>
+                            <span class="cs-trigger-arrow">
+                                <svg class="cs-trigger-arrow-icon" :class="{ 'cs-trigger-arrow-rotated': selectOpen }" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                        </button>
+                        <div x-show="selectOpen" @click.outside="selectOpen = false" class="cs-panel" style="display: none;">
+                            <div class="cs-options-list">
+                                <template x-for="service in servicosDisponiveis">
+                                    <button type="button" @click="adicionarServico('novo', service.id); selectOpen = false; selectValue = ''" class="cs-option" :class="{ 'cs-option-selected': selectValue === service.id }">
+                                        <span class="cs-option-text" x-text="`${service.name} (${service.duration}min - R$ ${parseFloat(service.price).toFixed(2)})`"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="adicionarServico('novo')" class="mt-2 inline-flex items-center justify-center rounded-2xl bg-barber-500 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600" disabled>
                         Adicionar
                     </button>
                 </div>
@@ -501,11 +520,30 @@
             <!-- Aba Servicos -->
             <div x-show="abaAtiva === 'servicos'" class="space-y-4 max-h-[60vh] overflow-y-auto">
                 <p class="text-sm text-zinc-600">Configuração de serviços específicos para este profissional.</p>
-                <div class="mb-4 flex gap-2">
-                    <select id="servico-select-edit" class="flex-1 mt-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
-                        <option value="">Selecione um serviço</option>
-                    </select>
-                    <button type="button" onclick="adicionarServico('edit')" class="mt-2 inline-flex items-center justify-center rounded-2xl bg-barber-500 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">
+                <div class="mb-4 flex gap-2" x-data="{ selectOpen: false, selectValue: '' }">
+                    <div class="flex-1 relative">
+                        <button type="button" @click="selectOpen = !selectOpen" class="cs-trigger w-full">
+                            <span class="cs-trigger-text" :class="{ 'cs-trigger-placeholder': !selectValue }">
+                                <span x-show="!selectValue">Selecione um serviço</span>
+                                <span x-show="selectValue" x-text="servicosDisponiveis.find(s => s.id == selectValue)?.name"></span>
+                            </span>
+                            <span class="cs-trigger-arrow">
+                                <svg class="cs-trigger-arrow-icon" :class="{ 'cs-trigger-arrow-rotated': selectOpen }" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                        </button>
+                        <div x-show="selectOpen" @click.outside="selectOpen = false" class="cs-panel" style="display: none;">
+                            <div class="cs-options-list">
+                                <template x-for="service in servicosDisponiveis">
+                                    <button type="button" @click="adicionarServico('edit', service.id); selectOpen = false; selectValue = ''" class="cs-option" :class="{ 'cs-option-selected': selectValue === service.id }">
+                                        <span class="cs-option-text" x-text="`${service.name} (${service.duration}min - R$ ${parseFloat(service.price).toFixed(2)})`"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="adicionarServico('edit')" class="mt-2 inline-flex items-center justify-center rounded-2xl bg-barber-500 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600" disabled>
                         Adicionar
                     </button>
                 </div>
@@ -606,27 +644,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Initialize services dropdown
-function initServicoSelect(selectId) {
-    const select = document.getElementById(selectId);
-    select.innerHTML = '<option value="">Selecione um serviço</option>';
-    servicosDisponiveis.forEach(service => {
-        const option = document.createElement('option');
-        option.value = service.id;
-        option.textContent = `${service.name} (${service.duration}min - R$ ${parseFloat(service.price).toFixed(2)})`;
-        select.appendChild(option);
-    });
-}
-
+// Get service by ID
 function getServicoById(id) {
     return servicosDisponiveis.find(s => s.id == id);
 }
 
-function adicionarServico(modalType) {
-    const selectId = modalType === 'novo' ? 'servico-select' : 'servico-select-edit';
-    const select = document.getElementById(selectId);
-    const serviceId = select.value;
-
+function adicionarServico(modalType, serviceId = null) {
+    // If serviceId is not provided, use null to let it fail gracefully
     if (!serviceId) return alert('Selecione um serviço');
 
     const service = getServicoById(serviceId);
@@ -646,7 +670,6 @@ function adicionarServico(modalType) {
     };
 
     renderServicosCriacao(modalType);
-    select.value = '';
 }
 
 function renderServicosCriacao(modalType) {
@@ -827,7 +850,6 @@ function abrirModalNovoUsuario() {
     servicosAdicionados = {};
     document.getElementById('formNovoUsuario').reset();
     renderServicosCriacao('novo');
-    initServicoSelect('servico-select');
     document.getElementById('modalNovoUsuario').classList.remove('hidden', 'pointer-events-none');
 }
 
@@ -859,7 +881,6 @@ function abrirModalEditarUsuario(id) {
     // Pre-populate existing services (would require another API call or data attribute)
     // For now, start with empty services
     renderServicosCriacao('edit');
-    initServicoSelect('servico-select-edit');
 
     document.getElementById('modalEditarUsuario').classList.remove('hidden', 'pointer-events-none');
 }
