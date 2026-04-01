@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Agendamento;
 use App\Models\Cliente;
+use App\Models\Service;
+use App\Notifications\EmployeeInvitationNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -24,9 +26,51 @@ class AdminController extends Controller
 
     public function index()
     {
-        $usuarios = User::withCount(['agendamentos as agendamentos_count'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        // Apply filters
+        $query = User::withCount(['agendamentos as agendamentos_count']);
+
+        // Search by name
+        if ($search = request('search')) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        // Filter by role/cargo
+        if ($cargo = request('cargo')) {
+            $query->where('cargo', $cargo);
+        }
+
+        // Filter by status (active/inactive based on last 30 days)
+        if ($status = request('status')) {
+            if ($status === 'active') {
+                $query->where(function ($q) {
+                    $q->has('agendamentos')
+                      ->orWhere('updated_at', '>=', now()->subDays(30));
+                });
+            } elseif ($status === 'inactive') {
+                $query->doesntHave('agendamentos')
+                      ->where('updated_at', '<', now()->subDays(30));
+            }
+        }
+
+        $usuarios = $query->orderBy('created_at', 'desc')->paginate(20);
+
+        // Prepare JS array for modal population
+        $usuariosJs = $usuarios->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'cpf' => $user->cpf,
+                'professional_name' => $user->professional_name,
+                'gender' => $user->gender,
+                'salary' => $user->salary,
+                'cargo' => $user->cargo,
+                'role' => $user->role,
+                'avatar' => $user->avatar,
+                'date_of_birth' => $user->date_of_birth,
+            ];
+        })->keyBy('id')->toArray();
 
         $estatisticas = [
             'total_usuarios' => User::count(),
@@ -39,7 +83,10 @@ class AdminController extends Controller
             'total_clientes' => Cliente::count(),
         ];
 
-        return view('admin.index', compact('usuarios', 'estatisticas'));
+        // Fetch available services
+        $services = Service::where('active', true)->get();
+
+        return view('admin.index', compact('usuarios', 'usuariosJs', 'estatisticas', 'services'));
     }
 
     public function show(User $user)
@@ -132,9 +179,15 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'role' => 'required|in:owner,barber',
-            'password' => 'nullable|min:8|confirmed',
-            'date_of_birth' => 'nullable|date',
-            'phone' => 'nullable|string|max:25',
+            'cargo' => 'required|string|max:255',
+            'professional_name' => 'nullable|string|max:255',
+            'gender' => 'required|in:M,F,O',
+            'cpf' => 'required|string|unique:users,cpf,' . $user->id,
+            'date_of_birth' => 'required|date',
+            'phone' => 'required|string|max:25',
+            'salary' => 'nullable|numeric|min:0',
+            'password' => 'nullable|min:8',
+            'avatar' => 'nullable|image|max:2048',
         ]);
 
         if ($request->filled('password')) {
@@ -144,6 +197,33 @@ class AdminController extends Controller
         }
 
         $user->update($data);
+
+        // Update schedule if provided
+        if ($request->filled('schedule')) {
+            $schedule = $request->input('schedule');
+            $user->schedule()->updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'entry_time' => $schedule['entry_time'] ?? null,
+                    'exit_time' => $schedule['exit_time'] ?? null,
+                    'break_start' => $schedule['break_start'] ?? null,
+                    'break_end' => $schedule['break_end'] ?? null,
+                ]
+            );
+        }
+
+        // Update professional services if provided
+        if ($request->has('services')) {
+            $user->professionalServices()->delete();
+            foreach ($request->input('services', []) as $service) {
+                $user->professionalServices()->create([
+                    'service_id' => $service['service_id'],
+                    'time_minutes' => $service['time_minutes'],
+                    'price' => $service['price'],
+                    'commission_percentage' => $service['commission_percentage'],
+                ]);
+            }
+        }
 
         return redirect()->route('admin.index')->with('success', 'Usuário atualizado com sucesso.');
     }
@@ -167,7 +247,8 @@ class AdminController extends Controller
 
     public function create()
     {
-        return view('admin.create');
+        $services = Service::where('active', true)->get();
+        return view('admin.create', compact('services'));
     }
 
     public function store(Request $request)
@@ -176,15 +257,62 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
             'role' => 'required|in:owner,barber',
-            'password' => 'required|min:8|confirmed',
+            'cargo' => 'required|string|max:255',
+            'professional_name' => 'nullable|string|max:255',
+            'gender' => 'required|in:M,F,O',
+            'cpf' => 'required|string|unique:users,cpf',
             'date_of_birth' => 'required|date',
             'phone' => 'required|string|max:25',
+            'password' => 'nullable|min:8',
+            'salary' => 'nullable|numeric|min:0',
+            'avatar' => 'nullable|image|max:2048',
         ]);
 
-        $data['password'] = Hash::make($data['password']);
+        // Generate provisional password if not provided
+        $provisionalPassword = $data['password'] ?? $this->generateProvisionalPassword();
+        $data['password'] = Hash::make($provisionalPassword);
 
-        User::create($data);
+        $user = User::create($data);
 
-        return redirect()->route('admin.index')->with('success', 'Usuário criado com sucesso.');
+        // Create schedule (empty if not provided)
+        $user->schedule()->create([
+            'entry_time' => null,
+            'exit_time' => null,
+            'break_start' => null,
+            'break_end' => null,
+        ]);
+
+        // Add professional services if provided
+        if ($request->has('services')) {
+            foreach ($request->input('services', []) as $service) {
+                $user->professionalServices()->create([
+                    'service_id' => $service['service_id'],
+                    'time_minutes' => $service['time_minutes'],
+                    'price' => $service['price'],
+                    'commission_percentage' => $service['commission_percentage'],
+                ]);
+            }
+        }
+
+        // Send welcome email
+        $user->notify(new EmployeeInvitationNotification($provisionalPassword));
+
+        return redirect()->route('admin.index')
+            ->with('success', 'Usuário criado com sucesso.')
+            ->with('provisional_password', $provisionalPassword);
+    }
+
+    /**
+     * Generate a random provisional password
+     */
+    private function generateProvisionalPassword(): string
+    {
+        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $password = '';
+        for ($i = 0; $i < 12; $i++) {
+            $password .= $characters[rand(0, strlen($characters) - 1)];
+        }
+        return $password;
     }
 }
+
