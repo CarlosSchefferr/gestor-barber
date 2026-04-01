@@ -44,7 +44,7 @@
                     required
                     autocomplete="current-password"
                     class="{{ $inputClass }} pr-12"
-                    placeholder="••••••••"
+                    placeholder="Digite sua senha"
                 >
                 <button
                     type="button"
@@ -86,12 +86,4 @@
         </button>
     </form>
 
-    @if (Route::has('register'))
-        <p class="mt-6 text-center text-sm text-zinc-600">
-            Não tem uma conta?
-            <a href="{{ route('register') }}" class="font-semibold text-barber-600 transition hover:text-barber-700">
-                Criar conta
-            </a>
-        </p>
-    @endif
 </x-guest-layout>
