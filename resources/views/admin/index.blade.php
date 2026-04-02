@@ -22,11 +22,11 @@
         <div class="flex flex-col gap-5">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Administração</p>
-                <h1 class="mt-2 text-3xl font-bold leading-tight text-zinc-900 sm:text-4xl">Usuarios</h1>
+                <h1 class="mt-2 text-3xl font-bold leading-tight text-zinc-900 sm:text-4xl">Usuários</h1>
             </div>
             <div class="flex flex-wrap items-center gap-3">
                 <button type="button" onclick="abrirModalNovoUsuario()" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">
-                    Novo usuario
+                    Novo usuário
                 </button>
             </div>
         </div>
@@ -53,7 +53,7 @@
 
     <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <div class="{{ $cardClass }} p-5">
-            <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Total de usuarios</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Total de usuários</p>
             <p class="mt-3 text-3xl font-bold text-zinc-900">{{ $estatisticas['total_usuarios'] }}</p>
             <p class="mt-1 text-sm text-zinc-500">Base cadastrada</p>
         </div>
@@ -81,7 +81,7 @@
             <div>
                 <label class="text-sm font-semibold text-zinc-700">Buscar por nome</label>
                 <input type="text" name="search" value="{{ request('search') }}"
-                       placeholder="Digite o nome do usuario..."
+                       placeholder="Digite o nome do usuário..."
                        class="{{ $inputClass }}">
             </div>
 
@@ -128,17 +128,17 @@
 
     <div class="{{ $cardClass }} overflow-hidden">
         <div class="border-b border-zinc-200 px-6 py-4">
-            <h3 class="text-lg font-bold text-zinc-900">Lista de usuarios</h3>
-            <p class="mt-1 text-sm text-zinc-500">Todos os usuarios cadastrados no sistema</p>
+            <h3 class="text-lg font-bold text-zinc-900">Lista de usuários</h3>
+            <p class="mt-1 text-sm text-zinc-500">Todos os usuários cadastrados no sistema</p>
         </div>
 
         <div class="overflow-x-auto">
             <table class="min-w-full">
                 <thead class="bg-zinc-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Usuario</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Usuário</th>
                         <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Cargo</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Nivel</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Nível</th>
                         <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Cadastro</th>
                         <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Status</th>
                         <th class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wide text-zinc-500">Acoes</th>
@@ -166,7 +166,7 @@
                             <td class="whitespace-nowrap px-6 py-4">
                                 @if($usuario->role === 'owner')
                                     <span class="inline-flex rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700">
-                                        Proprietario
+                                        Proprietário
                                     </span>
                                 @else
                                     <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
@@ -216,10 +216,10 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                     </svg>
                                 </div>
-                                <h3 class="text-sm font-bold text-zinc-900">Nenhum usuario encontrado</h3>
-                                <p class="mt-1 text-sm text-zinc-500">Comece cadastrando um novo usuario.</p>
+                                <h3 class="text-sm font-bold text-zinc-900">Nenhum usuário encontrado</h3>
+                                <p class="mt-1 text-sm text-zinc-500">Comece cadastrando um novo usuário.</p>
                                 <button type="button" onclick="abrirModalNovoUsuario()" class="mt-4 inline-flex items-center justify-center rounded-2xl bg-barber-500 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">
-                                    Novo usuario
+                                    Novo usuário
                                 </button>
                             </td>
                         </tr>
@@ -237,30 +237,30 @@
 </div>
 
 <div id="modalNovoUsuario" class="fixed inset-0 z-50 hidden pointer-events-none h-full w-full bg-zinc-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 sm:p-6" x-data="{ abaAtiva: 'dados' }">
-    <div class="relative w-full rounded-3xl border border-zinc-200 bg-white shadow-xl flex flex-col max-h-[90vh] transition-all duration-300 ease-in-out" :class="abaAtiva === 'servicos' ? 'max-w-6xl' : 'max-w-4xl'">
-        <div class="border-b border-zinc-200 p-6 sm:p-8 shrink-0">
+    <div class="relative w-full rounded-3xl border border-zinc-200 bg-white shadow-xl flex flex-col max-h-[90vh] transition-all duration-300 ease-in-out" :class="abaAtiva === 'servicos' ? 'max-w-6xl' : 'max-w-5xl'">
+        <div class="p-6 sm:p-8 pb-5 shrink-0">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.22em] text-barber-500">Cadastro</p>
-                <h3 class="mt-2 text-2xl font-bold text-zinc-900">Novo usuario</h3>
+                <h3 class="mt-2 text-2xl font-bold text-zinc-900">Novo usuário</h3>
             </div>
         </div>
 
-        <div class="border-b border-zinc-200 flex gap-0 shrink-0">
-            <button @click="abaAtiva = 'dados'" :class="abaAtiva === 'dados' ? 'border-b-2 border-barber-500 text-barber-600 font-semibold' : 'border-b-2 border-transparent text-zinc-600 hover:text-zinc-900'" class="flex-1 px-4 py-4 text-sm font-medium transition">
-                Dados do Usuario
+        <div class="flex shrink-0 px-6 sm:px-8 pb-6 gap-2">
+            <button @click="abaAtiva = 'dados'" :class="abaAtiva === 'dados' ? 'bg-barber-50 border-barber-500 text-barber-600 font-semibold' : 'bg-white border-zinc-300 text-zinc-500 hover:text-zinc-700 hover:border-zinc-400'" class="flex-1 py-2.5 text-sm font-medium transition-all duration-200 rounded-xl border">
+                Dados do usuário
             </button>
-            <button @click="abaAtiva = 'servicos'" :class="abaAtiva === 'servicos' ? 'border-b-2 border-barber-500 text-barber-600 font-semibold' : 'border-b-2 border-transparent text-zinc-600 hover:text-zinc-900'" class="flex-1 px-4 py-4 text-sm font-medium transition">
-                Servicos
+            <button @click="abaAtiva = 'servicos'" :class="abaAtiva === 'servicos' ? 'bg-barber-50 border-barber-500 text-barber-600 font-semibold' : 'bg-white border-zinc-300 text-zinc-500 hover:text-zinc-700 hover:border-zinc-400'" class="flex-1 py-2.5 text-sm font-medium transition-all duration-200 rounded-xl border">
+                Serviços
             </button>
-            <button @click="abaAtiva = 'horarios'" :class="abaAtiva === 'horarios' ? 'border-b-2 border-barber-500 text-barber-600 font-semibold' : 'border-b-2 border-transparent text-zinc-600 hover:text-zinc-900'" class="flex-1 px-4 py-4 text-sm font-medium transition">
-                Horarios
+            <button @click="abaAtiva = 'horarios'" :class="abaAtiva === 'horarios' ? 'bg-barber-50 border-barber-500 text-barber-600 font-semibold' : 'bg-white border-zinc-300 text-zinc-500 hover:text-zinc-700 hover:border-zinc-400'" class="flex-1 py-2.5 text-sm font-medium transition-all duration-200 rounded-xl border">
+                Horários
             </button>
         </div>
 
-        <form id="formNovoUsuario" action="{{ route('admin.store') }}" method="POST" enctype="multipart/form-data" class="p-6 sm:p-8 flex-1 overflow-y-auto">
+        <form id="formNovoUsuario" action="{{ route('admin.store') }}" method="POST" enctype="multipart/form-data" class="p-6 sm:p-8 flex-1 overflow-y-auto border-t border-zinc-200">
             @csrf
 
-            <div x-show="abaAtiva === 'dados'" class="space-y-4">
+            <div x-show="abaAtiva === 'dados'" class="space-y-6">
                 @if($errors->any())
                     <div class="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4">
                         <h4 class="font-semibold text-red-800 text-sm mb-2">Erros encontrados:</h4>
@@ -271,71 +271,150 @@
                         </ul>
                     </div>
                 @endif
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div class="sm:col-span-2">
-                        <label class="text-sm font-semibold text-zinc-700">Nome Completo <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" required value="{{ old('name') }}" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50" placeholder="Nome completo">
-                        <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+
+                <!-- Seção: Dados do Usuário -->
+                <div class="space-y-5">
+                    <div class="flex items-center gap-2 border-b border-zinc-200 pb-3">
+                        <svg class="w-5 h-5 text-barber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        <h4 class="text-sm font-bold text-zinc-900 uppercase tracking-wide">Dados do Usuário</h4>
                     </div>
-                    <div>
-                        <label class="text-sm font-semibold text-zinc-700">Nome Profissional (Site)</label>
-                        <input type="text" name="professional_name" value="{{ old('professional_name') }}" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20" placeholder="Nome para o site">
+
+                    <!-- Preview da Foto de Perfil (Centralizado) -->
+                    <div class="flex flex-col items-center p-5 bg-zinc-50 rounded-2xl border border-zinc-200">
+                        <div id="avatarPreviewNovo" class="w-28 h-28 rounded-full bg-zinc-200 flex items-center justify-center overflow-hidden mb-4 border-4 border-white shadow-lg">
+                            <svg class="w-12 h-12 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </div>
+                        <label class="text-sm font-semibold text-zinc-700 mb-2">Foto de perfil</label>
+                        <input type="file" name="avatar" id="avatarInputNovo" accept="image/*" class="hidden" onchange="previewAvatar(this, 'avatarPreviewNovo')">
+                        <button type="button" onclick="document.getElementById('avatarInputNovo').click()" class="inline-flex items-center gap-2 rounded-xl bg-white border border-zinc-300 px-4 py-2 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            Escolher foto
+                        </button>
+                        <p class="text-xs text-zinc-400 mt-2">Opcional • JPG, PNG até 2MB</p>
                     </div>
-                    <div>
-                        <label class="text-sm font-semibold text-zinc-700">CPF <span class="text-red-500">*</span></label>
-                        <input type="text" name="cpf" required value="{{ old('cpf') }}" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50" placeholder="000.000.000-00">
-                        <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+
+                    <!-- Nome completo / Nome profissional -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">Nome completo <span class="text-red-500">*</span></label>
+                            <input type="text" name="name" required value="{{ old('name') }}" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20" placeholder="Nome completo">
+                            <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">Nome profissional (Site)</label>
+                            <input type="text" name="professional_name" value="{{ old('professional_name') }}" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20" placeholder="Nome para o site">
+                        </div>
                     </div>
-                    <div>
-                        <label class="text-sm font-semibold text-zinc-700">Data de Nascimento <span class="text-red-500">*</span></label>
-                        <input type="date" name="date_of_birth" required value="{{ old('date_of_birth') }}" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
-                        <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+
+                    <!-- CPF / Data de nascimento -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">CPF <span class="text-red-500">*</span></label>
+                            <input type="text" name="cpf" required value="{{ old('cpf') }}" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20" placeholder="000.000.000-00">
+                            <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">Data de nascimento <span class="text-red-500">*</span></label>
+                            <input type="date" name="date_of_birth" required value="{{ old('date_of_birth') }}" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
+                            <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+                        </div>
                     </div>
-                    <div>
-                        <label class="text-sm font-semibold text-zinc-700">Sexo <span class="text-red-500">*</span></label>
-                        <x-custom-select
-                            name="gender"
-                            :options="['' => 'Selecione', 'M' => 'Masculino', 'F' => 'Feminino', 'O' => 'Outro']"
-                            :value="old('gender', '')"
-                            placeholder="Selecione o gênero"
-                        />
-                        <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+
+                    <!-- Sexo / Telefone -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">Sexo <span class="text-red-500">*</span></label>
+                            <x-custom-select
+                                name="gender"
+                                :options="['' => 'Selecione', 'M' => 'Masculino', 'F' => 'Feminino', 'O' => 'Outro']"
+                                :value="old('gender', '')"
+                                placeholder="Selecione o gênero"
+                                required
+                            />
+                            <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">Telefone <span class="text-red-500">*</span></label>
+                            <input type="tel" name="phone" required value="{{ old('phone') }}" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20" placeholder="(11) 99999-9999">
+                            <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+                        </div>
                     </div>
-                    <div>
-                        <label class="text-sm font-semibold text-zinc-700">Nivel de Acesso <span class="text-red-500">*</span></label>
-                        <x-custom-select
-                            name="role"
-                            :options="['' => 'Selecione', 'barber' => 'Barbeiro', 'owner' => 'Proprietario']"
-                            :value="old('role', '')"
-                            placeholder="Selecione o nível"
-                        />
-                        <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+                </div>
+
+                <!-- Seção: Dados Administrativos -->
+                <div class="space-y-5 pt-2">
+                    <div class="flex items-center gap-2 border-b border-zinc-200 pb-3">
+                        <svg class="w-5 h-5 text-barber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                        <h4 class="text-sm font-bold text-zinc-900 uppercase tracking-wide">Dados Administrativos</h4>
                     </div>
-                    <div>
-                        <label class="text-sm font-semibold text-zinc-700">Cargo <span class="text-red-500">*</span></label>
-                        <input type="text" name="cargo" required value="{{ old('cargo') }}" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50" placeholder="Ex: Barbeiro, Gerente">
-                        <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+
+                    <!-- Nível de acesso / Cargo -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">Nível de acesso <span class="text-red-500">*</span></label>
+                            <x-custom-select
+                                name="role"
+                                :options="['' => 'Selecione', 'barber' => 'Barbeiro', 'owner' => 'Proprietário']"
+                                :value="old('role', '')"
+                                placeholder="Selecione o nível"
+                                required
+                            />
+                            <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">Cargo <span class="text-red-500">*</span></label>
+                            <x-custom-select
+                                name="cargo"
+                                :options="['' => 'Selecione', 'Barbeiro' => 'Barbeiro', 'Gerente' => 'Gerente', 'Recepcionista' => 'Recepcionista', 'Auxiliar' => 'Auxiliar', 'Admin' => 'Admin']"
+                                :value="old('cargo', '')"
+                                placeholder="Selecione o cargo"
+                                required
+                            />
+                            <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+                        </div>
                     </div>
-                    <div>
-                        <label class="text-sm font-semibold text-zinc-700">Salario</label>
-                        <input type="number" name="salary" step="0.01" min="0" value="{{ old('salary') }}" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20" placeholder="0.00">
+
+                    <!-- Salário / E-mail -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">Salário</label>
+                            <div class="mt-2">
+                                <x-currency-input name="salary" :value="old('salary')" />
+                            </div>
+                            <p class="text-xs text-zinc-400 mt-1">Opcional</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">E-mail <span class="text-red-500">*</span></label>
+                            <input type="email" name="email" required value="{{ old('email') }}" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20" placeholder="usuario@email.com">
+                            <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+                        </div>
                     </div>
-                    <div>
-                        <label class="text-sm font-semibold text-zinc-700">Telefone <span class="text-red-500">*</span></label>
-                        <input type="tel" name="phone" required value="{{ old('phone') }}" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50" placeholder="(11) 99999-9999">
-                        <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
-                    </div>
-                    <div>
-                        <label class="text-sm font-semibold text-zinc-700">E-mail <span class="text-red-500">*</span></label>
-                        <input type="email" name="email" required value="{{ old('email') }}" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50" placeholder="usuario@email.com">
-                        <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label class="text-sm font-semibold text-zinc-700">Senha <span class="text-red-500">*</span></label>
-                        <input type="password" name="password" id="senhaInput" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50" placeholder="Deixe em branco para gerar automaticamente">
-                        <p class="mt-2 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-2">
-                            Esta é uma senha provisória para o primeiro acesso. O usuario deve alterá-la após o login.
-                        </p>
+
+                    <!-- Senha -->
+                    <div class="flex flex-col sm:flex-row gap-4 items-start">
+                        <div class="w-full sm:w-1/2">
+                            <label class="text-sm font-semibold text-zinc-700">Senha</label>
+                            <div class="relative mt-2">
+                                <input type="text" name="password" id="senhaInputNovo" value="{{ old('password', Str::random(12)) }}" class="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 pr-24 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 font-mono" placeholder="Senha provisória">
+                                <button type="button" onclick="gerarSenhaProvisoria('senhaInputNovo')" class="absolute inset-y-0 right-2 flex items-center px-3 text-xs font-semibold text-barber-600 hover:text-barber-700">
+                                    Gerar nova
+                                </button>
+                            </div>
+                        </div>
+                        <div class="w-full sm:w-1/2 sm:mt-7">
+                            <p class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                                Esta é uma senha provisória para o primeiro acesso. O usuário deve alterá-la após o login.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -351,7 +430,7 @@
                             />
                         </div>
                         <button type="button" onclick="adicionarServico('novo', getSelectedServiceId('novo'))" class="inline-flex h-[46px] items-center justify-center rounded-2xl bg-zinc-900 px-6 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-zinc-800 shrink-0">
-                            Adicionar Serviço
+                            Adicionar serviço
                         </button>
                     </div>
                 </div>
@@ -383,11 +462,11 @@
                         <input type="time" name="schedule[exit_time]" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
                     </div>
                     <div>
-                        <label class="text-sm font-semibold text-zinc-700">Início do Intervalo (00:00)</label>
+                        <label class="text-sm font-semibold text-zinc-700">Início do intervalo (00:00)</label>
                         <input type="time" name="schedule[break_start]" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
                     </div>
                     <div>
-                        <label class="text-sm font-semibold text-zinc-700">Fim do Intervalo (00:00)</label>
+                        <label class="text-sm font-semibold text-zinc-700">Fim do intervalo (00:00)</label>
                         <input type="time" name="schedule[break_end]" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
                     </div>
                 </div>
@@ -400,101 +479,172 @@
                 Fechar
             </button>
             <button type="button" onclick="validarFormulario('novo')" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">
-                Salvar usuario
+                Salvar usuário
             </button>
         </div>
     </div>
 </div>
 
 <div id="modalEditarUsuario" class="fixed inset-0 z-50 hidden pointer-events-none h-full w-full bg-zinc-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 sm:p-6" x-data="{ abaAtiva: 'dados' }">
-    <div class="relative w-full rounded-3xl border border-zinc-200 bg-white shadow-xl flex flex-col max-h-[90vh] transition-all duration-300 ease-in-out" :class="abaAtiva === 'servicos' ? 'max-w-6xl' : 'max-w-4xl'">
-        <div class="border-b border-zinc-200 p-6 sm:p-8 shrink-0">
+    <div class="relative w-full rounded-3xl border border-zinc-200 bg-white shadow-xl flex flex-col max-h-[90vh] transition-all duration-300 ease-in-out" :class="abaAtiva === 'servicos' ? 'max-w-6xl' : 'max-w-5xl'">
+        <div class="p-6 sm:p-8 pb-5 shrink-0">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.22em] text-barber-500">Edição</p>
-                <h3 class="mt-2 text-2xl font-bold text-zinc-900">Editar usuario</h3>
+                <h3 class="mt-2 text-2xl font-bold text-zinc-900">Editar usuário</h3>
             </div>
         </div>
 
-        <div class="border-b border-zinc-200 flex gap-0 shrink-0">
-            <button @click="abaAtiva = 'dados'" :class="abaAtiva === 'dados' ? 'border-b-2 border-barber-500 text-barber-600 font-semibold' : 'border-b-2 border-transparent text-zinc-600 hover:text-zinc-900'" class="flex-1 px-4 py-4 text-sm font-medium transition">
-                Dados do Usuario
+        <div class="flex shrink-0 px-6 sm:px-8 pb-6 gap-2">
+            <button @click="abaAtiva = 'dados'" :class="abaAtiva === 'dados' ? 'bg-barber-50 border-barber-500 text-barber-600 font-semibold' : 'bg-white border-zinc-300 text-zinc-500 hover:text-zinc-700 hover:border-zinc-400'" class="flex-1 py-2.5 text-sm font-medium transition-all duration-200 rounded-xl border">
+                Dados do usuário
             </button>
-            <button @click="abaAtiva = 'servicos'" :class="abaAtiva === 'servicos' ? 'border-b-2 border-barber-500 text-barber-600 font-semibold' : 'border-b-2 border-transparent text-zinc-600 hover:text-zinc-900'" class="flex-1 px-4 py-4 text-sm font-medium transition">
-                Servicos
+            <button @click="abaAtiva = 'servicos'" :class="abaAtiva === 'servicos' ? 'bg-barber-50 border-barber-500 text-barber-600 font-semibold' : 'bg-white border-zinc-300 text-zinc-500 hover:text-zinc-700 hover:border-zinc-400'" class="flex-1 py-2.5 text-sm font-medium transition-all duration-200 rounded-xl border">
+                Serviços
             </button>
-            <button @click="abaAtiva = 'horarios'" :class="abaAtiva === 'horarios' ? 'border-b-2 border-barber-500 text-barber-600 font-semibold' : 'border-b-2 border-transparent text-zinc-600 hover:text-zinc-900'" class="flex-1 px-4 py-4 text-sm font-medium transition">
-                Horarios
+            <button @click="abaAtiva = 'horarios'" :class="abaAtiva === 'horarios' ? 'bg-barber-50 border-barber-500 text-barber-600 font-semibold' : 'bg-white border-zinc-300 text-zinc-500 hover:text-zinc-700 hover:border-zinc-400'" class="flex-1 py-2.5 text-sm font-medium transition-all duration-200 rounded-xl border">
+                Horários
             </button>
         </div>
 
-        <form id="formEditarUsuario" method="POST" enctype="multipart/form-data" class="p-6 sm:p-8 flex-1 overflow-y-auto">
+        <form id="formEditarUsuario" method="POST" enctype="multipart/form-data" class="p-6 sm:p-8 flex-1 overflow-y-auto border-t border-zinc-200">
             @csrf
             @method('PUT')
 
-            <div x-show="abaAtiva === 'dados'" class="space-y-4">
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div class="sm:col-span-2">
-                        <label class="text-sm font-semibold text-zinc-700">Nome Completo <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
-                        <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+            <div x-show="abaAtiva === 'dados'" class="space-y-6">
+                <!-- Seção: Dados do Usuário -->
+                <div class="space-y-5">
+                    <div class="flex items-center gap-2 border-b border-zinc-200 pb-3">
+                        <svg class="w-5 h-5 text-barber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        <h4 class="text-sm font-bold text-zinc-900 uppercase tracking-wide">Dados do Usuário</h4>
                     </div>
+
+                    <!-- Preview da Foto de Perfil (Centralizado) -->
+                    <div class="flex flex-col items-center p-5 bg-zinc-50 rounded-2xl border border-zinc-200">
+                        <div id="avatarPreviewEdit" class="w-28 h-28 rounded-full bg-zinc-200 flex items-center justify-center overflow-hidden mb-4 border-4 border-white shadow-lg">
+                            <svg class="w-12 h-12 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </div>
+                        <label class="text-sm font-semibold text-zinc-700 mb-2">Foto de perfil</label>
+                        <input type="file" name="avatar" id="avatarInputEdit" accept="image/*" class="hidden" onchange="previewAvatar(this, 'avatarPreviewEdit')">
+                        <button type="button" onclick="document.getElementById('avatarInputEdit').click()" class="inline-flex items-center gap-2 rounded-xl bg-white border border-zinc-300 px-4 py-2 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            Alterar foto
+                        </button>
+                        <p class="text-xs text-zinc-400 mt-2">Opcional • JPG, PNG até 2MB</p>
+                    </div>
+
+                    <!-- Nome completo / Nome profissional -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">Nome completo <span class="text-red-500">*</span></label>
+                            <input type="text" name="name" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20" placeholder="Nome completo">
+                            <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">Nome profissional (Site)</label>
+                            <input type="text" name="professional_name" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20" placeholder="Nome para o site">
+                        </div>
+                    </div>
+
+                    <!-- CPF / Data de nascimento -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">CPF <span class="text-red-500">*</span></label>
+                            <input type="text" name="cpf" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20" placeholder="000.000.000-00">
+                            <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">Data de nascimento <span class="text-red-500">*</span></label>
+                            <input type="date" name="date_of_birth" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
+                            <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+                        </div>
+                    </div>
+
+                    <!-- Sexo / Telefone -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">Sexo <span class="text-red-500">*</span></label>
+                            <x-custom-select
+                                name="gender"
+                                :options="['' => 'Selecione', 'M' => 'Masculino', 'F' => 'Feminino', 'O' => 'Outro']"
+                                placeholder="Selecione o gênero"
+                                required
+                            />
+                            <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">Telefone <span class="text-red-500">*</span></label>
+                            <input type="tel" name="phone" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20" placeholder="(11) 99999-9999">
+                            <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção: Dados Administrativos -->
+                <div class="space-y-5 pt-2">
+                    <div class="flex items-center gap-2 border-b border-zinc-200 pb-3">
+                        <svg class="w-5 h-5 text-barber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                        <h4 class="text-sm font-bold text-zinc-900 uppercase tracking-wide">Dados Administrativos</h4>
+                    </div>
+
+                    <!-- Nível de acesso / Cargo -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">Nível de acesso <span class="text-red-500">*</span></label>
+                            <x-custom-select
+                                name="role"
+                                :options="['' => 'Selecione', 'barber' => 'Barbeiro', 'owner' => 'Proprietário']"
+                                placeholder="Selecione o nível"
+                                required
+                            />
+                            <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">Cargo <span class="text-red-500">*</span></label>
+                            <x-custom-select
+                                name="cargo"
+                                :options="['' => 'Selecione', 'Barbeiro' => 'Barbeiro', 'Gerente' => 'Gerente', 'Recepcionista' => 'Recepcionista', 'Auxiliar' => 'Auxiliar', 'Admin' => 'Admin']"
+                                placeholder="Selecione o cargo"
+                                required
+                            />
+                            <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+                        </div>
+                    </div>
+
+                    <!-- Salário / E-mail -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">Salário</label>
+                            <div class="mt-2">
+                                <x-currency-input name="salary" />
+                            </div>
+                            <p class="text-xs text-zinc-400 mt-1">Opcional</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-700">E-mail <span class="text-red-500">*</span></label>
+                            <input type="email" name="email" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20" placeholder="usuario@email.com">
+                            <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
+                        </div>
+                    </div>
+
+                    <!-- Senha -->
                     <div>
-                        <label class="text-sm font-semibold text-zinc-700">Nome Profissional (Site)</label>
-                        <input type="text" name="professional_name" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
-                    </div>
-                    <div>
-                        <label class="text-sm font-semibold text-zinc-700">CPF <span class="text-red-500">*</span></label>
-                        <input type="text" name="cpf" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
-                        <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
-                    </div>
-                    <div>
-                        <label class="text-sm font-semibold text-zinc-700">Data de Nascimento <span class="text-red-500">*</span></label>
-                        <input type="date" name="date_of_birth" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
-                        <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
-                    </div>
-                    <div>
-                        <label class="text-sm font-semibold text-zinc-700">Sexo <span class="text-red-500">*</span></label>
-                        <x-custom-select
-                            name="gender"
-                            :options="['' => 'Selecione', 'M' => 'Masculino', 'F' => 'Feminino', 'O' => 'Outro']"
-                            placeholder="Selecione o gênero"
-                            required
-                        />
-                        <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
-                    </div>
-                    <div>
-                        <label class="text-sm font-semibold text-zinc-700">Nivel de Acesso <span class="text-red-500">*</span></label>
-                        <x-custom-select
-                            name="role"
-                            :options="['barber' => 'Barbeiro', 'owner' => 'Proprietario']"
-                            placeholder="Selecione o nível"
-                            required
-                        />
-                        <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
-                    </div>
-                    <div>
-                        <label class="text-sm font-semibold text-zinc-700">Cargo <span class="text-red-500">*</span></label>
-                        <input type="text" name="cargo" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
-                        <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
-                    </div>
-                    <div>
-                        <label class="text-sm font-semibold text-zinc-700">Salario</label>
-                        <input type="number" name="salary" step="0.01" min="0" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
-                    </div>
-                    <div>
-                        <label class="text-sm font-semibold text-zinc-700">Telefone <span class="text-red-500">*</span></label>
-                        <input type="tel" name="phone" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
-                        <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
-                    </div>
-                    <div>
-                        <label class="text-sm font-semibold text-zinc-700">E-mail <span class="text-red-500">*</span></label>
-                        <input type="email" name="email" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
-                        <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label class="text-sm font-semibold text-zinc-700">Senha</label>
-                        <input type="password" name="password" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20" placeholder="Deixe em branco para manter a senha atual">
-                        <p class="mt-2 text-xs text-zinc-500">Deixe em branco para manter a senha atual.</p>
+                        <label class="text-sm font-semibold text-zinc-700">Nova senha</label>
+                        <div class="relative mt-2">
+                            <input type="text" name="password" id="senhaInputEdit" class="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 pr-24 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 font-mono" placeholder="Deixe em branco para manter">
+                            <button type="button" onclick="gerarSenhaProvisoria('senhaInputEdit')" class="absolute inset-y-0 right-2 flex items-center px-3 text-xs font-semibold text-barber-600 hover:text-barber-700">
+                                Gerar nova
+                            </button>
+                        </div>
+                        <p class="text-xs text-zinc-500 mt-1">Deixe a senha em branco para manter a senha atual.</p>
                     </div>
                 </div>
             </div>
@@ -503,14 +653,14 @@
                 <div class="flex flex-col gap-4">
                     <div class="flex flex-col sm:flex-row gap-3 items-end justify-center w-full mb-6 mx-auto">
                         <div class="w-full max-w-md">
-                            <label class="block text-sm font-semibold text-zinc-700 mb-2">Selecione um Serviço para Adicionar</label>
+                            <label class="block text-sm font-semibold text-zinc-700 mb-2">Selecione um serviço</label>
                             <x-custom-select
                                 name="select_servico_temp_edit"
                                 :options="$opcoesServicos"
                             />
                         </div>
                         <button type="button" onclick="adicionarServico('edit', getSelectedServiceId('edit'))" class="inline-flex h-[46px] items-center justify-center rounded-2xl bg-zinc-900 px-6 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-zinc-800 shrink-0">
-                            Adicionar Serviço
+                            Adicionar serviço
                         </button>
                     </div>
                 </div>
@@ -575,7 +725,7 @@
             </div>
             <h3 class="mt-5 text-xl font-bold text-zinc-900">Confirmar exclusao</h3>
             <p class="mt-2 text-sm text-zinc-500">
-                Tem certeza que deseja excluir este usuario? Esta acao nao pode ser desfeita.
+                Tem certeza que deseja excluir este usuário? Esta acao nao pode ser desfeita.
             </p>
             <div class="mt-6 flex justify-center gap-3">
                 <button type="button" onclick="closeModal()" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">
@@ -618,12 +768,39 @@ function getServicoById(id) {
 }
 
 function adicionarServico(modalType, serviceId = null) {
-    if (!serviceId) return alert('Selecione um serviço');
+    const selectWrapper = document.querySelector(`input[name="select_servico_temp_${modalType === 'novo' ? 'novo' : 'edit'}"]`).closest('.cs-wrapper');
+    const trigger = selectWrapper?.querySelector('.cs-trigger');
+    
+    if (!serviceId) {
+        if (trigger) {
+            trigger.classList.add('border-red-500', 'ring-2', 'ring-red-500/20');
+            trigger.classList.remove('border-zinc-200');
+        }
+        return;
+    }
+    
+    // Remove estado de erro se houver
+    if (trigger) {
+        trigger.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
+        trigger.classList.add('border-zinc-200');
+    }
+    
     const service = getServicoById(serviceId);
     if (!service) return;
 
     const servicosAtivos = modalType === 'novo' ? servicosAdicionados : servicosAdicionadosEdit;
-    if (servicosAtivos[serviceId]) return alert('Este serviço já foi adicionado');
+    if (servicosAtivos[serviceId]) {
+        // Serviço já adicionado - destacar visualmente
+        if (trigger) {
+            trigger.classList.add('border-amber-500', 'ring-2', 'ring-amber-500/20');
+            trigger.classList.remove('border-zinc-200');
+            setTimeout(() => {
+                trigger.classList.remove('border-amber-500', 'ring-2', 'ring-amber-500/20');
+                trigger.classList.add('border-zinc-200');
+            }, 2000);
+        }
+        return;
+    }
     servicosAtivos[serviceId] = {
         id: service.id,
         name: service.name,
@@ -658,21 +835,21 @@ function renderServicosCriacao(modalType) {
         row.innerHTML = `
             <td class="px-6 py-4 text-sm font-medium text-zinc-900">${service.name}</td>
             <td class="px-6 py-4 text-sm text-zinc-900">
-                <div class="flex items-center gap-2">
-                    <input type="number" class="duration-input w-full min-w-[80px] max-w-[120px] rounded-2xl border border-zinc-200 px-3 py-2 text-sm bg-zinc-50 focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 transition" data-service-id="${serviceId}" data-modal-type="${modalType}" value="${service.duration}" min="1">
-                    <span class="text-xs text-zinc-500">min</span>
+                <div class="w-full min-w-[80px] max-w-[120px] rounded-2xl border border-zinc-200 bg-zinc-50 shadow-sm transition focus-within:border-barber-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-barber-500/20 flex items-center overflow-hidden">
+                    <input type="number" class="duration-input w-full bg-transparent pl-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none border-none focus:ring-0" data-service-id="${serviceId}" data-modal-type="${modalType}" value="${service.duration}" min="1">
+                    <span class="pr-3 pl-1 text-xs select-none shrink-0" style="color: #18181b;">min</span>
                 </div>
             </td>
             <td class="px-6 py-4 text-sm text-zinc-900">
-                <div class="relative w-full min-w-[100px] max-w-[140px]">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-zinc-500">R$</span>
-                    <input type="number" class="price-input w-full rounded-2xl border border-zinc-200 py-2 pl-8 pr-3 text-sm bg-zinc-50 focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 transition" data-service-id="${serviceId}" data-modal-type="${modalType}" value="${service.price.toFixed(2)}" min="0" step="0.01">
+                <div class="w-full min-w-[100px] max-w-[140px] rounded-2xl border border-zinc-200 bg-zinc-50 shadow-sm transition focus-within:border-barber-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-barber-500/20 flex items-center overflow-hidden">
+                    <span class="pl-3 pr-1 text-xs select-none shrink-0" style="color: #18181b;">R$</span>
+                    <input type="number" class="price-input w-full bg-transparent pr-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none border-none focus:ring-0" data-service-id="${serviceId}" data-modal-type="${modalType}" value="${service.price.toFixed(2)}" min="0" step="0.01">
                 </div>
             </td>
             <td class="px-6 py-4 text-sm text-zinc-900">
-                <div class="flex items-center gap-2">
-                    <input type="number" class="commission-input w-full min-w-[80px] max-w-[120px] rounded-2xl border border-zinc-200 px-3 py-2 text-sm bg-zinc-50 focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 transition" data-service-id="${serviceId}" data-modal-type="${modalType}" value="${service.commission_percentage}" min="0" max="100" step="0.01">
-                    <span class="text-xs text-zinc-500">%</span>
+                <div class="w-full min-w-[80px] max-w-[120px] rounded-2xl border border-zinc-200 bg-zinc-50 shadow-sm transition focus-within:border-barber-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-barber-500/20 flex items-center overflow-hidden">
+                    <input type="number" class="commission-input w-full bg-transparent pl-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none border-none focus:ring-0" data-service-id="${serviceId}" data-modal-type="${modalType}" value="${service.commission_percentage}" min="0" max="100" step="0.01">
+                    <span class="pr-3 pl-1 text-xs select-none shrink-0" style="color: #18181b;">%</span>
                 </div>
             </td>
             <td class="px-6 py-4 text-center">
@@ -731,12 +908,18 @@ function validarFormulario(modalType) {
         el.classList.add('hidden');
         el.textContent = '';
     });
-    form.querySelectorAll('input, select').forEach(el => {
+    form.querySelectorAll('input, select, button.cs-trigger').forEach(el => {
         el.classList.remove('border-red-500', 'bg-red-50');
     });
-    const campos = form.querySelectorAll('[required]');
+
+    // Validar campos de input e select com required
+    const campos = form.querySelectorAll('input[required]:not([type="hidden"]), select[required]');
+    // Também validar inputs hidden com required (custom-select)
+    const camposHidden = form.querySelectorAll('input[type="hidden"][required]');
+
     let temErro = false;
     let primeiroErro = null;
+
     campos.forEach(campo => {
         let valor = campo.value.trim();
         let temValor = false;
@@ -757,33 +940,36 @@ function validarFormulario(modalType) {
             const errorSpan = campo.closest('div').querySelector('.error-message');
             if (errorSpan) {
                 errorSpan.classList.remove('hidden');
-                if (campo.type === 'email') {
-                    errorSpan.textContent = 'E-mail inválido';
-                } else if (campo.type === 'tel') {
-                    errorSpan.textContent = 'Telefone inválido';
-                } else if (campo.name === 'name') {
-                    errorSpan.textContent = 'Nome é obrigatório';
-                } else if (campo.name === 'cpf') {
-                    errorSpan.textContent = 'CPF é obrigatório';
-                } else if (campo.name === 'date_of_birth') {
-                    errorSpan.textContent = 'Data de nascimento é obrigatória';
-                } else if (campo.name === 'gender') {
-                    errorSpan.textContent = 'Selecione o gênero';
-                } else if (campo.name === 'role') {
-                    errorSpan.textContent = 'Selecione o nível de acesso';
-                } else if (campo.name === 'cargo') {
-                    errorSpan.textContent = 'Cargo é obrigatório';
-                } else if (campo.name === 'phone') {
-                    errorSpan.textContent = 'Telefone é obrigatório';
-                } else {
-                    errorSpan.textContent = 'Campo obrigatório';
-                }
+                errorSpan.textContent = getMensagemErro(campo);
             }
         }
     });
+
+    // Validar custom-selects (inputs hidden)
+    camposHidden.forEach(campo => {
+        let valor = campo.value.trim();
+        if (!valor || valor === '') {
+            temErro = true;
+
+            // Encontrar o wrapper do custom-select
+            const wrapper = campo.closest('.cs-wrapper');
+            if (wrapper) {
+                const trigger = wrapper.querySelector('.cs-trigger');
+                if (trigger) {
+                    trigger.classList.add('border-red-500', 'bg-red-50');
+                    if (!primeiroErro) primeiroErro = trigger;
+                }
+            }
+
+            const errorSpan = campo.closest('div')?.parentElement?.querySelector('.error-message');
+            if (errorSpan) {
+                errorSpan.classList.remove('hidden');
+                errorSpan.textContent = getMensagemErro(campo);
+            }
+        }
+    });
+
     if (temErro && primeiroErro) {
-        const modalId = modalType === 'novo' ? 'modalNovoUsuario' : 'modalEditarUsuario';
-        const modal = document.getElementById(modalId);
         primeiroErro.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return false;
     }
@@ -802,6 +988,23 @@ function validarFormulario(modalType) {
     return false;
 }
 
+function getMensagemErro(campo) {
+    const mensagens = {
+        'email': 'E-mail inválido',
+        'name': 'Nome é obrigatório',
+        'cpf': 'CPF é obrigatório',
+        'date_of_birth': 'Data de nascimento é obrigatória',
+        'gender': 'Selecione o sexo',
+        'role': 'Selecione o nível de acesso',
+        'cargo': 'Selecione o cargo',
+        'phone': 'Telefone é obrigatório'
+    };
+
+    if (campo.type === 'email') return 'E-mail inválido';
+    if (campo.type === 'tel') return 'Telefone inválido';
+    return mensagens[campo.name] || 'Campo obrigatório';
+}
+
 function serializarServicos(modalType) {
     const servicosAtivos = modalType === 'novo' ? servicosAdicionados : servicosAdicionadosEdit;
     return Object.values(servicosAtivos).map(s => ({
@@ -812,9 +1015,51 @@ function serializarServicos(modalType) {
     }));
 }
 
+function gerarSenhaProvisoria(inputId) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let senha = '';
+    for (let i = 0; i < 12; i++) {
+        senha += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    document.getElementById(inputId).value = senha;
+}
+
+function formatarMoeda(input) {
+    let value = input.value.replace(/[^\d]/g, '');
+    if (value === '') {
+        input.value = '';
+        return;
+    }
+    value = (parseInt(value) / 100).toFixed(2);
+    input.value = value.replace('.', ',');
+}
+
+function previewAvatar(input, previewId) {
+    const preview = document.getElementById(previewId);
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover" alt="Preview">`;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function resetAvatarPreview(previewId) {
+    const preview = document.getElementById(previewId);
+    preview.innerHTML = `
+        <svg class="w-12 h-12 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+    `;
+}
+
 function abrirModalNovoUsuario() {
     servicosAdicionados = {};
     document.getElementById('formNovoUsuario').reset();
+    resetAvatarPreview('avatarPreviewNovo');
+    gerarSenhaProvisoria('senhaInputNovo');
     renderServicosCriacao('novo');
     document.getElementById('modalNovoUsuario').classList.remove('hidden', 'pointer-events-none');
 }
@@ -822,6 +1067,7 @@ function abrirModalNovoUsuario() {
 function fecharModalNovoUsuario() {
     document.getElementById('modalNovoUsuario').classList.add('hidden', 'pointer-events-none');
     servicosAdicionados = {};
+    resetAvatarPreview('avatarPreviewNovo');
 }
 
 function abrirModalEditarUsuario(id) {
@@ -853,6 +1099,14 @@ function abrirModalEditarUsuario(id) {
     setValue('email', usuario.email ?? '');
     setValue('password', '');
 
+    // Atualizar preview do avatar
+    const avatarPreview = document.getElementById('avatarPreviewEdit');
+    if (usuario.avatar) {
+        avatarPreview.innerHTML = `<img src="/storage/${usuario.avatar}" class="w-full h-full object-cover" alt="Avatar">`;
+    } else {
+        resetAvatarPreview('avatarPreviewEdit');
+    }
+
     renderServicosCriacao('edit');
     document.getElementById('modalEditarUsuario').classList.remove('hidden', 'pointer-events-none');
 }
@@ -860,6 +1114,7 @@ function abrirModalEditarUsuario(id) {
 function fecharModalEditarUsuario() {
     document.getElementById('modalEditarUsuario').classList.add('hidden', 'pointer-events-none');
     servicosAdicionadosEdit = {};
+    resetAvatarPreview('avatarPreviewEdit');
 }
 
 function confirmDelete(id) {

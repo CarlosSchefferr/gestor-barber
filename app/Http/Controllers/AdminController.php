@@ -196,6 +196,12 @@ class AdminController extends Controller
             unset($data['password']);
         }
 
+        // Handle avatar upload
+        if ($request->hasFile('avatar')) {
+            $avatarPath = $request->file('avatar')->store('avatars', 'public');
+            $data['avatar'] = $avatarPath;
+        }
+
         $user->update($data);
 
         // Update schedule if provided
@@ -271,6 +277,12 @@ class AdminController extends Controller
         // Generate provisional password if not provided
         $provisionalPassword = $data['password'] ?? $this->generateProvisionalPassword();
         $data['password'] = Hash::make($provisionalPassword);
+
+        // Handle avatar upload
+        if ($request->hasFile('avatar')) {
+            $avatarPath = $request->file('avatar')->store('avatars', 'public'); 
+            $data['avatar'] = $avatarPath;
+        }
 
         $user = User::create($data);
 

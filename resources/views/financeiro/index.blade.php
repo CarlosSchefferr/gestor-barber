@@ -392,8 +392,8 @@
                     <x-custom-select
                         name="quem_tem_acesso"
                         :options="[
-                            'all' => 'Todos usuarios',
-                            'current' => 'Usuario atual',
+                            'all' => 'Todos usuários',
+                            'current' => 'Usuário atual',
                             'barbers' => 'Barbeiros',
                             'owners' => 'Administradores',
                             'attendants' => 'Atendentes',

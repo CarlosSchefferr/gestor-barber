@@ -41,7 +41,7 @@
                                         </a>
                                         <a href="{{ route('admin.index') }}" class="navbar-dropdown-item {{ request()->routeIs('admin.index') || request()->routeIs('admin.show') || request()->routeIs('admin.create') || request()->routeIs('admin.edit') ? 'navbar-dropdown-item-active' : '' }}">
                                             <i class="bi bi-person-fill-gear text-zinc-500 text-base" aria-hidden="true"></i>
-                                            <span class="text-sm font-medium text-zinc-700">Usuarios</span>
+                                            <span class="text-sm font-medium text-zinc-700">Usuários</span>
                                         </a>
                                         <a href="{{ route('admin.products.index') }}" class="navbar-dropdown-item {{ request()->routeIs('admin.products.*') ? 'navbar-dropdown-item-active' : '' }}">
                                             <i class="bi bi-box-seam text-zinc-500 text-base" aria-hidden="true"></i>
@@ -49,11 +49,11 @@
                                         </a>
                                         <a href="{{ route('admin.services.index') }}" class="navbar-dropdown-item {{ request()->routeIs('admin.services.*') ? 'navbar-dropdown-item-active' : '' }}">
                                             <i class="bi bi-tools text-zinc-500 text-base" aria-hidden="true"></i>
-                                            <span class="text-sm font-medium text-zinc-700">Servicos</span>
+                                            <span class="text-sm font-medium text-zinc-700">Serviços</span>
                                         </a>
                                         <a href="{{ route('agenda.config.index') }}" class="navbar-dropdown-item {{ request()->routeIs('agenda.config.*') ? 'navbar-dropdown-item-active' : '' }}">
                                             <i class="bi bi-sliders2-vertical text-zinc-500 text-base" aria-hidden="true"></i>
-                                            <span class="text-sm font-medium text-zinc-700">Agenda Configuracoes</span>
+                                            <span class="text-sm font-medium text-zinc-700">Configurações da agenda</span>
                                         </a>
                                     @endif
                                 </div>
@@ -127,10 +127,10 @@
                         <a href="{{ route('clientes.index') }}" class="navbar-mobile-link {{ request()->routeIs('clientes.*') ? 'navbar-mobile-link-active' : '' }}"><i class="bi bi-people-fill text-base" aria-hidden="true"></i><span>Clientes</span></a>
                         @if(Auth::user()->isOwner())
                             <a href="{{ route('financeiro.index') }}" class="navbar-mobile-link {{ request()->routeIs('financeiro.*') ? 'navbar-mobile-link-active' : '' }}"><i class="bi bi-cash-coin text-base" aria-hidden="true"></i><span>Financeiro</span></a>
-                            <a href="{{ route('admin.index') }}" class="navbar-mobile-link {{ request()->routeIs('admin.index') || request()->routeIs('admin.show') || request()->routeIs('admin.create') || request()->routeIs('admin.edit') ? 'navbar-mobile-link-active' : '' }}"><i class="bi bi-person-fill-gear text-base" aria-hidden="true"></i><span>Usuarios</span></a>
+                            <a href="{{ route('admin.index') }}" class="navbar-mobile-link {{ request()->routeIs('admin.index') || request()->routeIs('admin.show') || request()->routeIs('admin.create') || request()->routeIs('admin.edit') ? 'navbar-mobile-link-active' : '' }}"><i class="bi bi-person-fill-gear text-base" aria-hidden="true"></i><span>Usuários</span></a>
                             <a href="{{ route('admin.products.index') }}" class="navbar-mobile-link {{ request()->routeIs('admin.products.*') ? 'navbar-mobile-link-active' : '' }}"><i class="bi bi-box-seam text-base" aria-hidden="true"></i><span>Produtos</span></a>
-                            <a href="{{ route('admin.services.index') }}" class="navbar-mobile-link {{ request()->routeIs('admin.services.*') ? 'navbar-mobile-link-active' : '' }}"><i class="bi bi-tools text-base" aria-hidden="true"></i><span>Servicos</span></a>
-                            <a href="{{ route('agenda.config.index') }}" class="navbar-mobile-link {{ request()->routeIs('agenda.config.*') ? 'navbar-mobile-link-active' : '' }}"><i class="bi bi-sliders2-vertical text-base" aria-hidden="true"></i><span>Agenda Configuracoes</span></a>
+                            <a href="{{ route('admin.services.index') }}" class="navbar-mobile-link {{ request()->routeIs('admin.services.*') ? 'navbar-mobile-link-active' : '' }}"><i class="bi bi-tools text-base" aria-hidden="true"></i><span>Serviços</span></a>
+                            <a href="{{ route('agenda.config.index') }}" class="navbar-mobile-link {{ request()->routeIs('agenda.config.*') ? 'navbar-mobile-link-active' : '' }}"><i class="bi bi-sliders2-vertical text-base" aria-hidden="true"></i><span>Configurações da agenda</span></a>
                         @endif
                     </div>
                 </div>
@@ -244,10 +244,10 @@
                     <a href="{{ route('admin.index') }}"
                        class="sidebar-link {{ request()->routeIs('admin.index') || request()->routeIs('admin.show') || request()->routeIs('admin.create') || request()->routeIs('admin.edit') ? 'sidebar-link-active' : '' }}"
                        :class="collapsed ? 'justify-center px-2' : 'justify-start px-3.5'"
-                       @mouseenter="showTip('Usuarios', $el, $event)" @mousemove="moveTip($event)" @mouseleave="hideTip()"
+                       @mouseenter="showTip('Usuários', $el, $event)" @mousemove="moveTip($event)" @mouseleave="hideTip()"
                     >
                         <i class="bi bi-person-fill-gear text-lg shrink-0" aria-hidden="true"></i>
-                        <span x-show="!collapsed" x-transition>Usuarios</span>
+                        <span x-show="!collapsed" x-transition>Usuários</span>
                     </a>
                     <a href="{{ route('admin.products.index') }}"
                        class="sidebar-link {{ request()->routeIs('admin.products.*') ? 'sidebar-link-active' : '' }}"
@@ -260,18 +260,18 @@
                     <a href="{{ route('admin.services.index') }}"
                        class="sidebar-link {{ request()->routeIs('admin.services.*') ? 'sidebar-link-active' : '' }}"
                        :class="collapsed ? 'justify-center px-2' : 'justify-start px-3.5'"
-                       @mouseenter="showTip('Servicos', $el, $event)" @mousemove="moveTip($event)" @mouseleave="hideTip()"
+                       @mouseenter="showTip('Serviços', $el, $event)" @mousemove="moveTip($event)" @mouseleave="hideTip()"
                     >
                         <i class="bi bi-tools text-lg shrink-0" aria-hidden="true"></i>
-                        <span x-show="!collapsed" x-transition>Servicos</span>
+                        <span x-show="!collapsed" x-transition>Serviços</span>
                     </a>
                     <a href="{{ route('agenda.config.index') }}"
                        class="sidebar-link {{ request()->routeIs('agenda.config.*') ? 'sidebar-link-active' : '' }}"
                        :class="collapsed ? 'justify-center px-2' : 'justify-start px-3.5'"
-                       @mouseenter="showTip('Agenda Configuracoes', $el, $event)" @mousemove="moveTip($event)" @mouseleave="hideTip()"
+                       @mouseenter="showTip('Configurações da agenda', $el, $event)" @mousemove="moveTip($event)" @mouseleave="hideTip()"
                     >
                         <i class="bi bi-sliders2-vertical text-lg shrink-0" aria-hidden="true"></i>
-                        <span x-show="!collapsed" x-transition>Agenda Configuracoes</span>
+                        <span x-show="!collapsed" x-transition>Configurações da agenda</span>
                     </a>
                 @endif
             </nav>
