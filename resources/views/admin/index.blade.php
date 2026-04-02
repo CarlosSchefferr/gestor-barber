@@ -4,10 +4,20 @@
 @php
     $inputClass = 'mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20';
     $cardClass = 'rounded-3xl border border-zinc-200 bg-white/95 shadow-sm';
+
+    $opcoesServicos = ['' => 'Escolha na lista...'];
+    if(isset($services)) {
+        foreach($services as $service) {
+            $price = is_array($service) ? $service['price'] : $service->price;
+            $duration = is_array($service) ? $service['duration'] : $service->duration;
+            $name = is_array($service) ? $service['name'] : $service->name;
+            $id = is_array($service) ? $service['id'] : $service->id;
+            $opcoesServicos[$id] = "{$name} ({$duration}min - R$ " . number_format((float)$price, 2, ',', '.') . ")";
+        }
+    }
 @endphp
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <!-- Header -->
     <div class="mb-8 rounded-3xl border border-zinc-200 bg-white px-6 py-7 shadow-sm sm:px-8">
         <div class="flex flex-col gap-5">
             <div>
@@ -41,7 +51,6 @@
         </div>
     @endif
 
-    <!-- Cards de Estatisticas -->
     <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <div class="{{ $cardClass }} p-5">
             <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Total de usuarios</p>
@@ -62,7 +71,6 @@
         </div>
     </div>
 
-    <!-- Filtros -->
     <div class="{{ $cardClass }} mb-8 p-6 sm:p-7">
         <div class="mb-5 flex items-center justify-between">
             <h2 class="text-lg font-bold text-zinc-900">Filtros</h2>
@@ -118,7 +126,6 @@
         </form>
     </div>
 
-    <!-- Lista de Usuarios -->
     <div class="{{ $cardClass }} overflow-hidden">
         <div class="border-b border-zinc-200 px-6 py-4">
             <h3 class="text-lg font-bold text-zinc-900">Lista de usuarios</h3>
@@ -229,19 +236,16 @@
     </div>
 </div>
 
-<!-- MODAL NOVO USUARIO COM ABAS -->
-<div id="modalNovoUsuario" class="fixed inset-0 z-50 hidden pointer-events-none h-full w-full overflow-y-auto bg-zinc-900/60 backdrop-blur-[2px]" x-data="{ abaAtiva: 'dados' }">
-    <div class="relative top-10 mx-auto mb-10 w-11/12 rounded-3xl border border-zinc-200 bg-white shadow-xl" :class="abaAtiva === 'servicos' ? 'max-w-4xl' : 'max-w-2xl'">
-        <!-- Header -->
-        <div class="border-b border-zinc-200 p-6 sm:p-8">
+<div id="modalNovoUsuario" class="fixed inset-0 z-50 hidden pointer-events-none h-full w-full bg-zinc-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 sm:p-6" x-data="{ abaAtiva: 'dados' }">
+    <div class="relative w-full rounded-3xl border border-zinc-200 bg-white shadow-xl flex flex-col max-h-[90vh] transition-all duration-300 ease-in-out" :class="abaAtiva === 'servicos' ? 'max-w-6xl' : 'max-w-4xl'">
+        <div class="border-b border-zinc-200 p-6 sm:p-8 shrink-0">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.22em] text-barber-500">Cadastro</p>
                 <h3 class="mt-2 text-2xl font-bold text-zinc-900">Novo usuario</h3>
             </div>
         </div>
 
-        <!-- ABAS -->
-        <div class="border-b border-zinc-200 flex gap-0">
+        <div class="border-b border-zinc-200 flex gap-0 shrink-0">
             <button @click="abaAtiva = 'dados'" :class="abaAtiva === 'dados' ? 'border-b-2 border-barber-500 text-barber-600 font-semibold' : 'border-b-2 border-transparent text-zinc-600 hover:text-zinc-900'" class="flex-1 px-4 py-4 text-sm font-medium transition">
                 Dados do Usuario
             </button>
@@ -253,12 +257,10 @@
             </button>
         </div>
 
-        <!-- FORMULARIO COM ABAS -->
-        <form id="formNovoUsuario" action="{{ route('admin.store') }}" method="POST" enctype="multipart/form-data" class="p-6 sm:p-8">
+        <form id="formNovoUsuario" action="{{ route('admin.store') }}" method="POST" enctype="multipart/form-data" class="p-6 sm:p-8 flex-1 overflow-y-auto">
             @csrf
 
-            <!-- Aba Dados -->
-            <div x-show="abaAtiva === 'dados'" class="space-y-4 max-h-[60vh] overflow-y-auto">
+            <div x-show="abaAtiva === 'dados'" class="space-y-4">
                 @if($errors->any())
                     <div class="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4">
                         <h4 class="font-semibold text-red-800 text-sm mb-2">Erros encontrados:</h4>
@@ -338,35 +340,20 @@
                 </div>
             </div>
 
-            <!-- Aba Servicos -->
-            <div x-show="abaAtiva === 'servicos'" class="space-y-4 max-h-[60vh] overflow-y-auto">
-                <p class="text-sm text-zinc-600">Quando nenhum serviço estiver cadastrado, será utilizado o tempo, valor e comissão do cadastro do serviço.</p>
-                <div class="mb-4 flex gap-2" x-data="{ selectOpen: false, selectValue: '' }">
-                    <div class="flex-1 relative">
-                        <button type="button" @click="selectOpen = !selectOpen" class="cs-trigger w-full">
-                            <span class="cs-trigger-text" :class="{ 'cs-trigger-placeholder': !selectValue }">
-                                <span x-show="!selectValue">Selecione um serviço</span>
-                                <span x-show="selectValue" x-text="servicosDisponiveis.find(s => s.id == selectValue)?.name"></span>
-                            </span>
-                            <span class="cs-trigger-arrow">
-                                <svg class="cs-trigger-arrow-icon" :class="{ 'cs-trigger-arrow-rotated': selectOpen }" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-                                </svg>
-                            </span>
-                        </button>
-                        <div x-show="selectOpen" @click.outside="selectOpen = false" class="cs-panel" style="display: none;">
-                            <div class="cs-options-list">
-                                <template x-for="service in servicosDisponiveis">
-                                    <button type="button" @click="adicionarServico('novo', service.id); selectOpen = false; selectValue = ''" class="cs-option" :class="{ 'cs-option-selected': selectValue === service.id }">
-                                        <span class="cs-option-text" x-text="`${service.name} (${service.duration}min - R$ ${parseFloat(service.price).toFixed(2)})`"></span>
-                                    </button>
-                                </template>
-                            </div>
+            <div x-show="abaAtiva === 'servicos'" class="space-y-4 min-h-[400px] pb-48">
+                <div class="flex flex-col gap-4">
+                    <div class="flex flex-col sm:flex-row gap-3 items-end justify-center w-full mb-6 mx-auto">
+                        <div class="w-full max-w-md">
+                            <label class="block text-sm font-semibold text-zinc-700 mb-2">Selecione um serviço</label>
+                            <x-custom-select
+                                name="select_servico_temp_novo"
+                                :options="$opcoesServicos"
+                            />
                         </div>
+                        <button type="button" onclick="adicionarServico('novo', getSelectedServiceId('novo'))" class="inline-flex h-[46px] items-center justify-center rounded-2xl bg-zinc-900 px-6 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-zinc-800 shrink-0">
+                            Adicionar Serviço
+                        </button>
                     </div>
-                    <button type="button" onclick="adicionarServico('novo')" class="mt-2 inline-flex items-center justify-center rounded-2xl bg-barber-500 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600" disabled>
-                        Adicionar
-                    </button>
                 </div>
                 <div class="rounded-lg border border-zinc-200 overflow-x-auto">
                     <table class="w-full min-w-max">
@@ -385,8 +372,7 @@
                 </div>
             </div>
 
-            <!-- Aba Horarios -->
-            <div x-show="abaAtiva === 'horarios'" class="space-y-4 max-h-[60vh] overflow-y-auto">
+            <div x-show="abaAtiva === 'horarios'" class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="text-sm font-semibold text-zinc-700">Entrada (00:00)</label>
@@ -409,8 +395,7 @@
             </div>
         </form>
 
-        <!-- BOTOES -->
-        <div class="flex justify-center gap-3 border-t border-zinc-200 p-6 sm:p-8">
+        <div class="flex justify-center gap-3 border-t border-zinc-200 p-6 sm:p-8 shrink-0">
             <button type="button" onclick="fecharModalNovoUsuario()" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">
                 Fechar
             </button>
@@ -421,19 +406,16 @@
     </div>
 </div>
 
-<!-- MODAL EDITAR USUARIO COM ABAS -->
-<div id="modalEditarUsuario" class="fixed inset-0 z-50 hidden pointer-events-none h-full w-full overflow-y-auto bg-zinc-900/60 backdrop-blur-[2px]" x-data="{ abaAtiva: 'dados' }">
-    <div class="relative top-10 mx-auto mb-10 w-11/12 rounded-3xl border border-zinc-200 bg-white shadow-xl" :class="abaAtiva === 'servicos' ? 'max-w-4xl' : 'max-w-2xl'">
-        <!-- Header -->
-        <div class="border-b border-zinc-200 p-6 sm:p-8">
+<div id="modalEditarUsuario" class="fixed inset-0 z-50 hidden pointer-events-none h-full w-full bg-zinc-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 sm:p-6" x-data="{ abaAtiva: 'dados' }">
+    <div class="relative w-full rounded-3xl border border-zinc-200 bg-white shadow-xl flex flex-col max-h-[90vh] transition-all duration-300 ease-in-out" :class="abaAtiva === 'servicos' ? 'max-w-6xl' : 'max-w-4xl'">
+        <div class="border-b border-zinc-200 p-6 sm:p-8 shrink-0">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.22em] text-barber-500">Edição</p>
                 <h3 class="mt-2 text-2xl font-bold text-zinc-900">Editar usuario</h3>
             </div>
         </div>
 
-        <!-- ABAS -->
-        <div class="border-b border-zinc-200 flex gap-0">
+        <div class="border-b border-zinc-200 flex gap-0 shrink-0">
             <button @click="abaAtiva = 'dados'" :class="abaAtiva === 'dados' ? 'border-b-2 border-barber-500 text-barber-600 font-semibold' : 'border-b-2 border-transparent text-zinc-600 hover:text-zinc-900'" class="flex-1 px-4 py-4 text-sm font-medium transition">
                 Dados do Usuario
             </button>
@@ -445,107 +427,92 @@
             </button>
         </div>
 
-        <!-- FORMULARIO COM ABAS -->
-        <form id="formEditarUsuario" method="POST" enctype="multipart/form-data" class="p-6 sm:p-8">
+        <form id="formEditarUsuario" method="POST" enctype="multipart/form-data" class="p-6 sm:p-8 flex-1 overflow-y-auto">
             @csrf
             @method('PUT')
 
-            <!-- Aba Dados -->
-            <div x-show="abaAtiva === 'dados'" class="space-y-4 max-h-[60vh] overflow-y-auto">
+            <div x-show="abaAtiva === 'dados'" class="space-y-4">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div class="sm:col-span-2">
                         <label class="text-sm font-semibold text-zinc-700">Nome Completo <span class="text-red-500">*</span></label>
-                        <input id="editar-name" type="text" name="name" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
+                        <input type="text" name="name" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
                         <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
                     </div>
                     <div>
                         <label class="text-sm font-semibold text-zinc-700">Nome Profissional (Site)</label>
-                        <input id="editar-professional_name" type="text" name="professional_name" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
+                        <input type="text" name="professional_name" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
                     </div>
                     <div>
                         <label class="text-sm font-semibold text-zinc-700">CPF <span class="text-red-500">*</span></label>
-                        <input id="editar-cpf" type="text" name="cpf" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
+                        <input type="text" name="cpf" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
                         <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
                     </div>
                     <div>
                         <label class="text-sm font-semibold text-zinc-700">Data de Nascimento <span class="text-red-500">*</span></label>
-                        <input id="editar-date_of_birth" type="date" name="date_of_birth" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
+                        <input type="date" name="date_of_birth" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
                         <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
                     </div>
                     <div>
                         <label class="text-sm font-semibold text-zinc-700">Sexo <span class="text-red-500">*</span></label>
-                        <select id="editar-gender" name="gender" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
-                            <option value="">Selecione</option>
-                            <option value="M">Masculino</option>
-                            <option value="F">Feminino</option>
-                            <option value="O">Outro</option>
-                        </select>
+                        <x-custom-select
+                            name="gender"
+                            :options="['' => 'Selecione', 'M' => 'Masculino', 'F' => 'Feminino', 'O' => 'Outro']"
+                            placeholder="Selecione o gênero"
+                            required
+                        />
                         <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
                     </div>
                     <div>
                         <label class="text-sm font-semibold text-zinc-700">Nivel de Acesso <span class="text-red-500">*</span></label>
-                        <select id="editar-role" name="role" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
-                            <option value="barber">Barbeiro</option>
-                            <option value="owner">Proprietario</option>
-                        </select>
+                        <x-custom-select
+                            name="role"
+                            :options="['barber' => 'Barbeiro', 'owner' => 'Proprietario']"
+                            placeholder="Selecione o nível"
+                            required
+                        />
                         <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
                     </div>
                     <div>
                         <label class="text-sm font-semibold text-zinc-700">Cargo <span class="text-red-500">*</span></label>
-                        <input id="editar-cargo" type="text" name="cargo" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
+                        <input type="text" name="cargo" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
                         <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
                     </div>
                     <div>
                         <label class="text-sm font-semibold text-zinc-700">Salario</label>
-                        <input id="editar-salary" type="number" name="salary" step="0.01" min="0" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
+                        <input type="number" name="salary" step="0.01" min="0" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
                     </div>
                     <div>
                         <label class="text-sm font-semibold text-zinc-700">Telefone <span class="text-red-500">*</span></label>
-                        <input id="editar-phone" type="tel" name="phone" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
+                        <input type="tel" name="phone" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
                         <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
                     </div>
                     <div>
                         <label class="text-sm font-semibold text-zinc-700">E-mail <span class="text-red-500">*</span></label>
-                        <input id="editar-email" type="email" name="email" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
+                        <input type="email" name="email" required class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 error:border-red-500 error:bg-red-50">
                         <span class="error-message text-xs text-red-600 mt-1 hidden"></span>
                     </div>
                     <div class="sm:col-span-2">
                         <label class="text-sm font-semibold text-zinc-700">Senha</label>
-                        <input id="editar-password" type="password" name="password" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20" placeholder="Deixe em branco para manter a senha atual">
+                        <input type="password" name="password" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20" placeholder="Deixe em branco para manter a senha atual">
                         <p class="mt-2 text-xs text-zinc-500">Deixe em branco para manter a senha atual.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Aba Servicos -->
-            <div x-show="abaAtiva === 'servicos'" class="space-y-4 max-h-[60vh] overflow-y-auto">
-                <p class="text-sm text-zinc-600">Configuração de serviços específicos para este profissional.</p>
-                <div class="mb-4 flex gap-2" x-data="{ selectOpen: false, selectValue: '' }">
-                    <div class="flex-1 relative">
-                        <button type="button" @click="selectOpen = !selectOpen" class="cs-trigger w-full">
-                            <span class="cs-trigger-text" :class="{ 'cs-trigger-placeholder': !selectValue }">
-                                <span x-show="!selectValue">Selecione um serviço</span>
-                                <span x-show="selectValue" x-text="servicosDisponiveis.find(s => s.id == selectValue)?.name"></span>
-                            </span>
-                            <span class="cs-trigger-arrow">
-                                <svg class="cs-trigger-arrow-icon" :class="{ 'cs-trigger-arrow-rotated': selectOpen }" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-                                </svg>
-                            </span>
-                        </button>
-                        <div x-show="selectOpen" @click.outside="selectOpen = false" class="cs-panel" style="display: none;">
-                            <div class="cs-options-list">
-                                <template x-for="service in servicosDisponiveis">
-                                    <button type="button" @click="adicionarServico('edit', service.id); selectOpen = false; selectValue = ''" class="cs-option" :class="{ 'cs-option-selected': selectValue === service.id }">
-                                        <span class="cs-option-text" x-text="`${service.name} (${service.duration}min - R$ ${parseFloat(service.price).toFixed(2)})`"></span>
-                                    </button>
-                                </template>
-                            </div>
+            <div x-show="abaAtiva === 'servicos'" class="space-y-4 min-h-[400px] pb-48">
+                <div class="flex flex-col gap-4">
+                    <div class="flex flex-col sm:flex-row gap-3 items-end justify-center w-full mb-6 mx-auto">
+                        <div class="w-full max-w-md">
+                            <label class="block text-sm font-semibold text-zinc-700 mb-2">Selecione um Serviço para Adicionar</label>
+                            <x-custom-select
+                                name="select_servico_temp_edit"
+                                :options="$opcoesServicos"
+                            />
                         </div>
+                        <button type="button" onclick="adicionarServico('edit', getSelectedServiceId('edit'))" class="inline-flex h-[46px] items-center justify-center rounded-2xl bg-zinc-900 px-6 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-zinc-800 shrink-0">
+                            Adicionar Serviço
+                        </button>
                     </div>
-                    <button type="button" onclick="adicionarServico('edit')" class="mt-2 inline-flex items-center justify-center rounded-2xl bg-barber-500 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600" disabled>
-                        Adicionar
-                    </button>
                 </div>
                 <div class="rounded-lg border border-zinc-200 overflow-x-auto">
                     <table class="w-full min-w-max">
@@ -564,32 +531,30 @@
                 </div>
             </div>
 
-            <!-- Aba Horarios -->
-            <div x-show="abaAtiva === 'horarios'" class="space-y-4 max-h-[60vh] overflow-y-auto">
+            <div x-show="abaAtiva === 'horarios'" class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="text-sm font-semibold text-zinc-700">Entrada (00:00)</label>
-                        <input id="editar-entry_time" type="time" name="schedule[entry_time]" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
+                        <input type="time" name="schedule[entry_time]" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
                     </div>
                     <div>
                         <label class="text-sm font-semibold text-zinc-700">Saída (00:00)</label>
-                        <input id="editar-exit_time" type="time" name="schedule[exit_time]" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
+                        <input type="time" name="schedule[exit_time]" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
                     </div>
                     <div>
                         <label class="text-sm font-semibold text-zinc-700">Início do Intervalo (00:00)</label>
-                        <input id="editar-break_start" type="time" name="schedule[break_start]" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
+                        <input type="time" name="schedule[break_start]" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
                     </div>
                     <div>
                         <label class="text-sm font-semibold text-zinc-700">Fim do Intervalo (00:00)</label>
-                        <input id="editar-break_end" type="time" name="schedule[break_end]" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
+                        <input type="time" name="schedule[break_end]" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
                     </div>
                 </div>
                 <p class="text-xs text-zinc-500 text-center py-3">Todos os campos são opcionais. Deixe em branco caso não utilize horário configurado.</p>
             </div>
         </form>
 
-        <!-- BOTOES -->
-        <div class="flex justify-center gap-3 border-t border-zinc-200 p-6 sm:p-8">
+        <div class="flex justify-center gap-3 border-t border-zinc-200 p-6 sm:p-8 shrink-0">
             <button type="button" onclick="fecharModalEditarUsuario()" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">
                 Fechar
             </button>
@@ -600,9 +565,8 @@
     </div>
 </div>
 
-<!-- Modal Confirmacao de Exclusao -->
-<div id="confirmModal" class="fixed inset-0 z-50 hidden h-full w-full overflow-y-auto bg-zinc-900/60 backdrop-blur-[2px]">
-    <div class="relative top-20 mx-auto w-full max-w-md rounded-3xl border border-zinc-200 bg-white p-6 shadow-xl sm:p-8">
+<div id="confirmModal" class="fixed inset-0 z-50 hidden h-full w-full bg-zinc-900/60 backdrop-blur-[2px] flex items-center justify-center p-4">
+    <div class="relative w-full max-w-md rounded-3xl border border-zinc-200 bg-white p-6 shadow-xl sm:p-8">
         <div class="text-center">
             <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
                 <svg class="h-7 w-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -632,43 +596,41 @@ const servicosDisponiveis = @json($services);
 let servicosAdicionados = {};
 let servicosAdicionadosEdit = {};
 
-// Abrir modal automaticamente se houver erros
 document.addEventListener('DOMContentLoaded', function() {
     const erroBox = document.querySelector('#modalNovoUsuario .bg-red-50');
     if (erroBox) {
         document.getElementById('modalNovoUsuario').classList.remove('hidden', 'pointer-events-none');
-        // Scroll para o erro
         setTimeout(() => {
             erroBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }, 100);
     }
 });
 
-// Get service by ID
+function getSelectedServiceId(modalType) {
+    const modalId = modalType === 'novo' ? 'modalNovoUsuario' : 'modalEditarUsuario';
+    const nameAttr = modalType === 'novo' ? 'select_servico_temp_novo' : 'select_servico_temp_edit';
+    const el = document.querySelector(`#${modalId} [name="${nameAttr}"]`);
+    return el ? el.value : null;
+}
+
 function getServicoById(id) {
     return servicosDisponiveis.find(s => s.id == id);
 }
 
 function adicionarServico(modalType, serviceId = null) {
-    // If serviceId is not provided, use null to let it fail gracefully
     if (!serviceId) return alert('Selecione um serviço');
-
     const service = getServicoById(serviceId);
     if (!service) return;
 
     const servicosAtivos = modalType === 'novo' ? servicosAdicionados : servicosAdicionadosEdit;
-
-    // Don't add duplicate services
     if (servicosAtivos[serviceId]) return alert('Este serviço já foi adicionado');
-
     servicosAtivos[serviceId] = {
         id: service.id,
         name: service.name,
         duration: service.duration,
         price: parseFloat(service.price),
-        commission_percentage: 30 // default 30%
+        commission_percentage: 30
     };
-
     renderServicosCriacao(modalType);
 }
 
@@ -679,24 +641,42 @@ function renderServicosCriacao(modalType) {
 
     tbody.innerHTML = '';
 
+    if (Object.keys(servicosAtivos).length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="px-6 py-12 text-center text-sm text-zinc-500 bg-zinc-50/50">
+                    Quando nenhum serviço estiver cadastrado, será utilizado o tempo, valor e comissão do cadastro do serviço.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
     Object.entries(servicosAtivos).forEach(([serviceId, service]) => {
         const row = document.createElement('tr');
         row.className = 'hover:bg-zinc-50';
         row.innerHTML = `
-            <td class="px-6 py-4 text-sm text-zinc-900">${service.name}</td>
+            <td class="px-6 py-4 text-sm font-medium text-zinc-900">${service.name}</td>
             <td class="px-6 py-4 text-sm text-zinc-900">
-                <input type="number" class="duration-input w-20 rounded-2xl border border-zinc-200 px-3 py-2 text-sm bg-zinc-50 focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 transition" data-service-id="${serviceId}" data-modal-type="${modalType}" value="${service.duration}" min="1">
-                <span class="text-xs text-zinc-500 ml-1">min</span>
+                <div class="flex items-center gap-2">
+                    <input type="number" class="duration-input w-full min-w-[80px] max-w-[120px] rounded-2xl border border-zinc-200 px-3 py-2 text-sm bg-zinc-50 focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 transition" data-service-id="${serviceId}" data-modal-type="${modalType}" value="${service.duration}" min="1">
+                    <span class="text-xs text-zinc-500">min</span>
+                </div>
             </td>
             <td class="px-6 py-4 text-sm text-zinc-900">
-                <input type="number" class="price-input w-24 rounded-2xl border border-zinc-200 px-3 py-2 text-sm bg-zinc-50 focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 transition" data-service-id="${serviceId}" data-modal-type="${modalType}" value="${service.price.toFixed(2)}" min="0" step="0.01">
+                <div class="relative w-full min-w-[100px] max-w-[140px]">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-zinc-500">R$</span>
+                    <input type="number" class="price-input w-full rounded-2xl border border-zinc-200 py-2 pl-8 pr-3 text-sm bg-zinc-50 focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 transition" data-service-id="${serviceId}" data-modal-type="${modalType}" value="${service.price.toFixed(2)}" min="0" step="0.01">
+                </div>
             </td>
             <td class="px-6 py-4 text-sm text-zinc-900">
-                <input type="number" class="commission-input w-20 rounded-2xl border border-zinc-200 px-3 py-2 text-sm bg-zinc-50 focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 transition" data-service-id="${serviceId}" data-modal-type="${modalType}" value="${service.commission_percentage}" min="0" max="100" step="0.01">
-                <span class="text-xs text-zinc-500 ml-1">%</span>
+                <div class="flex items-center gap-2">
+                    <input type="number" class="commission-input w-full min-w-[80px] max-w-[120px] rounded-2xl border border-zinc-200 px-3 py-2 text-sm bg-zinc-50 focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20 transition" data-service-id="${serviceId}" data-modal-type="${modalType}" value="${service.commission_percentage}" min="0" max="100" step="0.01">
+                    <span class="text-xs text-zinc-500">%</span>
+                </div>
             </td>
             <td class="px-6 py-4 text-center">
-                <button type="button" class="btn-remover-servico text-red-600 hover:text-red-700 text-xs font-semibold" data-service-id="${serviceId}" data-modal-type="${modalType}">
+                <button type="button" class="btn-remover-servico inline-flex items-center justify-center rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100" data-service-id="${serviceId}" data-modal-type="${modalType}">
                     Remover
                 </button>
             </td>
@@ -704,7 +684,6 @@ function renderServicosCriacao(modalType) {
         tbody.appendChild(row);
     });
 
-    // Attach event listeners
     tbody.querySelectorAll('.duration-input').forEach(input => {
         input.addEventListener('change', function() {
             const serviceId = this.dataset.serviceId;
@@ -713,7 +692,6 @@ function renderServicosCriacao(modalType) {
             servicosAtivos[serviceId].duration = parseInt(this.value);
         });
     });
-
     tbody.querySelectorAll('.price-input').forEach(input => {
         input.addEventListener('change', function() {
             const serviceId = this.dataset.serviceId;
@@ -722,7 +700,6 @@ function renderServicosCriacao(modalType) {
             servicosAtivos[serviceId].price = parseFloat(this.value);
         });
     });
-
     tbody.querySelectorAll('.commission-input').forEach(input => {
         input.addEventListener('change', function() {
             const serviceId = this.dataset.serviceId;
@@ -731,7 +708,6 @@ function renderServicosCriacao(modalType) {
             servicosAtivos[serviceId].commission_percentage = parseFloat(this.value);
         });
     });
-
     tbody.querySelectorAll('.btn-remover-servico').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -751,8 +727,6 @@ function removerServico(serviceId, modalType) {
 function validarFormulario(modalType) {
     const formId = modalType === 'novo' ? 'formNovoUsuario' : 'formEditarUsuario';
     const form = document.getElementById(formId);
-
-    // Limpar erros anteriores
     form.querySelectorAll('.error-message').forEach(el => {
         el.classList.add('hidden');
         el.textContent = '';
@@ -760,12 +734,9 @@ function validarFormulario(modalType) {
     form.querySelectorAll('input, select').forEach(el => {
         el.classList.remove('border-red-500', 'bg-red-50');
     });
-
-    // Validar campos obrigatórios
     const campos = form.querySelectorAll('[required]');
     let temErro = false;
     let primeiroErro = null;
-
     campos.forEach(campo => {
         let valor = campo.value.trim();
         let temValor = false;
@@ -810,17 +781,13 @@ function validarFormulario(modalType) {
             }
         }
     });
-
     if (temErro && primeiroErro) {
-        // Scroll até o primeiro campo com erro
         const modalId = modalType === 'novo' ? 'modalNovoUsuario' : 'modalEditarUsuario';
         const modal = document.getElementById(modalId);
-        const contentDiv = modal.querySelector('.space-y-4');
         primeiroErro.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return false;
     }
 
-    // Se passou na validação, submeter o formulário
     const servicos = serializarServicos(modalType);
     servicos.forEach((servico, index) => {
         Object.entries(servico).forEach(([key, value]) => {
@@ -831,7 +798,6 @@ function validarFormulario(modalType) {
             form.appendChild(input);
         });
     });
-
     form.submit();
     return false;
 }
@@ -866,22 +832,28 @@ function abrirModalEditarUsuario(id) {
     const form = document.getElementById('formEditarUsuario');
     form.action = `/admin/users/${id}`;
 
-    document.getElementById('editar-name').value = usuario.name ?? '';
-    document.getElementById('editar-professional_name').value = usuario.professional_name ?? '';
-    document.getElementById('editar-cpf').value = usuario.cpf ?? '';
-    document.getElementById('editar-date_of_birth').value = usuario.date_of_birth ?? '';
-    document.getElementById('editar-gender').value = usuario.gender ?? '';
-    document.getElementById('editar-role').value = usuario.role ?? '';
-    document.getElementById('editar-cargo').value = usuario.cargo ?? '';
-    document.getElementById('editar-salary').value = usuario.salary ?? '';
-    document.getElementById('editar-phone').value = usuario.phone ?? '';
-    document.getElementById('editar-email').value = usuario.email ?? '';
-    document.getElementById('editar-password').value = '';
+    const setValue = (name, value) => {
+        const el = form.querySelector(`[name="${name}"]`);
+        if (el) {
+            el.value = value;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    };
 
-    // Pre-populate existing services (would require another API call or data attribute)
-    // For now, start with empty services
+    setValue('name', usuario.name ?? '');
+    setValue('professional_name', usuario.professional_name ?? '');
+    setValue('cpf', usuario.cpf ?? '');
+    setValue('date_of_birth', usuario.date_of_birth ?? '');
+    setValue('gender', usuario.gender ?? '');
+    setValue('role', usuario.role ?? '');
+    setValue('cargo', usuario.cargo ?? '');
+    setValue('salary', usuario.salary ?? '');
+    setValue('phone', usuario.phone ?? '');
+    setValue('email', usuario.email ?? '');
+    setValue('password', '');
+
     renderServicosCriacao('edit');
-
     document.getElementById('modalEditarUsuario').classList.remove('hidden', 'pointer-events-none');
 }
 
@@ -922,17 +894,14 @@ document.getElementById('confirmDeleteBtn').addEventListener('click', function()
         form.submit();
     }
 });
-
 document.getElementById('confirmModal').addEventListener('click', function(e) {
     if (e.target === this) {
         closeModal();
     }
 });
-
 document.getElementById('modalNovoUsuario').addEventListener('click', function(e) {
     if (e.target === this) fecharModalNovoUsuario();
 });
-
 document.getElementById('modalEditarUsuario').addEventListener('click', function(e) {
     if (e.target === this) fecharModalEditarUsuario();
 });

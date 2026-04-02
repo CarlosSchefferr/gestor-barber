@@ -25,6 +25,12 @@ class User extends Authenticatable
         'avatar',
         'date_of_birth',
         'phone',
+        'cpf',
+        'professional_name',
+        'gender',
+        'salary',
+        'cargo',
+        'usuario_admin',
         'navigation_layout',
         'sidebar_collapsed',
     ];
@@ -50,6 +56,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'sidebar_collapsed' => 'boolean',
+            'usuario_admin' => 'boolean',
         ];
     }
 
@@ -75,6 +82,22 @@ class User extends Authenticatable
     public function agendamentos()
     {
         return $this->hasMany(Agendamento::class, 'barbeiro_id');
+    }
+
+    /**
+     * Professional services configuration
+     */
+    public function professionalServices()
+    {
+        return $this->hasMany(ProfessionalService::class);
+    }
+
+    /**
+     * Schedule configuration
+     */
+    public function schedule()
+    {
+        return $this->hasOne(ProfessionalSchedule::class);
     }
 
     /**

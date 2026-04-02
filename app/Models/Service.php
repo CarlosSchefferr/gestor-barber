@@ -14,11 +14,14 @@ class Service extends Model
         'description',
         'price',
         'commission',
+        'duration',
+        'active',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'commission' => 'decimal:2',
+        'active' => 'boolean',
     ];
 
 }
