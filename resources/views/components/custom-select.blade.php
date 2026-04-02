@@ -161,7 +161,9 @@
         type="hidden"
         name="{{ $name }}"
         x-ref="hiddenInput"
-        :value="value"
+        x-model="value"
+        @input="value = $event.target.value"
+        @change="value = $event.target.value"
         {{ $required ? 'required' : '' }}
     >
 

@@ -55,7 +55,7 @@
         <div class="{{ $cardClass }} p-5">
             <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Total de usuários</p>
             <p class="mt-3 text-3xl font-bold text-zinc-900">{{ $estatisticas['total_usuarios'] }}</p>
-            <p class="mt-1 text-sm text-zinc-500">Base cadastrada</p>
+            <p class="mt-1 text-sm text-zinc-500">Usuários</p>
         </div>
 
         <div class="{{ $cardClass }} p-5">
@@ -67,7 +67,7 @@
         <div class="{{ $cardClass }} p-5">
             <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Total agendamentos</p>
             <p class="mt-3 text-3xl font-bold text-zinc-900">{{ $estatisticas['total_agendamentos'] }}</p>
-            <p class="mt-1 text-sm text-zinc-500">Base de agendamentos</p>
+            <p class="mt-1 text-sm text-zinc-500">Agendamentos</p>
         </div>
     </div>
 
@@ -259,11 +259,12 @@
 
         <form id="formNovoUsuario" action="{{ route('admin.store') }}" method="POST" enctype="multipart/form-data" class="p-6 sm:p-8 flex-1 overflow-y-auto border-t border-zinc-200">
             @csrf
+            <input type="hidden" name="_admin_form" value="create">
 
             <div x-show="abaAtiva === 'dados'" class="space-y-6">
-                @if($errors->any())
+                @if($errors->any() && old('_admin_form', 'create') === 'create')
                     <div class="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4">
-                        <h4 class="font-semibold text-red-800 text-sm mb-2">Erros encontrados:</h4>
+                        <h4 class="font-semibold text-red-800 text-sm mb-2">Não foi possível salvar o usuário. Revise os campos abaixo:</h4>
                         <ul class="space-y-1">
                             @foreach($errors->all() as $error)
                                 <li class="text-xs text-red-700">• {{ $error }}</li>
@@ -509,8 +510,21 @@
         <form id="formEditarUsuario" method="POST" enctype="multipart/form-data" class="p-6 sm:p-8 flex-1 overflow-y-auto border-t border-zinc-200">
             @csrf
             @method('PUT')
+            <input type="hidden" name="_admin_form" value="edit">
+            <input type="hidden" name="_editing_user_id" id="editingUserId" value="">
 
             <div x-show="abaAtiva === 'dados'" class="space-y-6">
+                @if($errors->any() && old('_admin_form') === 'edit')
+                    <div class="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4">
+                        <h4 class="font-semibold text-red-800 text-sm mb-2">Não foi possível atualizar o usuário. Revise os campos abaixo:</h4>
+                        <ul class="space-y-1">
+                            @foreach($errors->all() as $error)
+                                <li class="text-xs text-red-700">• {{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 <!-- Seção: Dados do Usuário -->
                 <div class="space-y-5">
                     <div class="flex items-center gap-2 border-b border-zinc-200 pb-3">
@@ -692,11 +706,11 @@
                         <input type="time" name="schedule[exit_time]" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
                     </div>
                     <div>
-                        <label class="text-sm font-semibold text-zinc-700">Início do Intervalo (00:00)</label>
+                        <label class="text-sm font-semibold text-zinc-700">Início do intervalo (00:00)</label>
                         <input type="time" name="schedule[break_start]" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
                     </div>
                     <div>
-                        <label class="text-sm font-semibold text-zinc-700">Fim do Intervalo (00:00)</label>
+                        <label class="text-sm font-semibold text-zinc-700">Fim do intervalo (00:00)</label>
                         <input type="time" name="schedule[break_end]" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
                     </div>
                 </div>
@@ -747,9 +761,24 @@ let servicosAdicionados = {};
 let servicosAdicionadosEdit = {};
 
 document.addEventListener('DOMContentLoaded', function() {
+    const hasErrors = @json($errors->any());
+    const oldInput = @json(session()->getOldInput());
+
+    if (!hasErrors) return;
+
+    if (oldInput?._admin_form === 'edit' && oldInput?._editing_user_id) {
+        abrirModalEditarUsuario(oldInput._editing_user_id);
+        preencherEdicaoComOldInput(oldInput);
+        const erroBoxEdit = document.querySelector('#modalEditarUsuario .bg-red-50');
+        if (erroBoxEdit) {
+            setTimeout(() => erroBoxEdit.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+        }
+        return;
+    }
+
     const erroBox = document.querySelector('#modalNovoUsuario .bg-red-50');
     if (erroBox) {
-        document.getElementById('modalNovoUsuario').classList.remove('hidden', 'pointer-events-none');
+        abrirModalNovoUsuario();
         setTimeout(() => {
             erroBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }, 100);
@@ -770,7 +799,7 @@ function getServicoById(id) {
 function adicionarServico(modalType, serviceId = null) {
     const selectWrapper = document.querySelector(`input[name="select_servico_temp_${modalType === 'novo' ? 'novo' : 'edit'}"]`).closest('.cs-wrapper');
     const trigger = selectWrapper?.querySelector('.cs-trigger');
-    
+
     if (!serviceId) {
         if (trigger) {
             trigger.classList.add('border-red-500', 'ring-2', 'ring-red-500/20');
@@ -778,13 +807,13 @@ function adicionarServico(modalType, serviceId = null) {
         }
         return;
     }
-    
+
     // Remove estado de erro se houver
     if (trigger) {
         trigger.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
         trigger.classList.add('border-zinc-200');
     }
-    
+
     const service = getServicoById(serviceId);
     if (!service) return;
 
@@ -974,6 +1003,15 @@ function validarFormulario(modalType) {
         return false;
     }
 
+    form.querySelectorAll('input[data-services-generated="1"]').forEach(el => el.remove());
+
+    const servicesSubmitted = document.createElement('input');
+    servicesSubmitted.type = 'hidden';
+    servicesSubmitted.name = 'services_submitted';
+    servicesSubmitted.value = '1';
+    servicesSubmitted.dataset.servicesGenerated = '1';
+    form.appendChild(servicesSubmitted);
+
     const servicos = serializarServicos(modalType);
     servicos.forEach((servico, index) => {
         Object.entries(servico).forEach(([key, value]) => {
@@ -981,6 +1019,7 @@ function validarFormulario(modalType) {
             input.type = 'hidden';
             input.name = `services[${index}][${key}]`;
             input.value = value;
+            input.dataset.servicesGenerated = '1';
             form.appendChild(input);
         });
     });
@@ -1009,9 +1048,9 @@ function serializarServicos(modalType) {
     const servicosAtivos = modalType === 'novo' ? servicosAdicionados : servicosAdicionadosEdit;
     return Object.values(servicosAtivos).map(s => ({
         service_id: s.id,
-        time_minutes: s.duration,
-        price: s.price,
-        commission_percentage: s.commission_percentage
+        time_minutes: Number.isFinite(Number(s.duration)) ? Number(s.duration) : 0,
+        price: Number.isFinite(Number(s.price)) ? Number(s.price) : 0,
+        commission_percentage: Number.isFinite(Number(s.commission_percentage)) ? Number(s.commission_percentage) : 0
     }));
 }
 
@@ -1077,6 +1116,8 @@ function abrirModalEditarUsuario(id) {
     servicosAdicionadosEdit = {};
     const form = document.getElementById('formEditarUsuario');
     form.action = `/admin/users/${id}`;
+    const editingUserId = document.getElementById('editingUserId');
+    if (editingUserId) editingUserId.value = id;
 
     const setValue = (name, value) => {
         const el = form.querySelector(`[name="${name}"]`);
@@ -1087,17 +1128,44 @@ function abrirModalEditarUsuario(id) {
         }
     };
 
+    const setCustomSelectValue = (name, value) => {
+        const hiddenInput = form.querySelector(`input[type="hidden"][name="${name}"]`);
+        if (!hiddenInput) return;
+
+        hiddenInput.value = value ?? '';
+        hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+        hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
     setValue('name', usuario.name ?? '');
     setValue('professional_name', usuario.professional_name ?? '');
     setValue('cpf', usuario.cpf ?? '');
     setValue('date_of_birth', usuario.date_of_birth ?? '');
-    setValue('gender', usuario.gender ?? '');
-    setValue('role', usuario.role ?? '');
-    setValue('cargo', usuario.cargo ?? '');
+    setCustomSelectValue('gender', usuario.gender ?? '');
+    setCustomSelectValue('role', usuario.role ?? '');
+    setCustomSelectValue('cargo', usuario.cargo ?? '');
     setValue('salary', usuario.salary ?? '');
     setValue('phone', usuario.phone ?? '');
     setValue('email', usuario.email ?? '');
     setValue('password', '');
+    setValue('schedule[entry_time]', usuario.schedule?.entry_time ?? '');
+    setValue('schedule[exit_time]', usuario.schedule?.exit_time ?? '');
+    setValue('schedule[break_start]', usuario.schedule?.break_start ?? '');
+    setValue('schedule[break_end]', usuario.schedule?.break_end ?? '');
+
+    if (Array.isArray(usuario.services)) {
+        usuario.services.forEach((service) => {
+            if (!service?.service_id) return;
+            const catalogService = getServicoById(service.service_id);
+            servicosAdicionadosEdit[service.service_id] = {
+                id: service.service_id,
+                name: service.name ?? catalogService?.name ?? `Serviço #${service.service_id}`,
+                duration: Number(service.time_minutes ?? catalogService?.duration ?? 30),
+                price: Number(service.price ?? catalogService?.price ?? 0),
+                commission_percentage: Number(service.commission_percentage ?? 0),
+            };
+        });
+    }
 
     // Atualizar preview do avatar
     const avatarPreview = document.getElementById('avatarPreviewEdit');
@@ -1109,6 +1177,65 @@ function abrirModalEditarUsuario(id) {
 
     renderServicosCriacao('edit');
     document.getElementById('modalEditarUsuario').classList.remove('hidden', 'pointer-events-none');
+}
+
+function preencherEdicaoComOldInput(oldInput) {
+    const form = document.getElementById('formEditarUsuario');
+    if (!form || !oldInput) return;
+
+    const setValue = (name, value) => {
+        if (value === undefined || value === null) return;
+        const el = form.querySelector(`[name="${name}"]`);
+        if (el) {
+            el.value = value;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    };
+
+    const setCustomSelectValue = (name, value) => {
+        if (value === undefined || value === null) return;
+        const hiddenInput = form.querySelector(`input[type="hidden"][name="${name}"]`);
+        if (!hiddenInput) return;
+
+        hiddenInput.value = value;
+        hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+        hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    setValue('name', oldInput.name);
+    setValue('professional_name', oldInput.professional_name);
+    setValue('cpf', oldInput.cpf);
+    setValue('date_of_birth', oldInput.date_of_birth);
+    setCustomSelectValue('gender', oldInput.gender);
+    setCustomSelectValue('role', oldInput.role);
+    setCustomSelectValue('cargo', oldInput.cargo);
+    setValue('salary', oldInput.salary);
+    setValue('phone', oldInput.phone);
+    setValue('email', oldInput.email);
+    setValue('password', oldInput.password);
+    setValue('schedule[entry_time]', oldInput?.schedule?.entry_time);
+    setValue('schedule[exit_time]', oldInput?.schedule?.exit_time);
+    setValue('schedule[break_start]', oldInput?.schedule?.break_start);
+    setValue('schedule[break_end]', oldInput?.schedule?.break_end);
+
+    servicosAdicionadosEdit = {};
+    if (Array.isArray(oldInput.services)) {
+        oldInput.services.forEach((service) => {
+            const serviceId = Number(service?.service_id);
+            if (!serviceId) return;
+            const catalogService = getServicoById(serviceId);
+            servicosAdicionadosEdit[serviceId] = {
+                id: serviceId,
+                name: catalogService?.name ?? `Serviço #${serviceId}`,
+                duration: Number(service?.time_minutes ?? catalogService?.duration ?? 30),
+                price: Number(service?.price ?? catalogService?.price ?? 0),
+                commission_percentage: Number(service?.commission_percentage ?? 0),
+            };
+        });
+    }
+
+    renderServicosCriacao('edit');
 }
 
 function fecharModalEditarUsuario() {
