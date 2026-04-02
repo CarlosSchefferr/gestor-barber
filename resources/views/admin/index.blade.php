@@ -5,7 +5,7 @@
     $inputClass = 'mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20';
     $cardClass = 'rounded-3xl border border-zinc-200 bg-white/95 shadow-sm';
 
-    $opcoesServicos = ['' => 'Escolha na lista...'];
+    $opcoesServicos = ['' => 'Selecione'];
     if(isset($services)) {
         foreach($services as $service) {
             $price = is_array($service) ? $service['price'] : $service->price;
@@ -424,7 +424,7 @@
                 <div class="flex flex-col gap-4">
                     <div class="flex flex-col sm:flex-row gap-3 items-end justify-center w-full mb-6 mx-auto">
                         <div class="w-full max-w-md">
-                            <label class="block text-sm font-semibold text-zinc-700 mb-2">Selecione um serviço</label>
+                            <label class="block text-sm font-semibold text-zinc-700 mb-2">Serviço</label>
                             <x-custom-select
                                 name="select_servico_temp_novo"
                                 :options="$opcoesServicos"
@@ -667,7 +667,7 @@
                 <div class="flex flex-col gap-4">
                     <div class="flex flex-col sm:flex-row gap-3 items-end justify-center w-full mb-6 mx-auto">
                         <div class="w-full max-w-md">
-                            <label class="block text-sm font-semibold text-zinc-700 mb-2">Selecione um serviço</label>
+                            <label class="block text-sm font-semibold text-zinc-700 mb-2">Serviço</label>
                             <x-custom-select
                                 name="select_servico_temp_edit"
                                 :options="$opcoesServicos"

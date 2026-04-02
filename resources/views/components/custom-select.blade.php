@@ -29,6 +29,7 @@
         search: '',
         value: '{{ $value }}',
         highlightedIndex: -1,
+        repositionHandler: null,
         options: {{ Js::from(collect($options)->map(fn($label, $val) => ['value' => (string)$val, 'label' => $label])->values()) }},
 
         get filteredOptions() {
@@ -60,6 +61,7 @@
             this.highlightedIndex = -1;
             this.$nextTick(() => {
                 this.positionDropdown();
+                this.bindPositionListeners();
                 if (this.$refs.searchInput) {
                     this.$refs.searchInput.focus();
                 }
@@ -70,6 +72,7 @@
             this.open = false;
             this.search = '';
             this.highlightedIndex = -1;
+            this.unbindPositionListeners();
         },
 
         select(option) {
@@ -90,17 +93,33 @@
             const spaceAbove = rect.top;
             const panelHeight = Math.min(panel.scrollHeight, 320);
 
+            panel.style.position = 'fixed';
+            panel.style.left = `${rect.left}px`;
+            panel.style.width = `${rect.width}px`;
+            panel.style.right = 'auto';
+            panel.style.bottom = 'auto';
+            panel.style.marginBottom = '0';
+            panel.style.marginTop = '0';
+
             if (spaceBelow < panelHeight && spaceAbove > spaceBelow) {
-                panel.style.bottom = '100%';
-                panel.style.top = 'auto';
-                panel.style.marginBottom = '8px';
-                panel.style.marginTop = '0';
+                panel.style.top = `${Math.max(8, rect.top - panelHeight - 8)}px`;
             } else {
-                panel.style.top = '100%';
-                panel.style.bottom = 'auto';
-                panel.style.marginTop = '8px';
-                panel.style.marginBottom = '0';
+                panel.style.top = `${Math.min(window.innerHeight - panelHeight - 8, rect.bottom + 8)}px`;
             }
+        },
+
+        bindPositionListeners() {
+            this.unbindPositionListeners();
+            this.repositionHandler = () => this.positionDropdown();
+            window.addEventListener('resize', this.repositionHandler);
+            window.addEventListener('scroll', this.repositionHandler, true);
+        },
+
+        unbindPositionListeners() {
+            if (!this.repositionHandler) return;
+            window.removeEventListener('resize', this.repositionHandler);
+            window.removeEventListener('scroll', this.repositionHandler, true);
+            this.repositionHandler = null;
         },
 
         handleKeydown(e) {
