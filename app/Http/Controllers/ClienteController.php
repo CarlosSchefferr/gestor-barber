@@ -36,7 +36,7 @@ class ClienteController extends Controller
             $query->whereHas('agendamentos', function ($q) {
                 $q->where('barbeiro_id', auth()->id());
             });
-        }   
+        }
 
         // Sorting
         if ($sort === 'created_at') {
@@ -335,9 +335,12 @@ class ClienteController extends Controller
             ->where('status', 'atendido')
             ->orderBy('starts_at', 'desc')
             ->first();
-        $daysSinceLastAppointment = $lastAppointment
-            ? now()->diffInDays($lastAppointment->starts_at)
-            : null;
+        $daysSinceLastAppointment = null;
+        if ($lastAppointment) {
+            // Garantir que o cálculo sempre resulta em número positivo
+            // diffInDays retorna valor absoluto quando usamos true como segundo parâmetro
+            $daysSinceLastAppointment = (int) $lastAppointment->starts_at->diffInDays(now(), false);
+        }
 
         // Atendimentos executados
         $atendimentosCount = $cliente->agendamentos()
@@ -442,13 +445,60 @@ class ClienteController extends Controller
 
         $atendimentos = $query->orderBy('starts_at', 'desc')->paginate(15);
 
+        // Format response with proper data structure
+        $formattedData = $atendimentos->items()->map(function ($atend) {
+            return [
+                'id' => $atend->id,
+                'status' => $atend->status,
+                'data_hora' => $atend->starts_at,
+                'barbeiro_nome' => $atend->barbeiro ? $atend->barbeiro->name : null,
+                'quantidade_servicos' => $atend->servico ? 1 : 0,
+                'quantidade_produtos' => $atend->produtos->sum('pivot.quantity'),
+                'valor_total' => ($atend->price ?? 0) + $atend->produtos->sum(function ($produto) {
+                    return $produto->pivot->price * $produto->pivot->quantity;
+                }),
+            ];
+        });
+
         return response()->json([
-            'data' => $atendimentos->items(),
+            'data' => $formattedData,
             'current_page' => $atendimentos->currentPage(),
             'last_page' => $atendimentos->lastPage(),
             'per_page' => $atendimentos->perPage(),
             'total' => $atendimentos->total(),
         ]);
+    }
+
+    /**
+     * Get barbeiros for select dropdown (AJAX)
+     */
+    public function getBarbeiros()
+    {
+        $barbeiros = \App\Models\User::orderBy('name')->get(['id', 'name']);
+        return response()->json($barbeiros);
+    }
+
+    /**
+     * Get unique servicos from agendamentos for select dropdown (AJAX)
+     */
+    public function getServicos()
+    {
+        $servicos = \App\Models\Agendamento::whereNotNull('servico')
+            ->distinct()
+            ->pluck('servico')
+            ->sort()
+            ->values();
+        
+        return response()->json($servicos);
+    }
+
+    /**
+     * Get produtos for select dropdown (AJAX)
+     */
+    public function getProdutos()
+    {
+        $produtos = \App\Models\Product::orderBy('name')->get(['id', 'name']);
+        return response()->json($produtos);
     }
 
     // Removed destroy method - clients can only be activated/deactivated via toggleStatus

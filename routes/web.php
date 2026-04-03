@@ -25,6 +25,11 @@ Route::middleware('auth')->group(function () {
     Route::get('clientes/{cliente}/history', [App\Http\Controllers\ClienteController::class, 'getClientHistory'])->name('clientes.history');
     Route::get('clientes/{cliente}', [App\Http\Controllers\ClienteController::class, 'show'])->name('clientes.show');
 
+    // AJAX endpoints for populating select dropdowns
+    Route::get('api/barbeiros', [App\Http\Controllers\ClienteController::class, 'getBarbeiros'])->name('api.barbeiros');
+    Route::get('api/servicos', [App\Http\Controllers\ClienteController::class, 'getServicos'])->name('api.servicos');
+    Route::get('api/produtos', [App\Http\Controllers\ClienteController::class, 'getProdutos'])->name('api.produtos');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

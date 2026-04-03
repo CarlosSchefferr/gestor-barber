@@ -153,15 +153,15 @@
                                 <p class="text-xs text-zinc-500">{{ $cliente->email ?: '-' }}</p>
                             </td>
                             <td class="px-6 py-4">
-                                @if($cliente->ultimo_atendimento)
-                                    <p class="text-sm text-zinc-900">{{ \Carbon\Carbon::parse($cliente->ultimo_atendimento)->format('d/m/Y') }}</p>
-                                    <p class="text-xs text-zinc-500">{{ \Carbon\Carbon::parse($cliente->ultimo_atendimento)->diffForHumans() }}</p>
+                                @if($cliente->last_appointment_at)
+                                    <p class="text-sm text-zinc-900">{{ \Carbon\Carbon::parse($cliente->last_appointment_at)->format('d/m/Y') }}</p>
+                                    <p class="text-xs text-zinc-500">{{ \Carbon\Carbon::parse($cliente->last_appointment_at)->diffForHumans() }}</p>
                                 @else
                                     <span class="text-sm text-zinc-400">Nunca atendido</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4">
-                                @if($cliente->ativo)
+                                @if($cliente->active)
                                     <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Ativo</span>
                                 @else
                                     <span class="inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-700">Inativo</span>
@@ -182,11 +182,11 @@
                                         </svg>
                                     </button>
                                     @endif
-                                    <form action="{{ route('clientes.toggleStatus', $cliente->id) }}" method="POST" class="inline" onsubmit="return confirm('{{ $cliente->ativo ? 'Inativar este cliente?' : 'Ativar este cliente?' }}')">
+                                    <form action="{{ route('clientes.toggleStatus', $cliente->id) }}" method="POST" class="inline" onsubmit="return confirm('{{ $cliente->active ? 'Inativar este cliente?' : 'Ativar este cliente?' }}')">
                                         @csrf
                                         @method('PATCH')
-                                        <button type="submit" class="inline-flex h-9 items-center px-3 rounded-xl text-xs font-semibold transition {{ $cliente->ativo ? 'border border-red-300 bg-red-50 text-red-700 hover:bg-red-100' : 'border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }}">
-                                            {{ $cliente->ativo ? 'Inativar' : 'Ativar' }}
+                                        <button type="submit" class="inline-flex h-9 items-center px-3 rounded-xl text-xs font-semibold transition {{ $cliente->active ? 'border border-red-300 bg-red-50 text-red-700 hover:bg-red-100' : 'border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }}">
+                                            {{ $cliente->active ? 'Inativar' : 'Ativar' }}
                                         </button>
                                     </form>
                                 </div>
@@ -518,6 +518,8 @@ function abrirModalDetalhesCliente(clienteId) {
     document.getElementById('modalDetalhesCliente').classList.remove('hidden');
     document.getElementById('modalDetalhesCliente').classList.add('flex');
     loadClienteDetails(clienteId);
+    // Carregar dados para os selects quando abrir a modal
+    loadSelectOptions();
 }
 
 function fecharModalDetalhesCliente() {
@@ -656,7 +658,7 @@ async function loadClienteStatistics(clienteId) {
         const response = await fetch(`/clientes/${clienteId}/statistics`);
         const stats = await response.json();
 
-        document.getElementById('indicatorDaysSince').textContent = stats.days_since_last_appointment ?? 'N/A';
+        document.getElementById('indicatorDaysSince').textContent = stats.days_since_last_appointment !== null ? stats.days_since_last_appointment : 'N/A';
         document.getElementById('indicatorAtendCount').textContent = stats.atendimentos_count || 0;
         document.getElementById('indicatorMostService').textContent = stats.most_frequent_service ? `Mais freq: ${stats.most_frequent_service}` : '';
         document.getElementById('indicatorProdCount').textContent = stats.produtos_count || 0;
@@ -666,6 +668,56 @@ async function loadClienteStatistics(clienteId) {
     } catch (error) {
         console.error(error);
     }
+}
+
+// Função para carregar as opções dos selects
+async function loadSelectOptions() {
+    try {
+        // Carregar barbeiros
+        const barbeirosResponse = await fetch('/api/barbeiros');
+        const barbeiros = await barbeirosResponse.json();
+        populateCustomSelect('filterBarbeiro', barbeiros.map(b => ({ value: b.id, label: b.name })));
+
+        // Carregar serviços
+        const servicosResponse = await fetch('/api/servicos');
+        const servicos = await servicosResponse.json();
+        populateCustomSelect('filterServico', servicos.map(s => ({ value: s, label: s })));
+
+        // Carregar produtos
+        const produtosResponse = await fetch('/api/produtos');
+        const produtos = await produtosResponse.json();
+        populateCustomSelect('filterProduto', produtos.map(p => ({ value: p.id, label: p.name })));
+    } catch (error) {
+        console.error('Erro ao carregar opções dos selects:', error);
+    }
+}
+
+// Função auxiliar para popular um custom select
+function populateCustomSelect(selectId, options) {
+    const selectElement = document.getElementById(selectId);
+    if (!selectElement) return;
+
+    const container = selectElement.closest('[data-custom-select]');
+    if (!container) return;
+
+    const optionsList = container.querySelector('.cs-options');
+    if (!optionsList) return;
+
+    // Limpar opções existentes (exceto "Todos")
+    const firstOption = optionsList.querySelector('.cs-option');
+    optionsList.innerHTML = '';
+    if (firstOption && firstOption.textContent.includes('Todos')) {
+        optionsList.appendChild(firstOption);
+    }
+
+    // Adicionar novas opções
+    options.forEach(opt => {
+        const optionEl = document.createElement('div');
+        optionEl.className = 'cs-option px-3 py-2 text-sm text-zinc-700 hover:bg-barber-50 hover:text-barber-600 cursor-pointer transition';
+        optionEl.textContent = opt.label;
+        optionEl.setAttribute('data-value', opt.value);
+        optionsList.appendChild(optionEl);
+    });
 }
 
 async function loadClienteHistory(clienteId) {
