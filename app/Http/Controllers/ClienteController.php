@@ -455,17 +455,17 @@ class ClienteController extends Controller
         $atendimentos = $query->orderBy('starts_at', 'desc')->paginate(15);
 
         // Format response with proper data structure
-        $formattedData = $atendimentos->items()->map(function ($atend) {
+        $formattedData = collect($atendimentos->items())->map(function ($atend) {
             return [
                 'id' => $atend->id,
                 'status' => $atend->status,
                 'data_hora' => $atend->starts_at,
                 'barbeiro_nome' => $atend->barbeiro ? $atend->barbeiro->name : null,
                 'quantidade_servicos' => $atend->servico ? 1 : 0,
-                'quantidade_produtos' => $atend->produtos->sum('pivot.quantity'),
-                'valor_total' => ($atend->price ?? 0) + $atend->produtos->sum(function ($produto) {
-                    return $produto->pivot->price * $produto->pivot->quantity;
-                }),
+                'quantidade_produtos' => $atend->produtos ? $atend->produtos->sum('pivot.quantity') : 0,
+                'valor_total' => ($atend->price ?? 0) + ($atend->produtos ? $atend->produtos->sum(function ($produto) {
+                    return ($produto->pivot->price ?? 0) * ($produto->pivot->quantity ?? 0);
+                }) : 0),
             ];
         });
 
