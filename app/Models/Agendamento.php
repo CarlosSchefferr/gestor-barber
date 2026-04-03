@@ -42,4 +42,14 @@ class Agendamento extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Produtos vinculados ao agendamento
+     */
+    public function produtos()
+    {
+        return $this->belongsToMany(Product::class, 'agendamento_produto', 'agendamento_id', 'produto_id')
+            ->withPivot('quantity', 'price')
+            ->withTimestamps();
+    }
 }

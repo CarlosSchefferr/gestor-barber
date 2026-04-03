@@ -16,6 +16,15 @@ Route::middleware('auth')->group(function () {
     // Toggle ativo/inativo para clientes (permitido por usuários autenticados; controller checa permissões)
     Route::patch('clientes/{cliente}/toggle-status', [App\Http\Controllers\ClienteController::class, 'toggleStatus'])->name('clientes.toggleStatus');
 
+    // AJAX validation endpoints for duplicate checking
+    Route::post('clientes/check-phone', [App\Http\Controllers\ClienteController::class, 'checkDuplicatePhone'])->name('clientes.check-phone');
+    Route::post('clientes/check-name', [App\Http\Controllers\ClienteController::class, 'checkDuplicateName'])->name('clientes.check-name');
+
+    // Client statistics and history endpoints
+    Route::get('clientes/{cliente}/statistics', [App\Http\Controllers\ClienteController::class, 'getClientStatistics'])->name('clientes.statistics');
+    Route::get('clientes/{cliente}/history', [App\Http\Controllers\ClienteController::class, 'getClientHistory'])->name('clientes.history');
+    Route::get('clientes/{cliente}', [App\Http\Controllers\ClienteController::class, 'show'])->name('clientes.show');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

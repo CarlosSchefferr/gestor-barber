@@ -64,10 +64,11 @@ class RealisticBarbershopSeeder extends Seeder
         })->values();
 
         $services = $this->seedServices();
-        $this->seedProducts();
+        $products = $this->seedProducts();
         $clientes = $this->seedClientes($faker, 650);
         $appointments = $this->seedAgendamentos($faker, $year, $clientes->pluck('id')->all(), $barbers->pluck('id')->all(), $services, [$owner->id, $attendant->id]);
 
+        $this->seedAgendamentoProdutos($products);
         $this->seedMetas($year, $owner->id, $appointments['receita_concluida']);
         $this->seedTransacoes($faker, $year, $appointments['receita_concluida']);
         $this->seedAgendaPublica($barbers->pluck('id')->all());
@@ -86,7 +87,7 @@ class RealisticBarbershopSeeder extends Seeder
     private function truncateDomainTables(): void
     {
         DB::statement('SET FOREIGN_KEY_CHECKS=0');
-        foreach (['agenda_imagens', 'agenda_configs', 'agendamentos', 'transacoes', 'metas', 'products', 'services', 'clientes'] as $table) {
+        foreach (['agendamento_produto', 'agenda_imagens', 'agenda_configs', 'agendamentos', 'transacoes', 'metas', 'products', 'services', 'clientes'] as $table) {
             DB::table($table)->truncate();
         }
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
@@ -116,7 +117,7 @@ class RealisticBarbershopSeeder extends Seeder
         return $services;
     }
 
-    private function seedProducts(): void
+    private function seedProducts(): array
     {
         $products = [
             ['name' => 'Pomada Modeladora Fosca', 'description' => 'Fixacao media com efeito natural.', 'price' => 39.90, 'quantity' => 45],
@@ -141,12 +142,16 @@ class RealisticBarbershopSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ], $products));
+
+        return $products;
     }
 
     private function seedClientes($faker, int $total): \Illuminate\Support\Collection
     {
         $firstNames = ['Gabriel', 'Miguel', 'Arthur', 'Heitor', 'Theo', 'Davi', 'Bernardo', 'Samuel', 'Matheus', 'Pedro', 'Lucas', 'Nicolas', 'Rafael', 'Joao', 'Guilherme', 'Vitor', 'Enzo', 'Felipe', 'Bruno', 'Diego', 'Leandro', 'Caio', 'Anderson', 'Tiago', 'Rodrigo', 'Marcelo', 'Fernando', 'Ricardo', 'Alexandre', 'Henrique', 'Paulo', 'Eduardo', 'Antonio', 'Julio', 'Leonardo', 'Cristiano', 'Cesar', 'Igor', 'Vinicius', 'Wesley', 'Yuri', 'Renato', 'Douglas', 'Alan', 'Jorge', 'Marcos', 'Fabio', 'Claudio', 'Sergio', 'Murilo'];
         $lastNames = ['Silva', 'Santos', 'Oliveira', 'Souza', 'Pereira', 'Costa', 'Rodrigues', 'Almeida', 'Nascimento', 'Lima', 'Araujo', 'Fernandes', 'Carvalho', 'Gomes', 'Martins', 'Rocha', 'Dias', 'Barbosa', 'Ribeiro', 'Cardoso', 'Melo', 'Freitas', 'Correia', 'Moura', 'Batista', 'Teixeira', 'Monteiro', 'Moreira', 'Nunes', 'Sales', 'Machado', 'Leite', 'Pinto', 'Farias', 'Vieira', 'Assis', 'Cavalcanti', 'Peixoto', 'Rezende', 'Tavares'];
+
+        $owner = User::where('email', 'proprietario@barberpro.com.br')->first();
 
         $used = [];
         $rows = [];
@@ -160,8 +165,14 @@ class RealisticBarbershopSeeder extends Seeder
                 'nome' => $nome,
                 'email' => Str::slug($nome, '.') . $i . '@gmail.com',
                 'telefone' => sprintf('(11) 9%04d-%04d', random_int(1000, 9999), random_int(1000, 9999)),
+                'data_nascimento' => $faker->dateTimeBetween('1960-01-01', '2008-12-31')->format('Y-m-d'),
+                'cep' => sprintf('%05d-%03d', random_int(10000, 99999), random_int(100, 999)),
+                'bairro' => $faker->citySuffix(),
+                'foto' => null,
                 'observacoes' => $faker->boolean(28) ? $faker->sentence() : null,
                 'active' => $faker->boolean(94),
+                'created_by' => $owner?->id,
+                'updated_by' => $owner?->id,
                 'last_appointment_at' => null,
                 'created_at' => now()->subDays(random_int(20, 900)),
                 'updated_at' => now(),
@@ -210,7 +221,7 @@ class RealisticBarbershopSeeder extends Seeder
                 $status = $this->pickStatus($startsAt);
                 $price = round((float) $service['price'] * ($faker->randomFloat(2, 0.95, 1.20)), 2);
 
-                if ($status === 'concluido') {
+                if ($status === 'atendido') {
                     $totalReceitaConcluida += $price;
                 }
 
@@ -240,6 +251,38 @@ class RealisticBarbershopSeeder extends Seeder
             'receita_concluida' => round($totalReceitaConcluida, 2),
             'total' => count($rows),
         ];
+    }
+
+    private function seedAgendamentoProdutos($products): void
+    {
+        $agendamentos = DB::table('agendamentos')->select('id', 'status', 'price')->where('status', 'atendido')->get();
+        $rows = [];
+
+        foreach ($agendamentos as $agendamento) {
+            if (random_int(1, 100) <= 35) {
+                $numProdutos = random_int(1, 3);
+                for ($i = 0; $i < $numProdutos; $i++) {
+                    $produto = (object) $products[array_rand($products)];
+                    $quantity = random_int(1, 2);
+                    $price = (float) $produto->price * $quantity;
+
+                    $rows[] = [
+                        'agendamento_id' => $agendamento->id,
+                        'produto_id' => DB::table('products')->where('name', $produto->name)->value('id') ?? 1,
+                        'quantity' => $quantity,
+                        'price' => round($price, 2),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+            }
+        }
+
+        if (!empty($rows)) {
+            foreach (array_chunk($rows, 500) as $chunk) {
+                DB::table('agendamento_produto')->insert($chunk);
+            }
+        }
     }
 
     private function randomTimeForDate(Carbon $date, int $duration): Carbon
@@ -272,16 +315,16 @@ class RealisticBarbershopSeeder extends Seeder
         if ($startsAt->isCurrentMonth()) {
             return $this->weightedPick([
                 'agendado' => 55,
-                'concluido' => 35,
+                'atendido' => 35,
                 'cancelado' => 7,
-                'faltou' => 3,
+                'não compareceu' => 3,
             ]);
         }
 
         return $this->weightedPick([
-            'concluido' => 81,
+            'atendido' => 81,
             'cancelado' => 11,
-            'faltou' => 8,
+            'não compareceu' => 8,
         ]);
     }
 
