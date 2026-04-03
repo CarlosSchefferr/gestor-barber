@@ -106,7 +106,16 @@ class ClienteController extends Controller
             }
         }
 
-        return view('clientes.index', compact('clientes', 'clientsWithoutAppointment', 'mostAttended', 'mostProfitable', 'days'));
+        // Dados para os selects de filtro na aba Atendimentos
+        $barbeiros = \App\Models\User::orderBy('name')->get();
+        $servicos = \App\Models\Agendamento::whereNotNull('servico')
+            ->distinct()
+            ->pluck('servico')
+            ->sort()
+            ->values();
+        $produtos = \App\Models\Product::orderBy('name')->get();
+
+        return view('clientes.index', compact('clientes', 'clientsWithoutAppointment', 'mostAttended', 'mostProfitable', 'days', 'barbeiros', 'servicos', 'produtos'));
     }
 
     /**
@@ -488,7 +497,7 @@ class ClienteController extends Controller
             ->pluck('servico')
             ->sort()
             ->values();
-        
+
         return response()->json($servicos);
     }
 

@@ -4,6 +4,22 @@
 @php
     $inputClass = 'mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20';
     $cardClass = 'rounded-3xl border border-zinc-200 bg-white/95 shadow-sm';
+
+    // Opções para selects de filtro
+    $opcoesBarbeiros = ['' => 'Todos barbeiros'];
+    foreach($barbeiros ?? [] as $barbeiro) {
+        $opcoesBarbeiros[$barbeiro->id] = $barbeiro->name;
+    }
+
+    $opcoesServicos = ['' => 'Todos serviços'];
+    foreach($servicos ?? [] as $servico) {
+        $opcoesServicos[$servico] = $servico;
+    }
+
+    $opcoesProdutos = ['' => 'Todos produtos'];
+    foreach($produtos ?? [] as $produto) {
+        $opcoesProdutos[$produto->id] = $produto->name;
+    }
 @endphp
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -380,27 +396,24 @@
                         <div>
                             <label class="text-sm font-semibold text-zinc-700 block mb-2">Barbeiro</label>
                             <x-custom-select
-                                id="filterBarbeiro"
                                 name="filterBarbeiro"
-                                :options="[]"
+                                :options="$opcoesBarbeiros"
                                 placeholder="Todos barbeiros"
                             />
                         </div>
                         <div>
                             <label class="text-sm font-semibold text-zinc-700 block mb-2">Serviço</label>
                             <x-custom-select
-                                id="filterServico"
                                 name="filterServico"
-                                :options="[]"
+                                :options="$opcoesServicos"
                                 placeholder="Todos serviços"
                             />
                         </div>
                         <div>
                             <label class="text-sm font-semibold text-zinc-700 block mb-2">Produto</label>
                             <x-custom-select
-                                id="filterProduto"
                                 name="filterProduto"
-                                :options="[]"
+                                :options="$opcoesProdutos"
                                 placeholder="Todos produtos"
                             />
                         </div>
@@ -518,8 +531,6 @@ function abrirModalDetalhesCliente(clienteId) {
     document.getElementById('modalDetalhesCliente').classList.remove('hidden');
     document.getElementById('modalDetalhesCliente').classList.add('flex');
     loadClienteDetails(clienteId);
-    // Carregar dados para os selects quando abrir a modal
-    loadSelectOptions();
 }
 
 function fecharModalDetalhesCliente() {
@@ -670,71 +681,29 @@ async function loadClienteStatistics(clienteId) {
     }
 }
 
-// Função para carregar as opções dos selects
-async function loadSelectOptions() {
-    try {
-        // Carregar barbeiros
-        const barbeirosResponse = await fetch('/api/barbeiros');
-        const barbeiros = await barbeirosResponse.json();
-        populateCustomSelect('filterBarbeiro', barbeiros.map(b => ({ value: b.id, label: b.name })));
-
-        // Carregar serviços
-        const servicosResponse = await fetch('/api/servicos');
-        const servicos = await servicosResponse.json();
-        populateCustomSelect('filterServico', servicos.map(s => ({ value: s, label: s })));
-
-        // Carregar produtos
-        const produtosResponse = await fetch('/api/produtos');
-        const produtos = await produtosResponse.json();
-        populateCustomSelect('filterProduto', produtos.map(p => ({ value: p.id, label: p.name })));
-    } catch (error) {
-        console.error('Erro ao carregar opções dos selects:', error);
-    }
-}
-
-// Função auxiliar para popular um custom select
-function populateCustomSelect(selectId, options) {
-    const selectElement = document.getElementById(selectId);
-    if (!selectElement) return;
-
-    const container = selectElement.closest('[data-custom-select]');
-    if (!container) return;
-
-    const optionsList = container.querySelector('.cs-options');
-    if (!optionsList) return;
-
-    // Limpar opções existentes (exceto "Todos")
-    const firstOption = optionsList.querySelector('.cs-option');
-    optionsList.innerHTML = '';
-    if (firstOption && firstOption.textContent.includes('Todos')) {
-        optionsList.appendChild(firstOption);
-    }
-
-    // Adicionar novas opções
-    options.forEach(opt => {
-        const optionEl = document.createElement('div');
-        optionEl.className = 'cs-option px-3 py-2 text-sm text-zinc-700 hover:bg-barber-50 hover:text-barber-600 cursor-pointer transition';
-        optionEl.textContent = opt.label;
-        optionEl.setAttribute('data-value', opt.value);
-        optionsList.appendChild(optionEl);
-    });
-}
-
 async function loadClienteHistory(clienteId) {
     try {
-        const statusInput = document.querySelector('input[type="hidden"][name="filterStatus"]');
-        const barbeiroinput = document.querySelector('input[type="hidden"][name="filterBarbeiro"]');
-        const servicoInput = document.querySelector('input[type="hidden"][name="filterServico"]');
-        const produtoInput = document.querySelector('input[type="hidden"][name="filterProduto"]');
+        const statusInput = document.querySelector('input[name="filterStatus"]');
+        const barbeiroInput = document.querySelector('input[name="filterBarbeiro"]');
+        const servicoInput = document.querySelector('input[name="filterServico"]');
+        const produtoInput = document.querySelector('input[name="filterProduto"]');
 
         const status = statusInput?.value || '';
         const dataInicio = document.getElementById('filterDataInicio')?.value || '';
         const dataFim = document.getElementById('filterDataFim')?.value || '';
-        const barbeiro = barbeiroinput?.value || '';
+        const barbeiroId = barbeiroInput?.value || '';
         const servico = servicoInput?.value || '';
-        const produto = produtoInput?.value || '';
+        const produtoId = produtoInput?.value || '';
 
-        const params = new URLSearchParams({ status, data_inicio: dataInicio, data_fim: dataFim, barbeiro, servico, produto });
+        const params = new URLSearchParams({ 
+            status, 
+            data_inicio: dataInicio, 
+            data_fim: dataFim, 
+            barbeiro_id: barbeiroId, 
+            servico, 
+            produto_id: produtoId 
+        });
+        
         const response = await fetch(`/clientes/${clienteId}/history?${params}`);
         const data = await response.json();
         const tbody = document.getElementById('historyTableBody');
@@ -773,24 +742,25 @@ async function loadClienteHistory(clienteId) {
 }
 
 function limparFiltros() {
-    const statusInput = document.querySelector('input[type="hidden"][name="filterStatus"]');
-    const barbeiroinput = document.querySelector('input[type="hidden"][name="filterBarbeiro"]');
-    const servicoInput = document.querySelector('input[type="hidden"][name="filterServico"]');
-    const produtoInput = document.querySelector('input[type="hidden"][name="filterProduto"]');
+    // Resetar os valores dos selects
+    ['filterStatus', 'filterBarbeiro', 'filterServico', 'filterProduto'].forEach(name => {
+        const input = document.querySelector(`input[name="${name}"]`);
+        if (input) {
+            const wrapper = input.closest('[x-data]');
+            if (wrapper && wrapper.__x) {
+                const alpineData = wrapper.__x.$data;
+                if (alpineData) {
+                    alpineData.value = '';
+                }
+            }
+        }
+    });
 
-    if (statusInput) statusInput.value = '';
-    if (barbeiroinput) barbeiroinput.value = '';
-    if (servicoInput) servicoInput.value = '';
-    if (produtoInput) produtoInput.value = '';
-
+    // Resetar campos de data
     document.getElementById('filterDataInicio').value = '';
     document.getElementById('filterDataFim').value = '';
 
-    document.querySelectorAll('[data-custom-select]').forEach(el => {
-        const trigger = el.querySelector('.cs-trigger');
-        if (trigger) trigger.textContent = el.getAttribute('data-placeholder') || 'Selecione';
-    });
-
+    // Recarregar histórico
     loadClienteHistory(currentClienteId);
 }
 
