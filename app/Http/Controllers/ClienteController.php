@@ -19,7 +19,8 @@ class ClienteController extends Controller
         $search = $request->get('search');
         $sort = $request->get('sort', 'nome');
         $statusFilter = $request->get('status');
-        $days = $request->get('days', 30);
+        $bairroFilter = $request->get('bairro');
+        $ultimoAtendimentoFilter = $request->get('ultimo_atendimento');
 
         $query = Cliente::query()->with('lastAgendamento');
 
@@ -29,6 +30,22 @@ class ClienteController extends Controller
 
         if ($search) {
             $query->where('nome', 'like', "%{$search}%");
+        }
+
+        // Filter by bairro
+        if ($bairroFilter) {
+            $query->where('bairro', $bairroFilter);
+        }
+
+        // Filter by último atendimento
+        if ($ultimoAtendimentoFilter) {
+            if ($ultimoAtendimentoFilter === 'nunca') {
+                $query->whereNull('last_appointment_at');
+            } else {
+                $diasFiltro = (int) $ultimoAtendimentoFilter;
+                $dataLimite = now()->subDays($diasFiltro);
+                $query->where('last_appointment_at', '>=', $dataLimite);
+            }
         }
 
         // If user is a barber, only show clients they have attended
@@ -64,15 +81,7 @@ class ClienteController extends Controller
             });
         }
 
-        // 1) clients with more than $days without appointment (only active)
-        $cutoff = now()->subDays((int)$days);
-        $clientsWithoutAppointment = (clone $clientQueryForIndicators)
-            ->where('active', true)
-            ->where(function ($q) use ($cutoff) {
-                $q->whereNull('last_appointment_at')->orWhere('last_appointment_at', '<', $cutoff);
-            })->count();
-
-        // 2) client with most attendances (count)
+        // client with most attendances (count)
         $mostAttended = null;
         $attQuery = \App\Models\Agendamento::query();
         if (auth()->check() && auth()->user()->isBarber()) {
@@ -89,7 +98,7 @@ class ClienteController extends Controller
             }
         }
 
-        // 3) most profitable client (sum of agendamentos.price)
+        // most profitable client (sum of agendamentos.price)
         $profitQuery = \App\Models\Agendamento::whereNotNull('price');
         if (auth()->check() && auth()->user()->isBarber()) {
             $profitQuery->where('barbeiro_id', auth()->id());
@@ -115,7 +124,18 @@ class ClienteController extends Controller
             ->values();
         $produtos = \App\Models\Product::orderBy('name')->get();
 
-        return view('clientes.index', compact('clientes', 'clientsWithoutAppointment', 'mostAttended', 'mostProfitable', 'days', 'barbeiros', 'servicos', 'produtos'));
+        // Bairros para filtro na listagem principal (todos os bairros de clientes cadastrados)
+        $bairrosQuery = Cliente::whereNotNull('bairro')
+            ->where('bairro', '!=', '')
+            ->distinct()
+            ->orderBy('bairro')
+            ->pluck('bairro');
+        $opcoesBairros = ['' => 'Todos bairros'];
+        foreach ($bairrosQuery as $bairro) {
+            $opcoesBairros[$bairro] = $bairro;
+        }
+
+        return view('clientes.index', compact('clientes', 'mostAttended', 'mostProfitable', 'barbeiros', 'servicos', 'produtos', 'opcoesBairros'));
     }
 
     /**

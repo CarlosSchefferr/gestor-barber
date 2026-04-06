@@ -55,23 +55,7 @@
         </div>
     @endif
 
-    <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div class="{{ $cardClass }} p-5">
-            <div class="flex items-start justify-between">
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Sem atendimento</p>
-                    <p class="mt-3 text-3xl font-bold text-orange-600">{{ $clientsWithoutAppointment ?? 0 }}</p>
-                    <p class="mt-1 text-sm text-zinc-500">Acima de {{ request('days', 30) }} dias</p>
-                </div>
-            </div>
-            <div class="mt-4 flex gap-2">
-                <input type="number" id="daysFilter" value="{{ request('days', 30) }}" min="1" max="365" class="w-16 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1.5 text-sm text-center text-zinc-900">
-                <button onclick="updateDaysFilter()" class="flex-1 rounded-lg bg-barber-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-barber-600 transition">
-                    Atualizar
-                </button>
-            </div>
-        </div>
-
+    <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div class="{{ $cardClass }} p-5">
             <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Mais atendido</p>
             <p class="mt-3 text-2xl font-bold text-zinc-900 truncate" title="{{ $mostAttended->cliente ?? 'Sem dados' }}">
@@ -95,13 +79,14 @@
             <span class="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">Busca avançada</span>
         </div>
 
-        <form method="GET" class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <form method="GET" class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div>
-                <label class="text-sm font-semibold text-zinc-700">Buscar por nome</label>
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Digite o nome do cliente..." class="{{ $inputClass }}">
+                <label class="text-sm font-semibold text-zinc-700 block mb-2">Buscar por nome</label>
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Digite o nome do cliente..." class="{{ $inputClass }} !mt-0">
             </div>
 
             <div>
+                <label class="text-sm font-semibold text-zinc-700 block mb-2">Status</label>
                 <x-custom-select
                     name="status"
                     :options="[
@@ -114,9 +99,35 @@
                 />
             </div>
 
-            <div></div>
+            <div>
+                <label class="text-sm font-semibold text-zinc-700 block mb-2">Bairro</label>
+                <x-custom-select
+                    name="bairro"
+                    :options="$opcoesBairros ?? ['' => 'Todos bairros']"
+                    :value="request('bairro', '')"
+                    placeholder="Todos bairros"
+                />
+            </div>
 
-            <div class="md:col-span-3 flex flex-wrap items-center justify-center gap-3 pt-2">
+            <div>
+                <label class="text-sm font-semibold text-zinc-700 block mb-2">Último atendimento</label>
+                <x-custom-select
+                    name="ultimo_atendimento"
+                    :options="[
+                        '' => 'Todos',
+                        '7' => 'Últimos 7 dias',
+                        '15' => 'Últimos 15 dias',
+                        '30' => 'Últimos 30 dias',
+                        '60' => 'Últimos 60 dias',
+                        '90' => 'Últimos 90 dias',
+                        'nunca' => 'Nunca atendido'
+                    ]"
+                    :value="request('ultimo_atendimento', '')"
+                    placeholder="Filtrar por atendimento"
+                />
+            </div>
+
+            <div class="md:col-span-2 lg:col-span-4 flex flex-wrap items-center justify-center gap-3 pt-2">
                 <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-6 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-barber-600">
                     Aplicar filtros
                 </button>
@@ -134,14 +145,14 @@
         </div>
 
         <div class="overflow-x-auto">
-            <table class="min-w-full">
+            <table class="min-w-full table-fixed">
                 <thead class="bg-zinc-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Cliente</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Contato</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Último atendimento</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Status</th>
-                        <th class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wide text-zinc-500">Ações</th>
+                        <th class="w-[280px] px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Cliente</th>
+                        <th class="w-[200px] px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Contato</th>
+                        <th class="w-[180px] px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Último atendimento</th>
+                        <th class="w-[100px] px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Status</th>
+                        <th class="w-[120px] px-6 py-3 text-right text-xs font-bold uppercase tracking-wide text-zinc-500">Ações</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-100 bg-white">
@@ -198,13 +209,6 @@
                                         </svg>
                                     </button>
                                     @endif
-                                    <form action="{{ route('clientes.toggleStatus', $cliente->id) }}" method="POST" class="inline" onsubmit="return confirm('{{ $cliente->active ? 'Inativar este cliente?' : 'Ativar este cliente?' }}')">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" class="inline-flex h-9 items-center px-3 rounded-xl text-xs font-semibold transition {{ $cliente->active ? 'border border-red-300 bg-red-50 text-red-700 hover:bg-red-100' : 'border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }}">
-                                            {{ $cliente->active ? 'Inativar' : 'Ativar' }}
-                                        </button>
-                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -322,7 +326,7 @@
 @endif
 
 <div id="modalDetalhesCliente" class="fixed inset-0 z-50 hidden items-center justify-center bg-zinc-900/60 backdrop-blur-sm p-4" x-data="{ abaAtiva: 'dados' }">
-    <div class="w-full rounded-3xl border border-zinc-200 bg-white shadow-2xl flex flex-col max-h-[90vh] transition-all duration-300" :class="abaAtiva === 'atendimentos' ? 'max-w-7xl' : 'max-w-4xl'">
+    <div class="w-full rounded-3xl border border-zinc-200 bg-white shadow-2xl flex flex-col transition-all duration-300" :class="abaAtiva === 'atendimentos' ? 'max-w-7xl max-h-[95vh]' : 'max-w-4xl max-h-[90vh]'">
         <div class="p-6 sm:p-8 pb-5 shrink-0">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.22em] text-barber-500">Cliente</p>
@@ -345,28 +349,6 @@
             </div>
 
             <div x-show="abaAtiva === 'atendimentos'" class="tab-content">
-                <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <div class="{{ $cardClass }} p-4">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Dias sem atendimento</p>
-                        <p id="indicatorDaysSince" class="mt-2 text-3xl font-bold text-zinc-900">-</p>
-                    </div>
-                    <div class="{{ $cardClass }} p-4">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Atendimentos</p>
-                        <p id="indicatorAtendCount" class="mt-2 text-3xl font-bold text-zinc-900">-</p>
-                        <p id="indicatorMostService" class="mt-1 text-xs text-zinc-500"></p>
-                    </div>
-                    <div class="{{ $cardClass }} p-4">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Produtos comprados</p>
-                        <p id="indicatorProdCount" class="mt-2 text-3xl font-bold text-zinc-900">-</p>
-                        <p id="indicatorMostProduct" class="mt-1 text-xs text-zinc-500"></p>
-                    </div>
-                    <div class="{{ $cardClass }} p-4">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Valor gasto</p>
-                        <p id="indicatorValorTotal" class="mt-2 text-xl font-bold text-emerald-700">-</p>
-                        <p id="indicatorValorDetalhes" class="mt-1 text-xs text-zinc-500"></p>
-                    </div>
-                </div>
-
                 <div class="mb-6 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
                     <h3 class="text-sm font-bold text-zinc-900 mb-4">Filtros do Histórico</h3>
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
@@ -424,17 +406,39 @@
                     </div>
                 </div>
 
+                <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div class="{{ $cardClass }} p-4">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Dias sem atendimento</p>
+                        <p id="indicatorDaysSince" class="mt-2 text-3xl font-bold text-zinc-900">-</p>
+                    </div>
+                    <div class="{{ $cardClass }} p-4">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Atendimentos</p>
+                        <p id="indicatorAtendCount" class="mt-2 text-3xl font-bold text-zinc-900">-</p>
+                        <p id="indicatorMostService" class="mt-1 text-xs text-zinc-500"></p>
+                    </div>
+                    <div class="{{ $cardClass }} p-4">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Produtos comprados</p>
+                        <p id="indicatorProdCount" class="mt-2 text-3xl font-bold text-zinc-900">-</p>
+                        <p id="indicatorMostProduct" class="mt-1 text-xs text-zinc-500"></p>
+                    </div>
+                    <div class="{{ $cardClass }} p-4">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Valor gasto</p>
+                        <p id="indicatorValorTotal" class="mt-2 text-xl font-bold text-emerald-700">-</p>
+                        <p id="indicatorValorDetalhes" class="mt-1 text-xs text-zinc-500"></p>
+                    </div>
+                </div>
+
                 <div class="rounded-2xl border border-zinc-200 overflow-hidden">
                     <div class="overflow-x-auto">
-                        <table class="w-full min-w-max">
+                        <table class="w-full table-fixed">
                             <thead class="bg-zinc-50">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-zinc-600">Status</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-zinc-600">Data/Hora</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-zinc-600">Barbeiro</th>
-                                    <th class="px-4 py-3 text-center text-xs font-semibold uppercase text-zinc-600">Serviços</th>
-                                    <th class="px-4 py-3 text-center text-xs font-semibold uppercase text-zinc-600">Produtos</th>
-                                    <th class="px-4 py-3 text-right text-xs font-semibold uppercase text-zinc-600">Valor</th>
+                                    <th class="w-[120px] px-4 py-3 text-left text-xs font-semibold uppercase text-zinc-600">Status</th>
+                                    <th class="w-[160px] px-4 py-3 text-left text-xs font-semibold uppercase text-zinc-600">Data/Hora</th>
+                                    <th class="w-[150px] px-4 py-3 text-left text-xs font-semibold uppercase text-zinc-600">Barbeiro</th>
+                                    <th class="w-[100px] px-4 py-3 text-center text-xs font-semibold uppercase text-zinc-600">Serviços</th>
+                                    <th class="w-[100px] px-4 py-3 text-center text-xs font-semibold uppercase text-zinc-600">Produtos</th>
+                                    <th class="w-[120px] px-4 py-3 text-right text-xs font-semibold uppercase text-zinc-600">Valor</th>
                                 </tr>
                             </thead>
                             <tbody id="historyTableBody" class="divide-y divide-zinc-200 bg-white">
@@ -448,7 +452,7 @@
             </div>
         </div>
 
-        <div class="border-t border-zinc-200 px-6 sm:px-8 py-6 shrink-0 flex justify-center">
+        <div class="border-t border-zinc-200 px-6 sm:px-8 py-4 shrink-0 flex justify-center">
             <button type="button" onclick="fecharModalDetalhesCliente()" class="rounded-2xl border border-zinc-300 bg-white px-6 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">
                 Fechar
             </button>
@@ -460,9 +464,12 @@
 <div id="modalEditarCliente" class="fixed inset-0 z-50 hidden items-center justify-center bg-zinc-900/60 backdrop-blur-sm p-4">
     <div class="w-full max-w-2xl rounded-3xl border border-zinc-200 bg-white shadow-2xl flex flex-col max-h-[90vh]">
         <div class="p-6 sm:p-8 pb-5 shrink-0">
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-barber-500">Edição</p>
-                <h3 class="mt-2 text-2xl font-bold text-zinc-900">Editar cliente</h3>
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-barber-500">Edição</p>
+                    <h3 class="mt-2 text-2xl font-bold text-zinc-900">Editar cliente</h3>
+                </div>
+                <div id="editClienteStatusBadge"></div>
             </div>
         </div>
 
@@ -471,16 +478,21 @@
                 @csrf
                 @method('PUT')
                 <div id="editClienteContent" class="space-y-6"></div>
-
-                <div class="mt-8 flex justify-center gap-3">
-                    <button type="button" onclick="fecharModalEditarCliente()" class="rounded-2xl border border-zinc-300 bg-white px-6 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="rounded-2xl bg-barber-500 px-6 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-barber-600">
-                        Atualizar cliente
-                    </button>
-                </div>
             </form>
+        </div>
+
+        <div class="border-t border-zinc-200 px-6 sm:px-8 py-4 shrink-0 bg-white rounded-b-3xl">
+            <div class="flex flex-wrap items-center justify-center gap-3">
+                <button type="button" id="btnToggleStatusEdit" onclick="toggleClienteStatus()" class="rounded-2xl px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] transition">
+                    Ativar/Inativar
+                </button>
+                <button type="button" onclick="fecharModalEditarCliente()" class="rounded-2xl border border-zinc-300 bg-white px-6 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">
+                    Fechar
+                </button>
+                <button type="button" onclick="document.getElementById('formEditarCliente').submit()" class="rounded-2xl bg-barber-500 px-6 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-barber-600">
+                    Atualizar cliente
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -501,17 +513,29 @@
     </div>
 </div>
 
+<div id="confirmStatusModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-zinc-900/60 backdrop-blur-sm p-4">
+    <div class="w-full max-w-md rounded-3xl border border-zinc-200 bg-white shadow-2xl">
+        <div class="p-6 sm:p-8 text-center">
+            <div id="confirmStatusIcon" class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full"></div>
+            <h3 id="confirmStatusTitle" class="text-xl font-bold text-zinc-900 mb-2"></h3>
+            <p id="confirmStatusMessage" class="text-sm text-zinc-600 mb-6"></p>
+            <div class="flex justify-center gap-3">
+                <button type="button" onclick="closeConfirmStatusModal()" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">
+                    Cancelar
+                </button>
+                <button type="button" id="confirmStatusBtn" class="inline-flex items-center justify-center rounded-2xl px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 let currentClienteId = null;
+let currentClienteActive = null;
 let duplicateCheckTimeout = null;
 let phoneCheckedAndClear = false;
-
-function updateDaysFilter() {
-    const days = document.getElementById('daysFilter').value;
-    const url = new URL(window.location.href);
-    url.searchParams.set('days', days);
-    window.location.href = url.toString();
-}
 
 function abrirModalNovoCliente() {
     document.getElementById('modalNovoCliente').classList.remove('hidden');
@@ -550,6 +574,84 @@ function fecharModalEditarCliente() {
     document.getElementById('modalEditarCliente').classList.add('hidden');
     document.getElementById('modalEditarCliente').classList.remove('flex');
     currentClienteId = null;
+    currentClienteActive = null;
+}
+
+function updateToggleStatusButton() {
+    const btn = document.getElementById('btnToggleStatusEdit');
+    if (!btn) return;
+
+    if (currentClienteActive) {
+        btn.textContent = 'Inativar cliente';
+        btn.className = 'rounded-2xl border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] transition';
+    } else {
+        btn.textContent = 'Ativar cliente';
+        btn.className = 'rounded-2xl border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] transition';
+    }
+}
+
+function toggleClienteStatus() {
+    if (!currentClienteId) return;
+    showConfirmStatusModal();
+}
+
+function showConfirmStatusModal() {
+    const modal = document.getElementById('confirmStatusModal');
+    const icon = document.getElementById('confirmStatusIcon');
+    const title = document.getElementById('confirmStatusTitle');
+    const message = document.getElementById('confirmStatusMessage');
+    const btn = document.getElementById('confirmStatusBtn');
+
+    if (currentClienteActive) {
+        icon.className = 'mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100';
+        icon.innerHTML = '<svg class="h-7 w-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>';
+        title.textContent = 'Inativar cliente';
+        message.textContent = 'Tem certeza que deseja inativar este cliente? Ele não aparecerá mais nas listagens ativas.';
+        btn.textContent = 'Sim, inativar';
+        btn.className = 'inline-flex items-center justify-center rounded-2xl bg-red-600 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-red-700';
+    } else {
+        icon.className = 'mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100';
+        icon.innerHTML = '<svg class="h-7 w-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+        title.textContent = 'Ativar cliente';
+        message.textContent = 'Tem certeza que deseja ativar este cliente? Ele voltará a aparecer nas listagens ativas.';
+        btn.textContent = 'Sim, ativar';
+        btn.className = 'inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-emerald-700';
+    }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeConfirmStatusModal() {
+    const modal = document.getElementById('confirmStatusModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+async function executeToggleStatus() {
+    if (!currentClienteId) return;
+
+    try {
+        const response = await fetch(`/clientes/${currentClienteId}/toggle-status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        });
+
+        if (response.ok) {
+            closeConfirmStatusModal();
+            window.location.reload();
+        } else {
+            closeConfirmStatusModal();
+            alert('Erro ao alterar status do cliente');
+        }
+    } catch (error) {
+        console.error(error);
+        closeConfirmStatusModal();
+        alert('Erro ao alterar status do cliente');
+    }
 }
 
 async function loadClienteDetails(clienteId) {
@@ -610,6 +712,16 @@ async function loadClienteForEdit(clienteId) {
         const form = document.getElementById('formEditarCliente');
         form.action = `/clientes/${clienteId}`;
         const content = document.getElementById('editClienteContent');
+
+        currentClienteActive = cliente.active;
+        updateToggleStatusButton();
+
+        const statusBadge = document.getElementById('editClienteStatusBadge');
+        if (statusBadge) {
+            statusBadge.innerHTML = cliente.active
+                ? '<span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Ativo</span>'
+                : '<span class="inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-700">Inativo</span>';
+        }
 
         content.innerHTML = `
             <div>
@@ -695,15 +807,15 @@ async function loadClienteHistory(clienteId) {
         const servico = servicoInput?.value || '';
         const produtoId = produtoInput?.value || '';
 
-        const params = new URLSearchParams({ 
-            status, 
-            data_inicio: dataInicio, 
-            data_fim: dataFim, 
-            barbeiro_id: barbeiroId, 
-            servico, 
-            produto_id: produtoId 
+        const params = new URLSearchParams({
+            status,
+            data_inicio: dataInicio,
+            data_fim: dataFim,
+            barbeiro_id: barbeiroId,
+            servico,
+            produto_id: produtoId
         });
-        
+
         const response = await fetch(`/clientes/${clienteId}/history?${params}`);
         const data = await response.json();
         const tbody = document.getElementById('historyTableBody');
@@ -723,16 +835,16 @@ async function loadClienteHistory(clienteId) {
 
             return `
                 <tr class="hover:bg-zinc-50">
-                    <td class="px-4 py-3">
+                    <td class="w-[120px] px-4 py-3">
                         <span class="inline-flex rounded-full px-2 py-1 text-xs font-semibold ${statusClass}">
                             ${atend.status}
                         </span>
                     </td>
-                    <td class="px-4 py-3 text-sm text-zinc-700">${formatDateTime(atend.data_hora)}</td>
-                    <td class="px-4 py-3 text-sm text-zinc-700">${atend.barbeiro_nome || '-'}</td>
-                    <td class="px-4 py-3 text-center text-sm text-zinc-700">${atend.quantidade_servicos || 0}</td>
-                    <td class="px-4 py-3 text-center text-sm text-zinc-700">${atend.quantidade_produtos || 0}</td>
-                    <td class="px-4 py-3 text-sm text-zinc-900 font-semibold text-right">R$ ${formatCurrency(atend.valor_total || 0)}</td>
+                    <td class="w-[160px] px-4 py-3 text-sm text-zinc-700">${formatDateTime(atend.data_hora)}</td>
+                    <td class="w-[150px] px-4 py-3 text-sm text-zinc-700 truncate">${atend.barbeiro_nome || '-'}</td>
+                    <td class="w-[100px] px-4 py-3 text-center text-sm text-zinc-700">${atend.quantidade_servicos || 0}</td>
+                    <td class="w-[100px] px-4 py-3 text-center text-sm text-zinc-700">${atend.quantidade_produtos || 0}</td>
+                    <td class="w-[120px] px-4 py-3 text-sm text-zinc-900 font-semibold text-right">R$ ${formatCurrency(atend.valor_total || 0)}</td>
                 </tr>
             `;
         }).join('');
@@ -908,6 +1020,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 fecharModalEditarCliente();
             }
         });
+    }
+
+    const confirmStatusModal = document.getElementById('confirmStatusModal');
+    if (confirmStatusModal) {
+        confirmStatusModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeConfirmStatusModal();
+            }
+        });
+    }
+
+    const confirmStatusBtn = document.getElementById('confirmStatusBtn');
+    if (confirmStatusBtn) {
+        confirmStatusBtn.addEventListener('click', executeToggleStatus);
     }
 });
 </script>
