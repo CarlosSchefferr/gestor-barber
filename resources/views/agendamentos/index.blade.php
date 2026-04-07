@@ -145,6 +145,7 @@
                         <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Servico</th>
                         <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Barbeiro</th>
                         <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Valor</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Status</th>
                         <th class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wide text-zinc-500">Acoes</th>
                     </tr>
                 </thead>
@@ -185,6 +186,26 @@
                             </td>
                             <td class="whitespace-nowrap px-6 py-4 text-sm font-bold text-emerald-600">
                                 R$ {{ number_format($agendamento->price ?? 0, 2, ',', '.') }}
+                            </td>
+                            <td class="whitespace-nowrap px-6 py-4">
+                                @php
+                                    $statusClasses = [
+                                        'agendado' => 'bg-blue-100 text-blue-700',
+                                        'atendido' => 'bg-emerald-100 text-emerald-700',
+                                        'cancelado' => 'bg-red-100 text-red-700',
+                                        'não compareceu' => 'bg-yellow-100 text-yellow-700'
+                                    ];
+                                    $statusText = [
+                                        'agendado' => 'Agendado',
+                                        'atendido' => 'Atendido',
+                                        'cancelado' => 'Cancelado',
+                                        'não compareceu' => 'Não compareceu'
+                                    ];
+                                    $status = $agendamento->status ?? 'agendado';
+                                @endphp
+                                <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ $statusClasses[$status] ?? 'bg-zinc-100 text-zinc-700' }}">
+                                    {{ $statusText[$status] ?? $status }}
+                                </span>
                             </td>
                             <td class="whitespace-nowrap px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
@@ -316,6 +337,23 @@
                     </div>
                 </div>
 
+                <div class="sm:col-span-2 flex justify-center">
+                    <div class="w-full max-w-xs">
+                        <label class="text-sm font-semibold text-zinc-700 block text-center mb-2">Status</label>
+                        <x-custom-select
+                            name="status"
+                            :options="[
+                                'agendado' => 'Agendado',
+                                'atendido' => 'Atendido',
+                                'cancelado' => 'Cancelado',
+                                'não compareceu' => 'Não compareceu'
+                            ]"
+                            :value="old('status', 'agendado')"
+                            placeholder="Selecione o status"
+                        />
+                    </div>
+                </div>
+
                 <div class="sm:col-span-2">
                     <label class="text-sm font-semibold text-zinc-700">Observacoes</label>
                     <textarea name="observacoes" rows="3"
@@ -324,7 +362,7 @@
                 </div>
             </div>
 
-            <div class="flex justify-center gap-3 pt-4">
+            <div class="flex justify-center gap-3 pt-6">
                 <button type="button" onclick="closeNovoAgendamentoModal()" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">Cancelar</button>
                 <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">Salvar agendamento</button>
             </div>
@@ -410,13 +448,31 @@
                     </div>
                 </div>
 
+                <div class="sm:col-span-2 flex justify-center">
+                    <div class="w-full max-w-xs">
+                        <label class="text-sm font-semibold text-zinc-700 block text-center mb-2">Status</label>
+                        <x-custom-select
+                            name="status"
+                            id="editStatusSelect"
+                            :options="[
+                                'agendado' => 'Agendado',
+                                'atendido' => 'Atendido',
+                                'cancelado' => 'Cancelado',
+                                'não compareceu' => 'Não compareceu'
+                            ]"
+                            :value="old('status')"
+                            placeholder="Selecione o status"
+                        />
+                    </div>
+                </div>
+
                 <div class="sm:col-span-2">
                     <label class="text-sm font-semibold text-zinc-700">Observacoes</label>
                     <textarea name="observacoes" id="editObservacoes" rows="3" placeholder="Digite aqui observacoes importantes sobre o agendamento..." class="{{ $inputClass }} resize-none"></textarea>
                 </div>
             </div>
 
-            <div class="flex justify-center gap-3 pt-4">
+            <div class="flex justify-center gap-3 pt-6">
                 <button type="button" onclick="closeEditarAgendamentoModal()" class="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-zinc-700 transition hover:bg-zinc-100">Cancelar</button>
                 <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-barber-500 px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-sm transition hover:bg-barber-600">Salvar alteracoes</button>
             </div>
@@ -506,6 +562,22 @@
 .gb-cal-event-barber {
     background: linear-gradient(135deg, #c96f1f 0%, #db934c 100%);
     color: white;
+}
+.gb-cal-event-agendado {
+    background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+    color: white;
+}
+.gb-cal-event-atendido {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    color: white;
+}
+.gb-cal-event-cancelado {
+    background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+    color: white;
+}
+.gb-cal-event-nao-compareceu {
+    background: linear-gradient(135deg, #eab308 0%, #facc15 100%);
+    color: #18181b;
 }
 /* Week View */
 .gb-cal-week-grid {
@@ -699,7 +771,14 @@ function renderMonthView(container) {
             </div>`;
             events.slice(0, 3).forEach(e => {
                 const time = new Date(e.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                html += `<div class="gb-cal-event gb-cal-event-barber" onclick="event.stopPropagation(); showEventModal(${e.id})" title="${e.title}">${time} ${e.title}</div>`;
+                const status = e.extendedProps?.status || 'agendado';
+                const statusClass = {
+                    'agendado': 'gb-cal-event-agendado',
+                    'atendido': 'gb-cal-event-atendido',
+                    'cancelado': 'gb-cal-event-cancelado',
+                    'não compareceu': 'gb-cal-event-nao-compareceu'
+                }[status] || 'gb-cal-event-barber';
+                html += `<div class="gb-cal-event ${statusClass}" onclick="event.stopPropagation(); showEventModal(${e.id})" title="${e.title}">${time} ${e.title}</div>`;
             });
             if (events.length > 3) {
                 html += `<div class="mt-1 text-[0.65rem] text-zinc-500 font-medium">+${events.length - 3} mais</div>`;
@@ -752,7 +831,14 @@ function renderWeekView(container) {
             html += `<div class="gb-cal-week-cell" onclick="openNewAppointment('${dateKey}', ${h})">`;
             eventsInSlot.forEach(e => {
                 const patient = e.extendedProps?.cliente_name || e.title || 'Cliente';
-                html += `<div class="gb-cal-event gb-cal-event-barber" onclick="event.stopPropagation(); showEventModal(${e.id})">${patient}</div>`;
+                const status = e.extendedProps?.status || 'agendado';
+                const statusClass = {
+                    'agendado': 'gb-cal-event-agendado',
+                    'atendido': 'gb-cal-event-atendido',
+                    'cancelado': 'gb-cal-event-cancelado',
+                    'não compareceu': 'gb-cal-event-nao-compareceu'
+                }[status] || 'gb-cal-event-barber';
+                html += `<div class="gb-cal-event ${statusClass}" onclick="event.stopPropagation(); showEventModal(${e.id})">${patient}</div>`;
             });
             html += '</div>';
         });
@@ -785,7 +871,14 @@ function renderDayView(container) {
             const patient = e.extendedProps?.cliente_name || e.title || 'Cliente';
             const time = new Date(e.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
             const servico = e.extendedProps?.servico || '';
-            html += `<div class="flex items-center gap-3 rounded-xl bg-gradient-to-r from-barber-500 to-barber-600 p-3 text-white mb-2 cursor-pointer transition hover:shadow-lg" onclick="event.stopPropagation(); showEventModal(${e.id})">
+            const status = e.extendedProps?.status || 'agendado';
+            const statusGradient = {
+                'agendado': 'from-blue-500 to-blue-600',
+                'atendido': 'from-emerald-500 to-emerald-600',
+                'cancelado': 'from-red-500 to-red-600',
+                'não compareceu': 'from-yellow-500 to-yellow-600'
+            }[status] || 'from-barber-500 to-barber-600';
+            html += `<div class="flex items-center gap-3 rounded-xl bg-gradient-to-r ${statusGradient} p-3 text-white mb-2 cursor-pointer transition hover:shadow-lg" onclick="event.stopPropagation(); showEventModal(${e.id})">
                 <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                 </div>
@@ -884,6 +977,11 @@ window.showEventModal = function(id) {
                             </div>
                         </div>
 
+                        <div id="eventModalStatusContainer" class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                            <p class="text-xs font-semibold uppercase text-zinc-500">Status</p>
+                            <p id="eventModalStatus" class="mt-1 text-sm font-medium text-zinc-900"></p>
+                        </div>
+
                         <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
                             <p class="text-xs font-semibold uppercase text-zinc-500">Observacoes</p>
                             <p id="eventModalObservacoes" class="mt-1 text-sm text-zinc-700"></p>
@@ -924,6 +1022,26 @@ window.showEventModal = function(id) {
         var formattedPrice = 'R$ 0,00';
         try { formattedPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(priceVal)); } catch (e) {}
         document.getElementById('eventModalValor').textContent = formattedPrice;
+
+        var status = props.status || 'agendado';
+        var statusText = {
+            'agendado': 'Agendado',
+            'atendido': 'Atendido',
+            'cancelado': 'Cancelado',
+            'não compareceu': 'Não compareceu'
+        }[status] || status;
+
+        var statusClasses = {
+            'agendado': 'bg-blue-100 text-blue-700 border-blue-200',
+            'atendido': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+            'cancelado': 'bg-red-100 text-red-700 border-red-200',
+            'não compareceu': 'bg-yellow-100 text-yellow-700 border-yellow-200'
+        }[status] || 'bg-zinc-100 text-zinc-700 border-zinc-200';
+
+        var statusContainer = document.getElementById('eventModalStatusContainer');
+        statusContainer.className = 'rounded-2xl border p-4 ' + statusClasses;
+        statusContainer.querySelector('p:last-child').textContent = statusText;
+
         document.getElementById('eventModalObservacoes').textContent = props.observacoes || 'Nenhuma observacao.';
 
         document.getElementById('eventModalEdit').onclick = function() { closeEventModal(); openEditarAgendamentoModal(id); };
@@ -996,7 +1114,8 @@ var agendamentosData = {!! json_encode($agendamentos->map(function($a) {
         'ends_at' => $a->ends_at ? $a->ends_at->format('Y-m-d\TH:i') : '',
         'servico' => $a->servico,
         'price' => $a->price,
-        'observacoes' => $a->observacoes
+        'observacoes' => $a->observacoes,
+        'status' => $a->status
     ];
 })->keyBy('id')) !!};
 
@@ -1024,7 +1143,27 @@ function updateCustomSelectText(wrapper, value, optionsMap) {
 
 function openEditarAgendamentoModal(id) {
     var data = agendamentosData[id];
-    if (!data) return;
+    if (!data) {
+        console.log('Carregando dados do agendamento via evento do calendário');
+        var ev = agendamentoMap[id];
+        if (ev) {
+            var props = ev.extendedProps || {};
+            data = {
+                id: id,
+                cliente_id: props.cliente_id || '',
+                barbeiro_id: props.barbeiro_id || '',
+                starts_at: props.starts_at || '',
+                ends_at: props.ends_at || '',
+                servico: props.servico || '',
+                price: props.price || '',
+                observacoes: props.observacoes || '',
+                status: props.status || 'agendado'
+            };
+        } else {
+            console.warn('Agendamento não encontrado');
+            return;
+        }
+    }
 
     var modal = document.getElementById('editarAgendamentoModal');
     var form = document.getElementById('editarAgendamentoForm');
@@ -1056,6 +1195,15 @@ function openEditarAgendamentoModal(id) {
                 }
                 if (input && input.name === 'servico') {
                     updateCustomSelectText(wrapper, data.servico, servicosMap);
+                }
+                if (input && input.name === 'status') {
+                    var statusMap = {
+                        'agendado': 'Agendado',
+                        'atendido': 'Atendido',
+                        'cancelado': 'Cancelado',
+                        'não compareceu': 'Não compareceu'
+                    };
+                    updateCustomSelectText(wrapper, data.status || 'agendado', statusMap);
                 }
             });
         }, 50);

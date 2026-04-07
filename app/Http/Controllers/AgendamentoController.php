@@ -67,6 +67,8 @@ class AgendamentoController extends Controller
                 'borderColor' => $a->color ?? '#3b82f6',
                 'textColor' => '#ffffff',
                 'extendedProps' => [
+                    'cliente_id' => $a->cliente_id,
+                    'barbeiro_id' => $a->barbeiro_id,
                     'barbeiro' => $a->barbeiro? $a->barbeiro->name : '',
                     'barbeiro_name' => $a->barbeiro? $a->barbeiro->name : '',
                     'cliente_name' => $a->cliente? $a->cliente->nome : '',
@@ -74,6 +76,7 @@ class AgendamentoController extends Controller
                     'servico' => $a->servico ?? '',
                     'price' => $a->price ?? null,
                     'observacoes' => $a->observacoes ?? '',
+                    'status' => $a->status ?? 'agendado',
                     'color' => $a->color ?? null,
                     'starts_at' => $a->starts_at ? $a->starts_at->format('Y-m-d\TH:i:s') : null,
                     'ends_at' => $a->ends_at ? $a->ends_at->format('Y-m-d\TH:i:s') : null,
@@ -107,6 +110,7 @@ class AgendamentoController extends Controller
             'color' => ['nullable','regex:/^#[0-9A-Fa-f]{6}$/'],
             'price' => 'nullable|numeric',
             'observacoes' => 'nullable|string',
+            'status' => 'nullable|in:agendado,atendido,cancelado,não compareceu',
         ]);
 
     $data['user_id'] = Auth::id();
@@ -145,7 +149,7 @@ class AgendamentoController extends Controller
             'color' => ['nullable','regex:/^#[0-9A-Fa-f]{6}$/'],
             'price' => 'nullable|numeric',
             'observacoes' => 'nullable|string',
-            'status' => 'nullable|string',
+            'status' => 'nullable|in:agendado,atendido,cancelado,não compareceu',
         ]);
 
         $agendamento->update($data);
