@@ -350,7 +350,7 @@
 
             <div x-show="abaAtiva === 'atendimentos'" class="tab-content">
                 <div class="mb-6 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-                    <h3 class="text-sm font-bold text-zinc-900 mb-4">Filtros do Histórico</h3>
+                    <h3 class="text-sm font-bold text-zinc-900 mb-4">Filtros</h3>
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                         <div>
                             <label class="text-sm font-semibold text-zinc-700 block mb-2">Status</label>
@@ -852,20 +852,39 @@ async function loadClienteHistory(clienteId) {
         }
 
         tbody.innerHTML = data.data.map(atend => {
-            const statusClass = {
-                'atendido': 'bg-emerald-100 text-emerald-700',
-                'agendado': 'bg-blue-100 text-blue-700',
-                'cancelado': 'bg-red-100 text-red-700',
-                'não compareceu': 'bg-orange-100 text-orange-700'
-            }[atend.status?.toLowerCase()] || 'bg-zinc-100 text-zinc-700';
+           const statusMap = {
+
+            'atendido': {
+                label: 'Atendido',
+                class: 'bg-emerald-100 text-emerald-700'
+            },
+            'agendado': {
+                label: 'Agendado',
+                class: 'bg-blue-100 text-blue-700'
+            },
+            'cancelado': {
+                label: 'Cancelado',
+                class: 'bg-red-100 text-red-700'
+            },
+            'não compareceu': {
+                label: 'Não compareceu',
+                class: 'bg-orange-100 text-orange-700'
+            }
+        };
+
+        const statusKey = atend.status?.toLowerCase();
+        const status = statusMap[statusKey] || {
+            label: atend.status || '—',
+            class: 'bg-zinc-100 text-zinc-700'
+        };
 
             return `
                 <tr class="hover:bg-zinc-50">
                     <td class="px-4 py-3">
-                        <span class="inline-flex rounded-full px-2 py-1 text-xs font-semibold ${statusClass}">
-                            ${atend.status}
-                        </span>
-                    </td>
+                        <span class="inline-flex rounded-full px-2 py-1 text-xs font-semibold ${status.class}">
+                        ${status.label}
+                 </span>
+                </td>
                     <td class="px-4 py-3 text-sm text-zinc-700">${formatDateTime(atend.data_hora)}</td>
                     <td class="px-4 py-3 text-sm text-zinc-700 truncate">${atend.barbeiro_nome || '-'}</td>
                     <td class="px-4 py-3 text-center text-sm text-zinc-700">${atend.quantidade_servicos || 0}</td>
