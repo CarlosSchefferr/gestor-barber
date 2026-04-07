@@ -43,14 +43,26 @@ class AgendamentoController extends Controller
 
         $agendamentos = $query->orderBy('starts_at')->paginate(20)->withQueryString();
 
-        // Para o calendário, usar a mesma query (aplicando os filtros) e gerar eventos
-        $calendarAgendamentos = (clone $query)->orderBy('starts_at')->get();
+        // Para o calendário, criar query SEPARADA sem filtros de data (para mostrar todos os agendamentos)
+        $calendarQuery = Agendamento::query()->with(['cliente', 'barbeiro']);
+        if (Auth::check() && Auth::user()->isBarber()) {
+            $calendarQuery->where('barbeiro_id', Auth::id());
+        }
+        // Aplicar apenas filtros de cliente e barbeiro, NÃO os filtros de data
+        if ($request->filled('cliente_id')) {
+            $calendarQuery->where('cliente_id', $request->cliente_id);
+        }
+        if ($request->filled('barbeiro_id')) {
+            $calendarQuery->where('barbeiro_id', $request->barbeiro_id);
+        }
+        $calendarAgendamentos = $calendarQuery->orderBy('starts_at')->get();
         $calendarEvents = $calendarAgendamentos->map(function($a) {
             return [
                 'id' => $a->id,
                 'title' => ($a->cliente? $a->cliente->nome : '') . ' - ' . ($a->servico ?? ''),
-                'start' => $a->starts_at ? $a->starts_at->toIso8601String() : null,
-                'end' => $a->ends_at ? $a->ends_at->toIso8601String() : null,
+                'start' => $a->starts_at ? $a->starts_at->format('Y-m-d\TH:i:s') : null,
+                'end' => $a->ends_at ? $a->ends_at->format('Y-m-d\TH:i:s') : null,
+                'dateKey' => $a->starts_at ? $a->starts_at->format('Y-m-d') : null,
                 'backgroundColor' => $a->color ?? '#3b82f6',
                 'borderColor' => $a->color ?? '#3b82f6',
                 'textColor' => '#ffffff',
@@ -63,8 +75,8 @@ class AgendamentoController extends Controller
                     'price' => $a->price ?? null,
                     'observacoes' => $a->observacoes ?? '',
                     'color' => $a->color ?? null,
-                    'starts_at' => $a->starts_at ? $a->starts_at->toIso8601String() : null,
-                    'ends_at' => $a->ends_at ? $a->ends_at->toIso8601String() : null,
+                    'starts_at' => $a->starts_at ? $a->starts_at->format('Y-m-d\TH:i:s') : null,
+                    'ends_at' => $a->ends_at ? $a->ends_at->format('Y-m-d\TH:i:s') : null,
                 ],
             ];
         })->toArray();

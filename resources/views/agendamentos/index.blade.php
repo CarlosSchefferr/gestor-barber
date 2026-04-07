@@ -583,16 +583,24 @@ let calendarCurrentDate = new Date();
 function pad2(n) { return String(n).padStart(2, '0'); }
 
 function formatDateKey(date) {
+    if (typeof date === 'string') {
+        return date.split('T')[0];
+    }
     const d = new Date(date);
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    const year = d.getFullYear();
+    const month = pad2(d.getMonth() + 1);
+    const day = pad2(d.getDate());
+    return `${year}-${month}-${day}`;
 }
 
 function groupEventsByDate(events) {
     const map = {};
-    events.forEach(e => {
-        const key = formatDateKey(e.start);
-        if (!map[key]) map[key] = [];
-        map[key].push(e);
+    events.forEach((e, idx) => {
+        if (!e.dateKey) {
+            return;
+        }
+        if (!map[e.dateKey]) map[e.dateKey] = [];
+        map[e.dateKey].push(e);
     });
     return map;
 }
@@ -600,12 +608,12 @@ function groupEventsByDate(events) {
 function groupEventsByDateAndHour(events) {
     const map = {};
     events.forEach(e => {
+        if (!e.dateKey) return;
         const d = new Date(e.start);
-        const dateKey = formatDateKey(e.start);
         const hour = d.getHours();
-        if (!map[dateKey]) map[dateKey] = {};
-        if (!map[dateKey][hour]) map[dateKey][hour] = [];
-        map[dateKey][hour].push(e);
+        if (!map[e.dateKey]) map[e.dateKey] = {};
+        if (!map[e.dateKey][hour]) map[e.dateKey][hour] = [];
+        map[e.dateKey][hour].push(e);
     });
     return map;
 }
@@ -658,6 +666,7 @@ function renderMonthView(container) {
     const todayKey = formatDateKey(new Date());
     const monthNames = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
+
     let html = `
         <div class="mb-4">
             <h3 class="text-xl font-bold text-zinc-900">${monthNames[month]} ${year}</h3>
@@ -677,6 +686,7 @@ function renderMonthView(container) {
         if (inMonth) cellDate = new Date(year, month, dayNumber);
         const dateKey = cellDate ? formatDateKey(cellDate) : null;
         const events = dateKey && eventsByDate[dateKey] ? eventsByDate[dateKey] : [];
+
         const isToday = dateKey === todayKey;
         const otherClass = inMonth ? '' : ' gb-cal-day-other';
         const todayClass = isToday ? ' gb-cal-day-today' : '';

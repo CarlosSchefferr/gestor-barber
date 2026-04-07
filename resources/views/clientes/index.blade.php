@@ -145,14 +145,14 @@
         </div>
 
         <div class="overflow-x-auto">
-            <table class="min-w-full table-fixed">
+            <table class="min-w-full">
                 <thead class="bg-zinc-50">
                     <tr>
-                        <th class="w-[280px] px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Cliente</th>
-                        <th class="w-[200px] px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Contato</th>
-                        <th class="w-[180px] px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Último atendimento</th>
-                        <th class="w-[100px] px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Status</th>
-                        <th class="w-[120px] px-6 py-3 text-right text-xs font-bold uppercase tracking-wide text-zinc-500">Ações</th>
+                        <th class="flex-1 px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Cliente</th>
+                        <th class="flex-1 px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Contato</th>
+                        <th class="flex-1 px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">Último atendimento</th>
+                        <th class="w-[160px] px-6 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-500">Status</th>
+                        <th class="w-[140px] px-6 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-500">Ações</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-100 bg-white">
@@ -187,15 +187,15 @@
                                     <span class="text-sm text-zinc-400">Nunca atendido</span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-4 text-center">
                                 @if($cliente->active)
                                     <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Ativo</span>
                                 @else
                                     <span class="inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-700">Inativo</span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 text-right">
-                                <div class="flex items-center justify-end gap-2">
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex items-center justify-center gap-2">
                                     <button type="button" onclick="abrirModalDetalhesCliente({{ $cliente->id }})" class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition hover:bg-zinc-50 hover:text-barber-600" title="Ver detalhes">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -430,15 +430,15 @@
 
                 <div class="rounded-2xl border border-zinc-200 overflow-hidden">
                     <div class="overflow-x-auto">
-                        <table class="w-full table-fixed">
+                        <table class="w-full">
                             <thead class="bg-zinc-50">
                                 <tr>
-                                    <th class="w-[120px] px-4 py-3 text-left text-xs font-semibold uppercase text-zinc-600">Status</th>
-                                    <th class="w-[160px] px-4 py-3 text-left text-xs font-semibold uppercase text-zinc-600">Data/Hora</th>
-                                    <th class="w-[150px] px-4 py-3 text-left text-xs font-semibold uppercase text-zinc-600">Barbeiro</th>
-                                    <th class="w-[100px] px-4 py-3 text-center text-xs font-semibold uppercase text-zinc-600">Serviços</th>
-                                    <th class="w-[100px] px-4 py-3 text-center text-xs font-semibold uppercase text-zinc-600">Produtos</th>
-                                    <th class="w-[120px] px-4 py-3 text-right text-xs font-semibold uppercase text-zinc-600">Valor</th>
+                                    <th class="flex-1 px-4 py-3 text-left text-xs font-semibold uppercase text-zinc-600">Status</th>
+                                    <th class="flex-1 px-4 py-3 text-left text-xs font-semibold uppercase text-zinc-600">Data/Hora</th>
+                                    <th class="flex-1 px-4 py-3 text-left text-xs font-semibold uppercase text-zinc-600">Barbeiro</th>
+                                    <th class="w-[120px] px-4 py-3 text-center text-xs font-semibold uppercase text-zinc-600">Serviços</th>
+                                    <th class="w-[120px] px-4 py-3 text-center text-xs font-semibold uppercase text-zinc-600">Produtos</th>
+                                    <th class="w-[160px] px-4 py-3 text-center text-xs font-semibold uppercase text-zinc-600">Valor</th>
                                 </tr>
                             </thead>
                             <tbody id="historyTableBody" class="divide-y divide-zinc-200 bg-white">
@@ -628,6 +628,21 @@ function closeConfirmStatusModal() {
     modal.classList.remove('flex');
 }
 
+function showSuccessNotification(message) {
+    const container = document.createElement('div');
+    container.className = 'fixed top-4 right-4 z-[100]';
+    container.innerHTML = `
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-lg">
+            <p class="text-sm font-medium text-emerald-700">${message}</p>
+        </div>
+    `;
+    document.body.appendChild(container);
+
+    setTimeout(() => {
+        container.remove();
+    }, 3000);
+}
+
 async function executeToggleStatus() {
     if (!currentClienteId) return;
 
@@ -636,13 +651,18 @@ async function executeToggleStatus() {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
             }
         });
 
         if (response.ok) {
             closeConfirmStatusModal();
-            window.location.reload();
+            const message = currentClienteActive ? 'Cliente inativado com sucesso!' : 'Cliente ativado com sucesso!';
+            showSuccessNotification(message);
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
         } else {
             closeConfirmStatusModal();
             alert('Erro ao alterar status do cliente');
@@ -756,14 +776,20 @@ async function loadClienteForEdit(clienteId) {
                 <input type="text" name="bairro" value="${cliente.bairro || ''}" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-400 shadow-sm transition focus:border-barber-500 focus:bg-white focus:ring-2 focus:ring-barber-500/20">
             </div>
 
-            <div>
-                <label class="text-sm font-semibold text-zinc-700">Foto atual</label>
-                ${cliente.foto ? `<img src="/storage/${cliente.foto}" alt="${cliente.nome}" class="mt-2 h-24 w-24 rounded-lg object-cover border border-zinc-200">` : '<p class="mt-2 text-sm text-zinc-500">Sem foto</p>'}
-                <label class="mt-3 text-sm font-semibold text-zinc-700 block">Nova foto</label>
-                <input type="file" name="foto" accept="image/jpeg,image/jpg,image/png" class="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900" onchange="previewPhoto(this, 'photoPreviewEdit')">
-                <div id="photoPreviewEdit" class="mt-3 hidden">
-                    <img src="" alt="Preview" class="h-24 w-24 rounded-lg object-cover border border-zinc-200">
+            <div class="flex flex-col items-center p-5 bg-zinc-50 rounded-2xl border border-zinc-200">
+                <div class="relative w-24 h-24 rounded-lg bg-zinc-200 flex items-center justify-center overflow-hidden mb-3 border-2 border-white shadow-lg">
+                    <div id="photoSemFotoEdit" class="absolute inset-0 flex items-center justify-center text-zinc-400 text-sm font-semibold text-center px-2 ${cliente.foto ? 'hidden' : ''}">Sem foto</div>
+                    <img id="photoImgEdit" src="${cliente.foto ? '/storage/' + cliente.foto : ''}" alt="Preview" class="w-full h-full object-cover ${cliente.foto ? '' : 'hidden'}">
                 </div>
+                <label class="text-sm font-semibold text-zinc-700 mb-2">Foto do cliente</label>
+                <input type="file" name="foto" accept="image/jpeg,image/jpg,image/png" class="hidden" id="fotoInputEdit" onchange="previewPhotoEdit(this)">
+                <button type="button" onclick="document.getElementById('fotoInputEdit').click()" class="inline-flex items-center gap-2 rounded-xl bg-white border border-zinc-300 px-4 py-2 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Escolher foto
+                </button>
+                <p class="text-xs text-zinc-400 mt-2">Opcional • JPG, PNG</p>
             </div>
 
             <div>
@@ -783,7 +809,7 @@ async function loadClienteStatistics(clienteId) {
 
         document.getElementById('indicatorDaysSince').textContent = stats.days_since_last_appointment !== null ? stats.days_since_last_appointment : 'N/A';
         document.getElementById('indicatorAtendCount').textContent = stats.atendimentos_count || 0;
-        document.getElementById('indicatorMostService').textContent = stats.most_frequent_service ? `Mais freq: ${stats.most_frequent_service}` : '';
+        document.getElementById('indicatorMostService').textContent = stats.most_frequent_service ? `Mais frequente: ${stats.most_frequent_service}` : '';
         document.getElementById('indicatorProdCount').textContent = stats.produtos_count || 0;
         document.getElementById('indicatorMostProduct').textContent = stats.most_bought_product ? `Mais comprado: ${stats.most_bought_product}` : '';
         document.getElementById('indicatorValorTotal').textContent = 'R$ ' + formatCurrency(stats.valor_total || 0);
@@ -835,16 +861,16 @@ async function loadClienteHistory(clienteId) {
 
             return `
                 <tr class="hover:bg-zinc-50">
-                    <td class="w-[120px] px-4 py-3">
+                    <td class="px-4 py-3">
                         <span class="inline-flex rounded-full px-2 py-1 text-xs font-semibold ${statusClass}">
                             ${atend.status}
                         </span>
                     </td>
-                    <td class="w-[160px] px-4 py-3 text-sm text-zinc-700">${formatDateTime(atend.data_hora)}</td>
-                    <td class="w-[150px] px-4 py-3 text-sm text-zinc-700 truncate">${atend.barbeiro_nome || '-'}</td>
-                    <td class="w-[100px] px-4 py-3 text-center text-sm text-zinc-700">${atend.quantidade_servicos || 0}</td>
-                    <td class="w-[100px] px-4 py-3 text-center text-sm text-zinc-700">${atend.quantidade_produtos || 0}</td>
-                    <td class="w-[120px] px-4 py-3 text-sm text-zinc-900 font-semibold text-right">R$ ${formatCurrency(atend.valor_total || 0)}</td>
+                    <td class="px-4 py-3 text-sm text-zinc-700">${formatDateTime(atend.data_hora)}</td>
+                    <td class="px-4 py-3 text-sm text-zinc-700 truncate">${atend.barbeiro_nome || '-'}</td>
+                    <td class="px-4 py-3 text-center text-sm text-zinc-700">${atend.quantidade_servicos || 0}</td>
+                    <td class="px-4 py-3 text-center text-sm text-zinc-700">${atend.quantidade_produtos || 0}</td>
+                    <td class="px-4 py-3 text-center text-sm text-zinc-900 font-semibold">R$ ${formatCurrency(atend.valor_total || 0)}</td>
                 </tr>
             `;
         }).join('');
@@ -973,6 +999,24 @@ function previewPhoto(input, previewId) {
             const img = preview.querySelector('img');
             if (img) img.src = e.target.result;
             preview.classList.remove('hidden');
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function previewPhotoEdit(input) {
+    const semFoto = document.getElementById('photoSemFotoEdit');
+    const img = document.getElementById('photoImgEdit');
+    if (!img) return;
+
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            img.src = e.target.result;
+            img.classList.remove('hidden');
+            if (semFoto) {
+                semFoto.classList.add('hidden');
+            }
         };
         reader.readAsDataURL(input.files[0]);
     }

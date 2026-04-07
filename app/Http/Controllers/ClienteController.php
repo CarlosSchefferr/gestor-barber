@@ -143,7 +143,6 @@ class ClienteController extends Controller
      */
     public function toggleStatus(Cliente $cliente)
     {
-        // Allow owners to toggle any client; barbers can toggle only clients they attended
         if (auth()->user()->isBarber()) {
             $attended = $cliente->agendamentos()->where('barbeiro_id', auth()->id())->exists();
             if (!$attended) {
@@ -153,6 +152,10 @@ class ClienteController extends Controller
 
         $cliente->active = !$cliente->active;
         $cliente->save();
+
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true, 'active' => $cliente->active]);
+        }
 
         return redirect()->route('clientes.index')->with('success', 'Status do cliente atualizado.');
     }
@@ -197,23 +200,25 @@ class ClienteController extends Controller
     {
         $data = $request->validate([
             'nome' => 'required|string|max:255',
-            'data_nascimento' => 'required|date',
+            'data_nascimento' => 'nullable|date',
             'email' => 'nullable|email',
-            'telefone' => 'required|string|max:50',
+            'telefone' => 'nullable|string|max:50',
             'cep' => 'nullable|string|max:10',
             'bairro' => 'nullable|string|max:100',
             'observacoes' => 'nullable|string',
             'foto' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
         ]);
 
-        // Handle photo upload
+        if (!isset($data['data_nascimento']) || empty($data['data_nascimento'])) {
+            $data['data_nascimento'] = now()->subYears(25)->format('Y-m-d');
+        }
+
         if ($request->hasFile('foto')) {
             $foto = $request->file('foto');
             $filename = time() . '_' . $foto->getClientOriginalName();
             $data['foto'] = $foto->storeAs('clientes/fotos', $filename, 'public');
         }
 
-        // Add audit trail
         $data['created_by'] = auth()->id();
         $data['updated_by'] = auth()->id();
 

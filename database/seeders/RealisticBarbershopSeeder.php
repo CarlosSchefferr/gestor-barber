@@ -207,11 +207,17 @@ class RealisticBarbershopSeeder extends Seeder
         $end = Carbon::create($year, 12, 31)->endOfDay();
 
         for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
-            $appointmentsOnDay = match ($date->dayOfWeekIso) {
-                6 => random_int(12, 20), // sabado
-                7 => random_int(3, 9),   // domingo
-                default => random_int(18, 32), // dias uteis
-            };
+            $rand = random_int(1, 100);
+
+            if ($rand <= 28) {
+                $appointmentsOnDay = 0;
+            } elseif ($rand <= 55) {
+                $appointmentsOnDay = random_int(1, 5);
+            } elseif ($rand <= 78) {
+                $appointmentsOnDay = random_int(5, 12);
+            } else {
+                $appointmentsOnDay = random_int(12, 22);
+            }
 
             for ($i = 0; $i < $appointmentsOnDay; $i++) {
                 $service = $services[array_rand($services)];
