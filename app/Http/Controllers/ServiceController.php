@@ -41,7 +41,7 @@ class ServiceController extends Controller
             $query->orderBy('name');
         }
 
-        $services = $query->paginate(20)->withQueryString();
+        $services = $query->with('comboServices')->paginate(20)->withQueryString();
 
         $totalServicos = Service::count();
         $servicosAtivos = Service::where('active', true)->count();
@@ -65,18 +65,46 @@ class ServiceController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
+            'type' => 'required|in:service,combo',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'duration' => 'required',
             'price' => 'required|numeric|min:0',
             'commission' => 'nullable|numeric|min:0',
+            'return_alert_days' => 'nullable|integer|min:0',
+            'observations' => 'nullable|string',
+            'combo_services' => 'nullable|array',
+            'combo_services.*' => 'exists:services,id',
         ]);
 
-        // Ensure commission has a default
         if (!isset($data['commission']) || $data['commission'] === null || $data['commission'] === '') {
             $data['commission'] = 0;
         }
 
-        Service::create($data);
+        // Convert duration HH:MM to minutes
+        if (!empty($data['duration'])) {
+            $parts = explode(':', $data['duration']);
+            if (count($parts) >= 2) {
+                $data['duration'] = (int)$parts[0] * 60 + (int)$parts[1];
+            } else {
+                $data['duration'] = (int)$data['duration'];
+            }
+        }
+
+        $service = Service::create([
+            'type' => $data['type'],
+            'name' => $data['name'],
+            'description' => $data['description'] ?? null,
+            'duration' => $data['duration'] ?? 0,
+            'price' => $data['price'],
+            'commission' => $data['commission'],
+            'return_alert_days' => $data['return_alert_days'] ?? null,
+            'observations' => $data['observations'] ?? null,
+        ]);
+
+        if ($data['type'] === 'combo' && !empty($data['combo_services'])) {
+            $service->comboServices()->sync($data['combo_services']);
+        }
 
         return redirect()->route('admin.services.index')->with('success', 'Serviço criado com sucesso.');
     }
@@ -120,17 +148,48 @@ class ServiceController extends Controller
     public function update(Request $request, Service $service)
     {
         $data = $request->validate([
+            'type' => 'required|in:service,combo',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'duration' => 'required',
             'price' => 'required|numeric|min:0',
             'commission' => 'nullable|numeric|min:0',
+            'return_alert_days' => 'nullable|integer|min:0',
+            'observations' => 'nullable|string',
+            'combo_services' => 'nullable|array',
+            'combo_services.*' => 'exists:services,id',
         ]);
 
         if (!isset($data['commission']) || $data['commission'] === null || $data['commission'] === '') {
             $data['commission'] = 0;
         }
 
-        $service->update($data);
+        // Convert duration HH:MM to minutes
+        if (!empty($data['duration'])) {
+            $parts = explode(':', $data['duration']);
+            if (count($parts) >= 2) {
+                $data['duration'] = (int)$parts[0] * 60 + (int)$parts[1];
+            } else {
+                $data['duration'] = (int)$data['duration'];
+            }
+        }
+
+        $service->update([
+            'type' => $data['type'],
+            'name' => $data['name'],
+            'description' => $data['description'] ?? null,
+            'duration' => $data['duration'] ?? 0,
+            'price' => $data['price'],
+            'commission' => $data['commission'],
+            'return_alert_days' => $data['return_alert_days'] ?? null,
+            'observations' => $data['observations'] ?? null,
+        ]);
+
+        if ($data['type'] === 'combo') {
+            $service->comboServices()->sync($data['combo_services'] ?? []);
+        } else {
+            $service->comboServices()->detach();
+        }
 
         return redirect()->route('admin.services.index')->with('success', 'Serviço atualizado.');
     }
