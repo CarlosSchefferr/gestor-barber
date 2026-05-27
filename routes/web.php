@@ -68,6 +68,11 @@ Route::middleware('auth')->group(function () {
         // Serviços e Produtos — CRUD para proprietários (dentro do prefix admin)
         Route::prefix('admin')->name('admin.')->group(function () {
             Route::resource('services', App\Http\Controllers\ServiceController::class);
+            Route::post('products/adjust-stock', [App\Http\Controllers\ProductController::class, 'adjustStock'])->name('products.adjust-stock');
+            Route::post('products/bulk-action', [App\Http\Controllers\ProductController::class, 'bulkAction'])->name('products.bulk-action');
+            Route::post('products/units', [App\Http\Controllers\ProductController::class, 'storeUnit'])->name('products.units.store');
+            Route::patch('products/units/{unit}/toggle', [App\Http\Controllers\ProductController::class, 'toggleUnit'])->name('products.units.toggle');
+            Route::patch('products/{product}/toggle-status', [App\Http\Controllers\ProductController::class, 'toggleStatus'])->name('products.toggle-status');
             Route::resource('products', App\Http\Controllers\ProductController::class);
             // Inline service creation for owners via AJAX
             Route::post('services/inline', [App\Http\Controllers\ServiceController::class, 'storeInline'])->name('services.inline.store');

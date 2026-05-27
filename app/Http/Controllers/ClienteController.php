@@ -531,10 +531,9 @@ class ClienteController extends Controller
      */
     public function getProdutos()
     {
-        $produtos = \App\Models\Product::orderBy('name')->get(['id', 'name']);
+        $produtos = \App\Models\Product::sellable()->orderBy('name')->get(['id', 'name']);
         return response()->json($produtos);
     }
 
     // Removed destroy method - clients can only be activated/deactivated via toggleStatus
 }
-
