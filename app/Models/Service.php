@@ -16,6 +16,9 @@ class Service extends Model
         'commission',
         'duration',
         'active',
+        'type',
+        'return_alert_days',
+        'observations',
     ];
 
     protected $casts = [
@@ -24,4 +27,8 @@ class Service extends Model
         'active' => 'boolean',
     ];
 
+    public function comboServices()
+    {
+        return $this->belongsToMany(Service::class, 'combo_services', 'combo_id', 'service_id')->withTimestamps();
+    }
 }
