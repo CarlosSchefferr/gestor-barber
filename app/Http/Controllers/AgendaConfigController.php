@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 
 class AgendaConfigController extends Controller
 {
@@ -55,7 +56,7 @@ class AgendaConfigController extends Controller
     /**
      * Update agenda configuration
      */
-    public function update(Request $request): RedirectResponse
+    public function update(Request $request): RedirectResponse|JsonResponse
     {
         $validated = $request->validate([
             'nome_barbearia' => 'required|string|max:255',
@@ -73,6 +74,13 @@ class AgendaConfigController extends Controller
         // Validar que pelo menos um dia foi selecionado
         $dias = collect($validated['dias_atendimento'] ?? [])->filter()->all();
         if (empty($dias)) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => 'Selecione pelo menos um dia de atendimento.',
+                    'errors' => ['dias_atendimento' => ['Selecione pelo menos um dia de atendimento.']],
+                ], 422);
+            }
+
             return redirect()->route('agenda.config.index')
                 ->withErrors(['dias_atendimento' => 'Selecione pelo menos um dia de atendimento.']);
         }
@@ -91,6 +99,14 @@ class AgendaConfigController extends Controller
         $agendaConfig->fill($validated);
         $agendaConfig->save();
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Configurações da agenda atualizadas com sucesso!',
+                'ativa' => (bool) $agendaConfig->ativa,
+            ]);
+        }
+
         return redirect()->route('agenda.config.index')
             ->with('success', 'Configurações da agenda atualizadas com sucesso!');
     }
@@ -98,7 +114,7 @@ class AgendaConfigController extends Controller
     /**
      * Upload images for the carousel
      */
-    public function uploadImages(Request $request): RedirectResponse
+    public function uploadImages(Request $request): RedirectResponse|JsonResponse
     {
         $request->validate([
             'imagens.*' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
@@ -106,18 +122,33 @@ class AgendaConfigController extends Controller
 
         $agendaConfig = AgendaConfig::where('user_id', $request->user()->id)->firstOrFail();
 
+        $novas = [];
+
         if ($request->hasFile('imagens')) {
             $ordem = $agendaConfig->imagens()->max('ordem') ?? 0;
 
             foreach ($request->file('imagens') as $image) {
                 $path = $image->store('agenda-imagens', 'public');
 
-                AgendaImagem::create([
+                $imagem = AgendaImagem::create([
                     'agenda_config_id' => $agendaConfig->id,
                     'caminho_imagem' => $path,
                     'ordem' => ++$ordem,
                 ]);
+
+                $novas[] = [
+                    'id' => $imagem->id,
+                    'url' => asset('storage/' . $imagem->caminho_imagem),
+                ];
             }
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => count($novas) . ' imagem(ns) adicionada(s) com sucesso!',
+                'imagens' => $novas,
+            ]);
         }
 
         return redirect()->route('agenda.config.index')
@@ -127,7 +158,7 @@ class AgendaConfigController extends Controller
     /**
      * Delete an image from carousel
      */
-    public function deleteImage(AgendaImagem $imagem): RedirectResponse
+    public function deleteImage(AgendaImagem $imagem): RedirectResponse|JsonResponse
     {
         $userId = auth()->id();
 
@@ -137,6 +168,13 @@ class AgendaConfigController extends Controller
 
         Storage::disk('public')->delete($imagem->caminho_imagem);
         $imagem->delete();
+
+        if (request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Imagem removida com sucesso!',
+            ]);
+        }
 
         return redirect()->route('agenda.config.index')
             ->with('success', 'Imagem removida com sucesso!');

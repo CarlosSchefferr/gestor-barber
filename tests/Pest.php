@@ -45,3 +45,105 @@ function something()
 {
     // ..
 }
+
+/**
+ * Cria um cenário mínimo de barbearia para os testes de agenda/chat.
+ *
+ * @return array{owner:\App\Models\User,barber:\App\Models\User,service:\App\Models\Service,config:\App\Models\AgendaConfig}
+ */
+function makeBarbershop(array $overrides = []): array
+{
+    $owner = \App\Models\User::factory()->create(['role' => 'owner', 'name' => 'Dono Teste']);
+
+    $barber = \App\Models\User::factory()->create([
+        'role' => 'barber',
+        'name' => 'Bruno Barbeiro',
+        'professional_name' => 'Bruno',
+    ]);
+
+    $service = \App\Models\Service::create([
+        'name' => $overrides['service_name'] ?? 'Corte de Cabelo',
+        'duration' => $overrides['duration'] ?? 30,
+        'price' => $overrides['price'] ?? 50,
+        'active' => $overrides['service_active'] ?? true,
+        'type' => 'service',
+    ]);
+
+    \App\Models\ProfessionalService::create([
+        'user_id' => $barber->id,
+        'service_id' => $service->id,
+        'time_minutes' => $overrides['duration'] ?? 30,
+        'price' => $overrides['price'] ?? 50,
+        'commission_percentage' => 0,
+    ]);
+
+    $config = \App\Models\AgendaConfig::create([
+        'user_id' => $owner->id,
+        'nome_barbearia' => 'Barbearia Teste',
+        'public_token' => (string) \Illuminate\Support\Str::uuid(),
+        'horario_inicio' => '08:00',
+        'horario_fim' => '18:00',
+        'intervalo_slots' => 30,
+        'dias_atendimento' => ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'],
+        'ativa' => $overrides['ativa'] ?? true,
+    ]);
+
+    return compact('owner', 'barber', 'service', 'config');
+}
+
+/**
+ * Próximo início válido (amanhã num horário dado, no fuso oficial).
+ */
+function nextSlotStart(int $hour = 10, int $minute = 0): \Carbon\CarbonImmutable
+{
+    $tz = config('chat.scheduling.timezone', 'America/Sao_Paulo');
+
+    return \Carbon\CarbonImmutable::now($tz)->addDay()->setTime($hour, $minute, 0);
+}
+
+/**
+ * Habilita o chat IA em testes (sem chave real).
+ */
+function enableChatAi(): void
+{
+    config([
+        'chat.enabled' => true,
+        'chat.openai.api_key' => 'sk-test-fake',
+        'chat.openai.model' => 'gpt-test',
+        'chat.moderation.enabled' => false,
+    ]);
+}
+
+/**
+ * Monta uma resposta fake da Responses API com uma function_call.
+ */
+function fakeResponsesFunctionCall(string $name, array $arguments, string $callId = 'call_1'): array
+{
+    return [
+        'id' => 'resp_'.\Illuminate\Support\Str::random(6),
+        'model' => 'gpt-test',
+        'output' => [[
+            'type' => 'function_call',
+            'call_id' => $callId,
+            'name' => $name,
+            'arguments' => json_encode($arguments),
+        ]],
+        'usage' => ['input_tokens' => 50, 'output_tokens' => 10],
+    ];
+}
+
+/**
+ * Monta uma resposta fake da Responses API com texto final.
+ */
+function fakeResponsesMessage(string $text): array
+{
+    return [
+        'id' => 'resp_'.\Illuminate\Support\Str::random(6),
+        'model' => 'gpt-test',
+        'output' => [[
+            'type' => 'message',
+            'content' => [['type' => 'output_text', 'text' => $text]],
+        ]],
+        'usage' => ['input_tokens' => 60, 'output_tokens' => 20],
+    ];
+}

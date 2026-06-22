@@ -20,6 +20,8 @@ class Agendamento extends Model
         'color',
         'price',
         'observacoes',
+        'public_token',
+        'origin',
     ];
 
     protected $casts = [

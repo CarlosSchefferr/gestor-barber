@@ -94,6 +94,20 @@ Route::middleware('auth')->group(function () {
 // Rotas públicas de agendamento (sem autenticação)
 Route::get('t/{public_token}', [App\Http\Controllers\PublicAgendamentoController::class, 'show'])->name('public.agendamento.show');
 Route::get('t/{public_token}/api/config', [App\Http\Controllers\PublicAgendamentoController::class, 'getAgendaConfig'])->name('public.agendamento.config');
-Route::post('t/{public_token}/api/submit', [App\Http\Controllers\PublicAgendamentoController::class, 'submitAgendamento'])->name('public.agendamento.submit');
+Route::post('t/{public_token}/api/submit', [App\Http\Controllers\PublicAgendamentoController::class, 'submitAgendamento'])
+    ->middleware('throttle:public-booking')
+    ->name('public.agendamento.submit');
+
+// Chat IA de agendamento (página pública)
+Route::prefix('t/{public_token}/api/chat')->name('public.chat.')->group(function () {
+    Route::post('start', [App\Http\Controllers\Public\ChatController::class, 'start'])
+        ->middleware('throttle:chat-start')->name('start');
+    Route::post('message', [App\Http\Controllers\Public\ChatController::class, 'message'])
+        ->middleware('throttle:chat-message')->name('message');
+    Route::post('proposal/customer', [App\Http\Controllers\Public\ChatController::class, 'proposalCustomer'])
+        ->middleware('throttle:chat-message')->name('proposal.customer');
+    Route::post('confirm', [App\Http\Controllers\Public\ChatController::class, 'confirm'])
+        ->middleware('throttle:chat-confirm')->name('confirm');
+});
 
 require __DIR__.'/auth.php';
