@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\AgendaConfig;
 use App\Models\AgendaImagem;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\View\View;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class AgendaConfigController extends Controller
 {
@@ -25,7 +26,7 @@ class AgendaConfigController extends Controller
     {
         $agendaConfig = AgendaConfig::where('user_id', $request->user()->id)->first();
 
-        if (!$agendaConfig) {
+        if (! $agendaConfig) {
             $agendaConfig = new AgendaConfig([
                 'user_id' => $request->user()->id,
                 'nome_barbearia' => $request->user()->name,
@@ -58,8 +59,23 @@ class AgendaConfigController extends Controller
      */
     public function update(Request $request): RedirectResponse|JsonResponse
     {
+        $agendaConfig = AgendaConfig::where('user_id', $request->user()->id)->first();
+
+        if (! $agendaConfig) {
+            $agendaConfig = new AgendaConfig([
+                'user_id' => $request->user()->id,
+                'public_token' => (string) Str::uuid(),
+            ]);
+            $agendaConfig->save();
+        }
+
         $validated = $request->validate([
             'nome_barbearia' => 'required|string|max:255',
+            'slug' => [
+                'required', 'string', 'max:120',
+                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
+                Rule::unique('agenda_configs', 'slug')->ignore($agendaConfig->id),
+            ],
             'descricao' => 'nullable|string',
             'telefone' => 'nullable|string|max:20',
             'endereco' => 'nullable|string|max:255',
@@ -69,6 +85,11 @@ class AgendaConfigController extends Controller
             'dias_atendimento' => 'nullable|array',
             'dias_atendimento.*' => 'string|in:segunda,terca,quarta,quinta,sexta,sabado,domingo',
             'ativa' => 'boolean',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
+            'remover_logo' => 'nullable|boolean',
+        ], [
+            'slug.regex' => 'O endereço do link deve conter apenas letras minúsculas, números e hífens.',
+            'slug.unique' => 'Esse endereço já está em uso. Escolha outro.',
         ]);
 
         // Validar que pelo menos um dia foi selecionado
@@ -87,14 +108,21 @@ class AgendaConfigController extends Controller
 
         $validated['dias_atendimento'] = $dias;
 
-        $agendaConfig = AgendaConfig::where('user_id', $request->user()->id)->first();
-
-        if (!$agendaConfig) {
-            $agendaConfig = new AgendaConfig([
-                'user_id' => $request->user()->id,
-                'public_token' => (string) Str::uuid(),
-            ]);
+        // Logo: upload novo, remoção ou manutenção.
+        if ($request->hasFile('logo')) {
+            if ($agendaConfig->logo) {
+                Storage::disk('public')->delete($agendaConfig->logo);
+            }
+            $validated['logo'] = $request->file('logo')->store('agenda-logos', 'public');
+        } elseif ($request->boolean('remover_logo')) {
+            if ($agendaConfig->logo) {
+                Storage::disk('public')->delete($agendaConfig->logo);
+            }
+            $validated['logo'] = null;
+        } else {
+            unset($validated['logo']);
         }
+        unset($validated['remover_logo']);
 
         $agendaConfig->fill($validated);
         $agendaConfig->save();
@@ -104,11 +132,35 @@ class AgendaConfigController extends Controller
                 'success' => true,
                 'message' => 'Configurações da agenda atualizadas com sucesso!',
                 'ativa' => (bool) $agendaConfig->ativa,
+                'slug' => $agendaConfig->slug,
+                'public_url' => $agendaConfig->getPublicUrl(),
+                'logo_url' => $agendaConfig->getLogoUrl(),
             ]);
         }
 
         return redirect()->route('agenda.config.index')
             ->with('success', 'Configurações da agenda atualizadas com sucesso!');
+    }
+
+    /**
+     * Verifica a disponibilidade de um slug para o link público.
+     */
+    public function checkSlug(Request $request): JsonResponse
+    {
+        $request->validate(['slug' => 'required|string|max:120']);
+
+        $slug = Str::slug($request->input('slug'));
+        $agendaConfig = AgendaConfig::where('user_id', $request->user()->id)->first();
+
+        $emUso = AgendaConfig::where('slug', $slug)
+            ->when($agendaConfig, fn ($q) => $q->where('id', '!=', $agendaConfig->id))
+            ->exists();
+
+        return response()->json([
+            'slug' => $slug,
+            'available' => $slug !== '' && ! $emUso,
+            'url' => url('/t/'.$slug),
+        ]);
     }
 
     /**
@@ -138,7 +190,7 @@ class AgendaConfigController extends Controller
 
                 $novas[] = [
                     'id' => $imagem->id,
-                    'url' => asset('storage/' . $imagem->caminho_imagem),
+                    'url' => asset('storage/'.$imagem->caminho_imagem),
                 ];
             }
         }
@@ -146,7 +198,7 @@ class AgendaConfigController extends Controller
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => count($novas) . ' imagem(ns) adicionada(s) com sucesso!',
+                'message' => count($novas).' imagem(ns) adicionada(s) com sucesso!',
                 'imagens' => $novas,
             ]);
         }

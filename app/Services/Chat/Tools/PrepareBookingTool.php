@@ -2,11 +2,9 @@
 
 namespace App\Services\Chat\Tools;
 
-use App\Models\ChatBookingProposal;
 use App\Models\Service;
 use App\Models\User;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Str;
 
 class PrepareBookingTool implements Tool
 {
@@ -63,46 +61,17 @@ class PrepareBookingTool implements Tool
             return ToolResult::invalid('Data ou hora inválida.');
         }
 
-        $slot = $context->availability->resolveSlot($context->config, $service, $professional, $start);
-        if (! $slot) {
+        $built = (new \App\Services\Chat\ProposalBuilder($context->availability))
+            ->build($context->config, $context->session, $service, $professional, $start);
+
+        if (! $built) {
             return ToolResult::invalid('Esse horário não está mais disponível. Posso sugerir outro?', [
                 'tem_disponibilidade' => false,
             ]);
         }
 
-        // Invalida propostas pendentes anteriores desta sessão.
-        ChatBookingProposal::query()
-            ->where('chat_session_id', $context->session->id)
-            ->where('status', 'pending')
-            ->update(['status' => 'cancelled']);
-
-        $ttl = (int) config('chat.limits.proposal_ttl_minutes', 10);
-
-        $proposal = ChatBookingProposal::create([
-            'chat_session_id' => $context->session->id,
-            'agenda_config_id' => $context->config->id,
-            'token' => (string) Str::uuid(),
-            'service_id' => $slot->service->id,
-            'professional_id' => $slot->professional->id,
-            'starts_at' => $slot->startsAt,
-            'ends_at' => $slot->endsAt,
-            'price' => $slot->price,
-            'duration_minutes' => $slot->durationMinutes,
-            'status' => 'pending',
-            // Instante absoluto (TTL): usa o relógio da aplicação (UTC).
-            'expires_at' => now()->addMinutes($ttl),
-        ]);
-
-        $summary = [
-            'servico' => $slot->service->name,
-            'profissional' => $slot->professional->professional_name ?: $slot->professional->name,
-            'data' => $slot->startsAt->format('Y-m-d'),
-            'data_label' => $this->dateLabel($slot->startsAt),
-            'inicio' => $slot->startsAt->format('H:i'),
-            'fim' => $slot->endsAt->format('H:i'),
-            'duracao_label' => $slot->durationMinutes.' min',
-            'preco_label' => $slot->price !== null ? 'R$ '.number_format($slot->price, 2, ',', '.') : null,
-        ];
+        $proposal = $built['proposal'];
+        $summary = $built['summary'];
 
         // Ao modelo: apenas a confirmação de que o resumo está pronto (sem token).
         $modelOutput = [
@@ -137,12 +106,5 @@ class PrepareBookingTool implements Tool
         $found = $apt->firstWhere('id', (int) $professionalId);
 
         return $found ?: false;
-    }
-
-    private function dateLabel(CarbonImmutable $d): string
-    {
-        $dias = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-
-        return $dias[$d->dayOfWeek].', '.$d->format('d/m/Y');
     }
 }

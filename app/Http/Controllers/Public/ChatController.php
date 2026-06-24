@@ -9,11 +9,14 @@ use App\Http\Requests\Chat\ChatProposalCustomerRequest;
 use App\Models\AgendaConfig;
 use App\Models\ChatBookingProposal;
 use App\Models\ChatSession;
+use App\Models\Service;
+use App\Services\Agenda\AvailabilityService;
 use App\Services\Agenda\Exceptions\SlotUnavailableException;
 use App\Services\Chat\ChatBookingService;
 use App\Services\Chat\ChatOrchestrator;
 use App\Services\Chat\ChatSessionManager;
 use App\Services\Chat\Exceptions\ChatBookingException;
+use App\Services\Chat\ProposalBuilder;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,6 +28,8 @@ class ChatController extends Controller
         private readonly ChatOrchestrator $orchestrator,
         private readonly ChatSessionManager $sessions,
         private readonly ChatBookingService $bookingService,
+        private readonly AvailabilityService $availability,
+        private readonly ProposalBuilder $proposalBuilder,
     ) {}
 
     /**
@@ -34,22 +39,20 @@ class ChatController extends Controller
     {
         $config = $this->resolveConfig($publicToken);
 
-        if (! $this->orchestrator->available()) {
-            return response()->json([
-                'ok' => true,
-                'ai_enabled' => false,
-                'message' => 'Atendimento por IA indisponível. Use o agendamento tradicional.',
-            ]);
-        }
-
+        // A sessão é sempre criada: o montador de agendamento do site usa o
+        // fluxo de proposta/confirmação mesmo quando a IA está desabilitada.
+        // A IA controla apenas o atendimento conversacional.
         $session = $this->sessions->start($config, $request->ip());
+        $aiEnabled = $this->orchestrator->available();
 
         return response()->json([
             'ok' => true,
-            'ai_enabled' => true,
+            'ai_enabled' => $aiEnabled,
             'session_token' => $session->session_token,
-            'greeting' => 'Olá! 👋 Sou o assistente da '.($config->nome_barbearia ?: 'barbearia')
-                .'. Posso te ajudar a agendar um horário. O que você gostaria de fazer hoje?',
+            'greeting' => $aiEnabled
+                ? 'Olá! 👋 Sou o assistente da '.($config->nome_barbearia ?: 'barbearia')
+                    .'. Posso te ajudar a agendar um horário. O que você gostaria de fazer hoje?'
+                : null,
         ]);
     }
 
@@ -92,6 +95,65 @@ class ChatController extends Controller
             'ui' => $result['ui'],
             'status' => $result['status'],
             'message_count' => $session->fresh()->message_count,
+        ]);
+    }
+
+    /**
+     * Cria uma proposta a partir de uma seleção montada no site (serviço,
+     * profissional, data e hora explícitos). Robusto: não depende de o modelo
+     * interpretar a mensagem. A interface mostra o resumo e o cliente confirma.
+     */
+    public function prepareFromSelection(Request $request, string $publicToken): JsonResponse
+    {
+        $config = $this->resolveConfig($publicToken);
+
+        $data = $request->validate([
+            'session_token' => 'required|uuid',
+            'service_id' => 'required|integer',
+            'professional_id' => 'nullable|integer',
+            'data' => 'required|date_format:Y-m-d',
+            'hora' => 'required|date_format:H:i',
+        ]);
+
+        $session = $this->resolveActiveSession($config, $data['session_token']);
+        if (! $session) {
+            return response()->json(['ok' => false, 'error' => 'session_expired'], 410);
+        }
+
+        $service = Service::where('active', true)->find($data['service_id']);
+        if (! $service) {
+            return response()->json(['ok' => false, 'message' => 'Serviço indisponível.'], 422);
+        }
+
+        $professional = null;
+        if (! empty($data['professional_id'])) {
+            $professional = $this->availability->professionalsForService($config, $service)
+                ->firstWhere('id', (int) $data['professional_id']);
+            if (! $professional) {
+                return response()->json(['ok' => false, 'message' => 'Profissional indisponível.'], 422);
+            }
+        }
+
+        try {
+            $start = CarbonImmutable::createFromFormat('Y-m-d H:i', $data['data'].' '.$data['hora'], $this->availability->timezone());
+        } catch (\Throwable $e) {
+            return response()->json(['ok' => false, 'message' => 'Data ou hora inválida.'], 422);
+        }
+
+        $built = $this->proposalBuilder->build($config, $session, $service, $professional, $start);
+        if (! $built) {
+            return response()->json(['ok' => false, 'error' => 'slot_unavailable', 'message' => 'Esse horário acabou de ficar indisponível. Escolha outro.'], 409);
+        }
+
+        $proposal = $built['proposal'];
+
+        return response()->json([
+            'ok' => true,
+            'proposal' => array_merge($built['summary'], [
+                'token' => $proposal->token,
+                'expires_at' => $proposal->expires_at->toIso8601String(),
+                'missing_fields' => ['nome', 'email', 'telefone'],
+            ]),
         ]);
     }
 
@@ -178,7 +240,7 @@ class ChatController extends Controller
     private function resolveConfig(string $publicToken): AgendaConfig
     {
         return AgendaConfig::query()
-            ->where('public_token', $publicToken)
+            ->forPublicIdentifier($publicToken)
             ->where('ativa', true)
             ->firstOrFail();
     }

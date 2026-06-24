@@ -54,5 +54,10 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('public-booking', function (Request $request) {
             return Limit::perMinute(8)->by('public-booking:'.$request->ip());
         });
+
+        // Consulta de disponibilidade do montador do site (leitura, mais folgado).
+        RateLimiter::for('public-availability', function (Request $request) {
+            return Limit::perMinute(60)->by('public-avail:'.$request->ip());
+        });
     }
 }

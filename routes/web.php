@@ -50,6 +50,7 @@ Route::middleware('auth')->group(function () {
         // Agenda Configurações
         Route::get('agenda/configuracoes', [App\Http\Controllers\AgendaConfigController::class, 'index'])->name('agenda.config.index');
         Route::put('agenda/configuracoes', [App\Http\Controllers\AgendaConfigController::class, 'update'])->name('agenda.config.update');
+        Route::post('agenda/configuracoes/check-slug', [App\Http\Controllers\AgendaConfigController::class, 'checkSlug'])->name('agenda.config.check-slug');
         Route::post('agenda/imagens', [App\Http\Controllers\AgendaConfigController::class, 'uploadImages'])->name('agenda.imagens.upload');
         Route::delete('agenda/imagens/{imagem}', [App\Http\Controllers\AgendaConfigController::class, 'deleteImage'])->name('agenda.imagens.delete');
         Route::patch('agenda/imagens/reorder', [App\Http\Controllers\AgendaConfigController::class, 'reorderImages'])->name('agenda.imagens.reorder');
@@ -98,12 +99,21 @@ Route::post('t/{public_token}/api/submit', [App\Http\Controllers\PublicAgendamen
     ->middleware('throttle:public-booking')
     ->name('public.agendamento.submit');
 
+// Disponibilidade real para o montador de agendamento do site.
+Route::middleware('throttle:public-availability')->group(function () {
+    Route::get('t/{public_token}/api/professionals', [App\Http\Controllers\PublicAgendamentoController::class, 'professionals'])->name('public.agendamento.professionals');
+    Route::get('t/{public_token}/api/available-dates', [App\Http\Controllers\PublicAgendamentoController::class, 'availableDates'])->name('public.agendamento.dates');
+    Route::get('t/{public_token}/api/available-times', [App\Http\Controllers\PublicAgendamentoController::class, 'availableTimes'])->name('public.agendamento.times');
+});
+
 // Chat IA de agendamento (página pública)
 Route::prefix('t/{public_token}/api/chat')->name('public.chat.')->group(function () {
     Route::post('start', [App\Http\Controllers\Public\ChatController::class, 'start'])
         ->middleware('throttle:chat-start')->name('start');
     Route::post('message', [App\Http\Controllers\Public\ChatController::class, 'message'])
         ->middleware('throttle:chat-message')->name('message');
+    Route::post('prepare-from-selection', [App\Http\Controllers\Public\ChatController::class, 'prepareFromSelection'])
+        ->middleware('throttle:chat-message')->name('prepare');
     Route::post('proposal/customer', [App\Http\Controllers\Public\ChatController::class, 'proposalCustomer'])
         ->middleware('throttle:chat-message')->name('proposal.customer');
     Route::post('confirm', [App\Http\Controllers\Public\ChatController::class, 'confirm'])

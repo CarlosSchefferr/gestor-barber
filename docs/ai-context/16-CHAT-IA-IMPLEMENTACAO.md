@@ -92,6 +92,25 @@ Falhas preexistentes (8) não relacionadas permanecem: `RegistrationTest` (2), `
 - A lista de horários do **fallback tradicional** é gerada no cliente como conveniência; a autoridade é o backend (rejeita com 409). O chat IA usa a disponibilidade real via tool.
 - Sem sistema de avaliações: `media_avaliacoes` segue placeholder fora do escopo desta tarefa.
 
+## Ajustes complementares (página pública e configuração)
+
+- **Produtos no showcase público:** a aba Produtos lista todos os produtos `active = true` (não apenas `usage_type` sale/both), pois é uma vitrine pública. Para esconder itens de uso interno futuramente, criar um toggle "exibir na página pública" por produto.
+- **Link amigável (slug):** `agenda_configs` ganhou `slug` (único) e `logo`. A URL pública passou a usar o slug (`/t/{slug}`), com fallback para o `public_token` (links antigos seguem válidos) via `AgendaConfig::scopeForPublicIdentifier`. Endpoint `POST agenda/configuracoes/check-slug` verifica disponibilidade.
+- **Logo da barbearia:** upload em `agenda-logos` (disco public); exibida como avatar do cabeçalho do chat público (`config.logo`).
+- **Tela de configurações:** reorganizada em um card de **preview** + botão **Editar** que abre um **modal com abas** (Informações básicas + logo, Horário de atendimento, Acesso da agenda, Link compartilhável com checagem de slug, Imagens), no padrão de abas do gestor-barber. Salvamento AJAX com toast, sem reload.
+- Testes: `tests/Feature/Chat/AgendaPublicAdjustmentsTest.php` (produtos ativos, resolução por slug/token, logo no config, check-slug, update de slug válido/duplicado/inválido, upload/remoção de logo).
+
+## Montador de agendamento no site + carrinho (handoff para o chat)
+
+- **Endpoints públicos de disponibilidade** (reusam `AvailabilityService`, throttle `public-availability`): `GET .../api/professionals`, `.../api/available-dates`, `.../api/available-times`. Os horários já vêm com os ocupados excluídos e, no modo "qualquer profissional", cada horário vinculado a um profissional real.
+- **Montador no site** (`resources/views/public/agendamento.blade.php`): modal/bottom-sheet com etapas serviço → profissional → data → horário usando os endpoints acima. Ao escolher o horário, chama `POST .../api/chat/prepare-from-selection`, que cria uma **proposta server-side** (via `ProposalBuilder`, mesmo caminho da tool `prepare_booking`) e devolve o resumo. A interface exibe o card de proposta no chat; o cliente preenche os dados em campo seguro e confirma. Handoff **robusto, sem depender do modelo interpretar texto**.
+- **Sessão sempre criada**: `start` cria a sessão do chat mesmo sem IA, para o montador funcionar com ou sem credenciais. A IA controla apenas o input conversacional.
+- **`ProposalBuilder`**: extraído e compartilhado por `PrepareBookingTool` (chat IA) e pelo `prepareFromSelection` (montador do site) — regras idênticas.
+- **Navegação de profissionais** (Figma frames 1 e 4): aba Barbeiros mostra um profissional por vez (‹ ›) com seus serviços abaixo; o config público passou a incluir `servicos` por profissional (duração/preço efetivos de `professional_services`, com fallback).
+- **Fotos da barbearia**: faixa "Nossa estrutura" com rolagem lateral automática (marquee CSS, pausa no hover, respeita `prefers-reduced-motion`).
+- **Carrinho de produtos**: adicionar/ajustar quantidade e "Enviar pedido pelo chat" (compõe uma mensagem com os itens; não há entidade de pedido de produto no sistema, então é um encaminhamento informativo).
+- Testes: `tests/Feature/Chat/SiteBuilderTest.php` (serviços por profissional, endpoint de profissionais, horários excluindo ocupados, montador prepara+confirma, rejeição de horário ocupado).
+
 ## Configuração necessária (o que preencher no `.env`)
 
 ```env

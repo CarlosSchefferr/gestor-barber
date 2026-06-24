@@ -12,6 +12,8 @@ class AgendaConfig extends Model
     protected $fillable = [
         'user_id',
         'nome_barbearia',
+        'slug',
+        'logo',
         'descricao',
         'telefone',
         'endereco',
@@ -37,6 +39,17 @@ class AgendaConfig extends Model
     }
 
     /**
+     * Resolve a agenda pública por slug amigável OU public_token (compatível
+     * com links antigos baseados em UUID).
+     */
+    public function scopeForPublicIdentifier($query, string $identifier)
+    {
+        return $query->where(function ($q) use ($identifier) {
+            $q->where('slug', $identifier)->orWhere('public_token', $identifier);
+        });
+    }
+
+    /**
      * Relação com AgendaImagem
      */
     public function imagens()
@@ -45,11 +58,38 @@ class AgendaConfig extends Model
     }
 
     /**
-     * Obter URL pública
+     * Obter URL pública (usa slug amigável, com fallback para o token)
      */
     public function getPublicUrl()
     {
-        return route('public.agendamento.show', ['public_token' => $this->public_token]);
+        return route('public.agendamento.show', ['public_token' => $this->slug ?: $this->public_token]);
+    }
+
+    /**
+     * URL do logo da barbearia (avatar do chat), se houver.
+     */
+    public function getLogoUrl(): ?string
+    {
+        return $this->logo ? asset('storage/'.$this->logo) : null;
+    }
+
+    /**
+     * Gera um slug único a partir de um texto, ignorando o próprio registro.
+     */
+    public static function generateUniqueSlug(string $base, ?int $ignoreId = null): string
+    {
+        $slug = \Illuminate\Support\Str::slug($base) ?: 'barbearia';
+        $original = $slug;
+        $i = 2;
+
+        while (static::where('slug', $slug)
+            ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+            ->exists()) {
+            $slug = $original.'-'.$i;
+            $i++;
+        }
+
+        return $slug;
     }
 
     /**

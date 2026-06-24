@@ -53,7 +53,11 @@ class ChatOrchestrator
         $this->sessions->touch($session);
 
         $context = new ToolContext($config, $session, $this->availability);
-        $instructions = $this->buildInstructions($config);
+
+        // Estado estruturado da reserva (persistido entre turnos): impede a IA
+        // de perder o contexto (serviço/profissional/data já escolhidos).
+        $selection = is_array($session->state) ? $session->state : [];
+        $instructions = $this->buildInstructions($config, $selection);
 
         $input = [];
         foreach ($this->sessions->historyForModel($session) as $msg) {
@@ -88,13 +92,20 @@ class ChatOrchestrator
             $this->recordUsage($session, $config, $response, $startedAt, 'ok', $toolCallCount);
 
             $functionCalls = [];
+            $iterationText = '';
             foreach (($response['output'] ?? []) as $item) {
                 $type = $item['type'] ?? null;
                 if ($type === 'function_call') {
                     $functionCalls[] = $item;
                 } elseif ($type === 'message') {
-                    $assistantText .= $this->extractText($item);
+                    $iterationText .= $this->extractText($item);
                 }
+            }
+
+            // O texto da iteração mais recente prevalece (evita duplicar o
+            // preâmbulo emitido junto com a tool call e a resposta final).
+            if (trim($iterationText) !== '') {
+                $assistantText = $iterationText;
             }
 
             if (empty($functionCalls)) {
@@ -110,6 +121,7 @@ class ChatOrchestrator
                 $toolCallCount++;
                 [$outputJson, $callUi] = $this->executeTool($call, $context);
                 $ui = array_merge($ui, $callUi);
+                $selection = $this->mergeSelection($selection, $call);
 
                 // Reenvia o function_call e seu resultado ao modelo.
                 $input[] = [
@@ -129,7 +141,81 @@ class ChatOrchestrator
         $assistantText = trim($assistantText) ?: 'Como posso te ajudar com seu agendamento?';
         $this->sessions->recordAssistantMessage($session, $assistantText);
 
+        // Persiste o estado da reserva para o próximo turno.
+        $session->forceFill(['state' => $selection])->save();
+
         return ['assistant' => $assistantText, 'ui' => $ui, 'status' => 'ok'];
+    }
+
+    /**
+     * Captura serviço/profissional/data/hora dos argumentos de uma tool call.
+     *
+     * @param  array<string,mixed>  $selection
+     * @param  array<string,mixed>  $call
+     * @return array<string,mixed>
+     */
+    private function mergeSelection(array $selection, array $call): array
+    {
+        $args = json_decode((string) ($call['arguments'] ?? '{}'), true);
+        if (! is_array($args)) {
+            return $selection;
+        }
+
+        if (array_key_exists('service_id', $args) && $args['service_id']) {
+            $selection['service_id'] = (int) $args['service_id'];
+        }
+        if (array_key_exists('professional_id', $args)) {
+            // null = "qualquer profissional" (seleção válida).
+            $selection['professional_id'] = $args['professional_id'] !== null ? (int) $args['professional_id'] : null;
+            $selection['professional_any'] = $args['professional_id'] === null;
+        }
+        if (array_key_exists('data', $args) && is_string($args['data']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $args['data'])) {
+            $selection['data'] = $args['data'];
+        }
+        if (array_key_exists('hora', $args) && is_string($args['hora']) && preg_match('/^\d{2}:\d{2}$/', $args['hora'])) {
+            $selection['hora'] = $args['hora'];
+        }
+
+        return $selection;
+    }
+
+    /**
+     * Bloco de contexto com a seleção atual, para a IA não perder o fio.
+     *
+     * @param  array<string,mixed>  $selection
+     */
+    private function stateBlock(array $selection): string
+    {
+        $linhas = [];
+
+        if (! empty($selection['service_id'])) {
+            $svc = \App\Models\Service::where('active', true)->find($selection['service_id']);
+            if ($svc) {
+                $linhas[] = '- Serviço escolhido: '.$svc->name;
+            }
+        }
+        if (array_key_exists('professional_id', $selection)) {
+            if (! empty($selection['professional_any'])) {
+                $linhas[] = '- Profissional: qualquer disponível';
+            } elseif (! empty($selection['professional_id'])) {
+                $prof = \App\Models\User::find($selection['professional_id']);
+                if ($prof) {
+                    $linhas[] = '- Profissional escolhido: '.($prof->professional_name ?: $prof->name);
+                }
+            }
+        }
+        if (! empty($selection['data'])) {
+            $linhas[] = '- Data escolhida: '.$selection['data'];
+        }
+        if (! empty($selection['hora'])) {
+            $linhas[] = '- Horário escolhido: '.$selection['hora'];
+        }
+
+        if (empty($linhas)) {
+            return "\n\nSELEÇÃO ATUAL\n- Nada escolhido ainda.";
+        }
+
+        return "\n\nSELEÇÃO ATUAL (não pergunte de novo o que já está aqui)\n".implode("\n", $linhas);
     }
 
     /**
@@ -190,13 +276,45 @@ class ChatOrchestrator
         ];
     }
 
-    private function buildInstructions(AgendaConfig $config): string
+    private function buildInstructions(AgendaConfig $config, array $selection = []): string
     {
         $tz = $this->availability->timezone();
         $now = CarbonImmutable::now($tz);
 
         return SystemPrompt::build($config)
-            ."\n\nCONTEXTO TEMPORAL\n- Fuso: {$tz}.\n- Agora: ".$now->format('Y-m-d H:i')." ({$now->translatedFormat('l')}).";
+            ."\n\nCONTEXTO TEMPORAL\n- Fuso: {$tz}.\n- Agora: ".$now->format('Y-m-d H:i')." ({$now->translatedFormat('l')})."
+            .$this->catalogBlock($config)
+            .$this->stateBlock($selection);
+    }
+
+    /**
+     * Catálogo compacto (serviços e profissionais) com IDs estáveis, para a IA
+     * sempre saber qual service_id/professional_id usar ao chamar as ferramentas,
+     * sem perder o vínculo entre os turnos. Disponibilidade NÃO entra aqui — ela
+     * vem sempre das ferramentas.
+     */
+    private function catalogBlock(AgendaConfig $config): string
+    {
+        $servicos = \App\Models\Service::where('active', true)->orderBy('name')->get(['id', 'name', 'price', 'duration']);
+        $profissionais = $this->availability->professionals($config);
+
+        $svcLinhas = $servicos->map(function ($s) {
+            $preco = 'R$ '.number_format((float) $s->price, 2, ',', '.');
+
+            return "  [{$s->id}] {$s->name} — {$preco} — {$s->duration} min";
+        })->implode("\n");
+
+        $profLinhas = $profissionais->map(function ($p) {
+            $nome = $p->professional_name ?: $p->name;
+
+            return "  [{$p->id}] {$nome}";
+        })->implode("\n");
+
+        return "\n\nCATÁLOGO (use exatamente estes IDs ao chamar ferramentas; preços oficiais)\n"
+            ."Serviços:\n{$svcLinhas}\n"
+            ."Profissionais:\n{$profLinhas}\n"
+            .'Regra: para descobrir QUEM atende um serviço e QUAIS datas/horários existem, use sempre as ferramentas. '
+            .'O ID do serviço e do profissional vêm deste catálogo.';
     }
 
     private function extractText(array $messageItem): string

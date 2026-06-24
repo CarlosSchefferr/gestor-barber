@@ -191,6 +191,89 @@ class AvailabilityService
     }
 
     /**
+     * Grade completa de horários da data (incluindo os ocupados/passados),
+     * marcando cada um como disponível ou não. Usado na vitrine pública para
+     * exibir os horários cheios apenas como referência (sem permitir seleção).
+     *
+     * @return array<int,array{time:string,available:bool,professional_id:?int,professional_name:?string}>
+     */
+    public function gridTimes(AgendaConfig $config, Service $service, ?User $professional, CarbonImmutable $date): array
+    {
+        if (! $config->ativa || ! $this->isServedDay($config, $date)) {
+            return [];
+        }
+
+        $tz = $this->timezone();
+        $date = $date->setTimezone($tz)->startOfDay();
+        $step = max(5, (int) ($config->intervalo_slots ?: 30));
+
+        $professionals = $professional
+            ? collect([$professional])
+            : $this->professionalsForService($config, $service);
+
+        $now = CarbonImmutable::now($tz);
+        $minStart = $now->addMinutes($this->minLeadMinutes());
+
+        // Une todas as janelas de trabalho dos profissionais para montar a grade.
+        $byTime = [];
+        foreach ($professionals as $prof) {
+            $duration = $this->durationMinutes($service, $prof);
+            [$windowStart, $windowEnd] = $this->workingWindow($config, $prof, $date);
+            if ($windowStart === null || $windowEnd === null || $windowStart->greaterThanOrEqualTo($windowEnd)) {
+                continue;
+            }
+
+            [$breakStart, $breakEnd] = $this->breakWindow($prof, $date);
+            $occupied = $this->occupiedIntervals($prof->id, $date);
+
+            $cursor = $windowStart;
+            while ($cursor->lessThanOrEqualTo($windowEnd->subMinutes($duration))) {
+                $candidateStart = $cursor;
+                $candidateEnd = $cursor->addMinutes($duration);
+                $cursor = $cursor->addMinutes($step);
+
+                $time = $candidateStart->format('H:i');
+
+                $available = true;
+                if ($candidateStart->lessThan($minStart)) {
+                    $available = false;
+                } elseif ($breakStart && $breakEnd && $this->overlaps($candidateStart, $candidateEnd, $breakStart, $breakEnd)) {
+                    $available = false;
+                } else {
+                    foreach ($occupied as [$oStart, $oEnd]) {
+                        if ($this->overlaps($candidateStart, $candidateEnd, $oStart, $oEnd)) {
+                            $available = false;
+                            break;
+                        }
+                    }
+                }
+
+                // Mantém o melhor estado por horário: disponível vence ocupado,
+                // e registra o profissional concreto quando disponível.
+                if (! isset($byTime[$time])) {
+                    $byTime[$time] = [
+                        'time' => $time,
+                        'available' => $available,
+                        'professional_id' => $available ? $prof->id : null,
+                        'professional_name' => $available ? ($prof->professional_name ?: $prof->name) : null,
+                    ];
+                } elseif ($available && ! $byTime[$time]['available']) {
+                    $byTime[$time] = [
+                        'time' => $time,
+                        'available' => true,
+                        'professional_id' => $prof->id,
+                        'professional_name' => $prof->professional_name ?: $prof->name,
+                    ];
+                }
+            }
+        }
+
+        ksort($byTime);
+
+        return array_values($byTime);
+    }
+
+    /**
      * Valida e resolve um horário específico, retornando o profissional
      * concreto (resolvendo "qualquer profissional") e a duração efetiva.
      */

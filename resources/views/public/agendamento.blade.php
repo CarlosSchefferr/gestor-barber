@@ -54,6 +54,17 @@
         .chat-scroll::-webkit-scrollbar { width: 6px; }
         .chat-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 3px; }
 
+        /* ===== Marquee de fotos (rolagem lateral automática) ===== */
+        .marquee { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+        .marquee-track { display: flex; gap: 14px; width: max-content; animation: marquee 32s linear infinite; }
+        .marquee:hover .marquee-track { animation-play-state: paused; }
+        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        @media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } .marquee { overflow-x: auto; } }
+
+        /* ===== Builder / cart ===== */
+        .builder-scroll { max-height: 70vh; overflow-y: auto; }
+        [x-cloak] { display: none !important; }
+
         .bubble-bot {
             background: #ffffff;
             border-radius: 0 10px 10px 10px;
@@ -76,6 +87,10 @@
         chatMessageUrl: @js(route('public.chat.message', $agendaConfig->public_token)),
         chatCustomerUrl: @js(route('public.chat.proposal.customer', $agendaConfig->public_token)),
         chatConfirmUrl: @js(route('public.chat.confirm', $agendaConfig->public_token)),
+        professionalsUrl: @js(route('public.agendamento.professionals', $agendaConfig->public_token)),
+        datesUrl: @js(route('public.agendamento.dates', $agendaConfig->public_token)),
+        timesUrl: @js(route('public.agendamento.times', $agendaConfig->public_token)),
+        prepareUrl: @js(route('public.chat.prepare', $agendaConfig->public_token)),
      })">
 
     <div class="flex flex-col lg:flex-row min-h-screen w-full">
@@ -146,8 +161,18 @@
 
             {{-- Conteúdo da aba --}}
             <section class="px-8 py-6">
-                <div class="flex items-center justify-between border-b-2 border-[#155dfc] pb-3">
-                    <h2 class="text-[24px] font-bold text-black" x-text="tituloAba"></h2>
+                <div class="flex items-center justify-between gap-3 border-b-2 border-[#155dfc] pb-3">
+                    <h2 class="text-[20px] sm:text-[24px] font-bold text-black truncate" x-text="tituloAba"></h2>
+                    {{-- Carrinho resumido (mesma linha do título) --}}
+                    <button x-show="carrinho.length" @click="cartAberto = true" x-cloak
+                        class="flex items-center gap-2 rounded-full bg-[#075e54] text-white pl-3 pr-4 py-1.5 hover:bg-[#064a42] transition flex-shrink-0">
+                        <span class="relative flex items-center justify-center">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                            <span class="absolute -top-2 -right-2 rounded-full bg-white text-[#075e54] text-[10px] font-bold w-4 h-4 flex items-center justify-center" x-text="carrinhoQtd()"></span>
+                        </span>
+                        {{-- Total visível só em telas maiores; no mobile fica só o ícone + badge --}}
+                        <span class="hidden sm:inline text-sm font-bold" x-text="carrinhoTotalLabel()"></span>
+                    </button>
                 </div>
 
                 {{-- Loading --}}
@@ -156,8 +181,8 @@
                 {{-- Lista vazia --}}
                 <div x-show="!carregandoConfig && itensAba.length === 0" class="py-20 text-center text-zinc-400 text-sm" x-text="vazioLabel"></div>
 
-                {{-- Card / carrossel --}}
-                <div x-show="!carregandoConfig && itensAba.length > 0"
+                {{-- Card / carrossel (serviços e produtos) --}}
+                <div x-show="!carregandoConfig && abaAtiva !== 'barbeiros' && itensAba.length > 0"
                     class="mt-6 bg-white border border-[#e8e8e8] rounded-[10px] p-6 relative">
 
                     <div class="carousel-track" x-ref="track" @scroll.debounce.100ms="updateDot()">
@@ -177,8 +202,9 @@
                                             <p class="text-[12px] text-[#484848] mt-1" x-text="item.duracao_label ? 'Duração: ' + item.duracao_label : ''"></p>
                                             <div class="mt-3 flex items-center justify-between">
                                                 <span class="text-[20px] font-extrabold text-[#1538fc]" x-text="item.preco_label"></span>
-                                                <button @click="iniciarAgendamento(item.nome)" class="w-8 h-8 rounded-full bg-[#155dfc]/10 hover:bg-[#155dfc]/20 flex items-center justify-center transition" title="Agendar">
-                                                    <svg class="w-4 h-4 text-[#155dfc]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                                                <button @click="abrirMontador(item.id, null)" class="inline-flex items-center gap-1 rounded-full bg-[#155dfc] text-white text-xs font-bold px-3 py-1.5 hover:bg-[#1148d8] transition" title="Agendar">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                    Agendar
                                                 </button>
                                             </div>
                                         </div>
@@ -197,7 +223,10 @@
                                         <div class="p-4 flex flex-col flex-1">
                                             <h3 class="text-[16px] font-bold text-black" x-text="item.nome"></h3>
                                             <p class="text-[12px] text-[#484848] mt-1" x-text="item.marca || ''"></p>
-                                            <span class="mt-3 text-[20px] font-extrabold text-[#1538fc]" x-text="item.preco_label"></span>
+                                            <div class="mt-auto pt-3 flex items-center justify-between gap-2">
+                                                <span class="text-[20px] font-extrabold text-[#1538fc]" x-text="item.preco_label"></span>
+                                                <button @click="cartAdicionar(item)" class="rounded-lg bg-[#075e54] text-white text-xs font-bold px-3 py-1.5 hover:bg-[#064a42] flex-shrink-0">Adicionar</button>
+                                            </div>
                                         </div>
                                     </div>
                                 </template>
@@ -218,18 +247,79 @@
                         </template>
                     </div>
 
+                    {{-- Botão voltar --}}
+                    <button x-show="itensAba.length > 1" @click="scrollPrev()"
+                        class="hidden sm:flex absolute top-1/2 -translate-y-1/2 left-3 w-10 h-10 rounded-full bg-white shadow-lg border border-zinc-200 items-center justify-center hover:bg-blue-50 transition">
+                        <svg class="w-5 h-5 text-[#155dfc]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                    </button>
                     {{-- Botão avançar --}}
                     <button x-show="itensAba.length > 1" @click="scrollNext()"
-                        class="hidden sm:flex absolute top-1/2 -translate-y-1/2 right-3 w-9 h-9 rounded-full bg-white shadow-md border border-zinc-200 items-center justify-center hover:bg-zinc-50 transition">
-                        <svg class="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        class="hidden sm:flex absolute top-1/2 -translate-y-1/2 right-3 w-10 h-10 rounded-full bg-white shadow-lg border border-zinc-200 items-center justify-center hover:bg-blue-50 transition">
+                        <svg class="w-5 h-5 text-[#155dfc]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                     </button>
                 </div>
 
-                {{-- Dots --}}
-                <div x-show="!carregandoConfig && itensAba.length > 1" class="flex justify-center gap-2 mt-5">
-                    <template x-for="(item, idx) in itensAba" :key="'dot-' + idx">
-                        <div class="dot" :class="dotAtivo === idx ? 'active' : ''" @click="scrollTo(idx)"></div>
+                {{-- Dots (serviços/produtos) --}}
+                <div x-show="!carregandoConfig && abaAtiva !== 'barbeiros' && numDots > 1" @resize.window.debounce.150ms="recalcDots()" class="flex justify-center gap-2 mt-5">
+                    <template x-for="idx in numDots" :key="'dot-' + idx">
+                        <div class="dot" :class="dotAtivo === (idx - 1) ? 'active' : ''" @click="scrollTo(idx - 1)"></div>
                     </template>
+                </div>
+
+                {{-- ===== Navegador de profissionais (Figma): passar de um a outro e ver serviços ===== --}}
+                <div x-show="!carregandoConfig && abaAtiva === 'barbeiros' && barbeiros.length > 0" class="mt-6" x-cloak>
+                    <template x-if="barbeiros[barbeiroAtivo]">
+                        <div class="bg-white border border-[#e8e8e8] rounded-[14px] overflow-hidden">
+                            {{-- Cabeçalho do profissional com navegação --}}
+                            <div class="flex items-center gap-4 p-5 border-b border-zinc-100">
+                                <button @click="barbeiroPrev()" :disabled="barbeiros.length < 2" class="w-10 h-10 rounded-full bg-blue-50 hover:bg-blue-100 flex items-center justify-center flex-shrink-0 disabled:opacity-40" aria-label="Anterior">
+                                    <svg class="w-5 h-5 text-[#155dfc]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                                </button>
+                                <div class="flex-1 flex flex-col items-center text-center min-w-0">
+                                    <div class="w-16 h-16 rounded-full bg-zinc-200 overflow-hidden flex items-center justify-center flex-shrink-0 mb-2" :style="barbeiros[barbeiroAtivo].avatar ? `background-image:url('${barbeiros[barbeiroAtivo].avatar}');background-size:cover;background-position:center` : ''">
+                                        <template x-if="!barbeiros[barbeiroAtivo].avatar"><span class="text-2xl font-bold text-zinc-500" x-text="(barbeiros[barbeiroAtivo].nome || '?').charAt(0).toUpperCase()"></span></template>
+                                    </div>
+                                    <h3 class="text-lg font-bold text-zinc-900 truncate max-w-full" x-text="barbeiros[barbeiroAtivo].nome"></h3>
+                                    <p class="text-sm text-zinc-500" x-text="barbeiros[barbeiroAtivo].cargo"></p>
+                                </div>
+                                <button @click="barbeiroNext()" :disabled="barbeiros.length < 2" class="w-10 h-10 rounded-full bg-blue-50 hover:bg-blue-100 flex items-center justify-center flex-shrink-0 disabled:opacity-40" aria-label="Próximo">
+                                    <svg class="w-5 h-5 text-[#155dfc]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                                </button>
+                            </div>
+                            {{-- Serviços do profissional (cards com imagem, igual à referência) --}}
+                            <div class="p-5">
+                                <h4 class="text-[18px] font-bold text-zinc-900 mb-4">Conheça seus serviços</h4>
+                                <div class="flex gap-4 overflow-x-auto pb-2 carousel-track">
+                                    <template x-for="(serv, sidx) in (barbeiros[barbeiroAtivo].servicos || [])" :key="'bs'+serv.id">
+                                        <button @click="abrirMontador(serv.id, barbeiros[barbeiroAtivo].id)" class="group relative flex-shrink-0 w-[210px] rounded-2xl overflow-hidden border border-zinc-200 hover:shadow-lg hover:border-[#155dfc]/40 transition text-left">
+                                            <div class="h-[170px] bg-gradient-to-br from-zinc-800 to-zinc-900 relative overflow-hidden flex items-center justify-center">
+                                                <svg class="w-10 h-10 text-zinc-500" fill="currentColor" viewBox="0 0 24 24"><path d="M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1L9.64 7.64zM6 8c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm0 12c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2z"/></svg>
+                                                <template x-if="imagemCard(null, sidx)"><img :src="imagemCard(null, sidx)" x-on:error="$el.style.display='none'" alt="" class="absolute inset-0 w-full h-full object-cover"></template>
+                                                <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent"></div>
+                                                <div class="absolute bottom-0 left-0 right-0 p-3">
+                                                    <p class="text-white text-sm font-bold leading-tight" x-text="serv.nome"></p>
+                                                    <p class="text-white/80 text-[11px] mt-0.5" x-text="serv.duracao_label"></p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-between px-3 py-2.5 bg-white">
+                                                <span class="text-[17px] font-extrabold text-[#1538fc]" x-text="serv.preco_label"></span>
+                                                <span class="inline-flex items-center gap-1 text-xs font-bold text-[#155dfc] group-hover:gap-2 transition-all">Agendar
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                                                </span>
+                                            </div>
+                                        </button>
+                                    </template>
+                                    <p x-show="!(barbeiros[barbeiroAtivo].servicos || []).length" class="text-sm text-zinc-400 py-6">Este profissional ainda não tem serviços configurados.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    {{-- Indicador de posição --}}
+                    <div class="flex justify-center gap-2 mt-4" x-show="barbeiros.length > 1">
+                        <template x-for="(b, idx) in barbeiros" :key="'bd'+idx">
+                            <div class="dot" :class="barbeiroAtivo === idx ? 'active' : ''" @click="barbeiroAtivo = idx"></div>
+                        </template>
+                    </div>
                 </div>
             </section>
         </main>
@@ -241,12 +331,17 @@
 
             {{-- Cabeçalho do chat --}}
             <div class="bg-[#075e54] px-4 py-3 flex items-center gap-3 flex-shrink-0">
-                <div class="w-11 h-11 rounded-full bg-white/90 flex items-center justify-center overflow-hidden">
-                    <svg class="w-7 h-7 text-[#075e54]" fill="currentColor" viewBox="0 0 24 24"><path d="M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1L9.64 7.64zM6 8c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm0 12c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2z"/></svg>
+                <div class="w-11 h-11 rounded-full bg-white/90 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <template x-if="config.logo">
+                        <img :src="config.logo" alt="" class="w-full h-full object-cover">
+                    </template>
+                    <template x-if="!config.logo">
+                        <svg class="w-7 h-7 text-[#075e54]" fill="currentColor" viewBox="0 0 24 24"><path d="M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1L9.64 7.64zM6 8c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm0 12c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2z"/></svg>
+                    </template>
                 </div>
                 <div class="min-w-0">
                     <p class="text-white font-semibold text-[18px] leading-tight truncate" x-text="config.nome_barbearia || '{{ $agendaConfig->nome_barbearia }}'"></p>
-                    <p class="text-white/80 text-[13px] leading-tight">Online</p>
+                    <p class="text-white/80 text-[13px] leading-tight" x-text="aiTyping ? 'digitando...' : 'Online'"></p>
                 </div>
             </div>
 
@@ -255,7 +350,7 @@
                 <template x-for="(msg, idx) in messages" :key="idx">
                     <div class="flex" :class="msg.tipo === 'cliente' ? 'justify-end' : 'justify-start'">
                         <div class="max-w-[85%] px-3 py-2" :class="msg.tipo === 'cliente' ? 'bubble-user' : 'bubble-bot'">
-                            <p class="text-[14px] text-[rgba(30,30,30,0.9)] leading-snug whitespace-pre-line" x-text="msg.texto"></p>
+                            <p class="text-[14px] text-[rgba(30,30,30,0.9)] leading-snug whitespace-pre-line" x-html="formatarMensagem(msg.texto, msg.tipo)"></p>
                             <p class="text-[10px] text-[#878585] text-right mt-1" x-text="msg.hora"></p>
                         </div>
                     </div>
@@ -271,8 +366,8 @@
                 </div>
             </div>
 
-            {{-- ============ Painel estruturado (modo IA) ============ --}}
-            <div x-show="mode === 'ai' && !proposal" class="bg-white/95 border-t border-zinc-200 px-3 py-2 max-h-44 overflow-y-auto" x-cloak>
+            {{-- ============ Painel estruturado (desativado: cliente escolhe digitando) ============ --}}
+            <div x-show="false" class="bg-white/95 border-t border-zinc-200 px-3 py-2 max-h-44 overflow-y-auto" x-cloak>
                 {{-- Serviços --}}
                 <div x-show="ui.services && ui.services.length" class="flex flex-wrap gap-2 py-1">
                     <template x-for="s in (ui.services || [])" :key="'s'+s.id">
@@ -303,7 +398,7 @@
             </div>
 
             {{-- ============ Card de proposta / confirmação (modo IA) ============ --}}
-            <div x-show="mode === 'ai' && proposal" class="bg-white border-t border-zinc-200 p-4" x-cloak>
+            <div x-show="proposal" class="bg-white border-t border-zinc-200 p-4" x-cloak>
                 <div class="rounded-2xl border border-zinc-200 overflow-hidden">
                     <div class="bg-[#075e54] px-4 py-2"><p class="text-white text-sm font-semibold">Resumo do agendamento</p></div>
                     <div class="p-4 space-y-1.5 text-sm">
@@ -346,8 +441,7 @@
                         <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                     </button>
                 </div>
-                <div class="flex items-center justify-between mt-1.5 px-1">
-                    <p class="text-[10px] text-zinc-500">Assistente com IA · seus dados são usados apenas para o agendamento.</p>
+                <div class="flex justify-center mt-1.5 px-1">
                     <button @click="mode = 'tradicional'; iniciarTradicional()" class="text-[10px] text-[#075e54] font-medium hover:underline">Agendar sem IA</button>
                 </div>
             </div>
@@ -423,6 +517,139 @@
         </aside>
     </div>
 
+    {{-- ===================== MONTADOR DE AGENDAMENTO ===================== --}}
+    <div x-cloak x-show="montador.aberto" @keydown.escape.window="fecharMontador()"
+         class="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-zinc-900/60 backdrop-blur-sm p-0 sm:p-4" x-transition.opacity>
+        <div class="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col" @click.outside="fecharMontador()">
+            {{-- Cabeçalho com etapas --}}
+            <div class="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
+                <div class="flex items-center gap-2">
+                    <button x-show="montador.etapa !== 'servico'" @click="montadorVoltar()" class="text-zinc-400 hover:text-zinc-700 -ml-1"><svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></button>
+                    <h3 class="text-base font-bold text-zinc-900" x-text="montadorTitulo()"></h3>
+                </div>
+                <button @click="fecharMontador()" class="text-zinc-400 hover:text-zinc-700"><svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+
+            {{-- Trilha de progresso --}}
+            <div class="flex gap-1.5 px-5 pt-3">
+                <template x-for="(et, i) in ['servico','profissional','data','hora']" :key="et">
+                    <div class="h-1.5 flex-1 rounded-full transition" :class="montadorEtapaIndex() >= i ? 'bg-[#155dfc]' : 'bg-zinc-200'"></div>
+                </template>
+            </div>
+
+            <div class="builder-scroll px-5 py-4">
+                {{-- resumo da seleção --}}
+                <div class="flex flex-wrap gap-2 mb-4" x-show="montador.serviceNome">
+                    <span class="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700" x-text="montador.serviceNome"></span>
+                    <span x-show="montador.profissionalNome" class="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700" x-text="montador.profissionalNome"></span>
+                    <span x-show="montador.dataLabel" class="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700" x-text="montador.dataLabel"></span>
+                    <span x-show="montador.hora" class="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700" x-text="montador.hora"></span>
+                </div>
+
+                {{-- loading --}}
+                <div x-show="montador.loading" class="py-10 flex justify-center"><svg class="h-7 w-7 animate-spin text-[#155dfc]" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg></div>
+
+                {{-- ETAPA: serviço --}}
+                <div x-show="!montador.loading && montador.etapa === 'servico'" class="space-y-2">
+                    <template x-for="s in servicos" :key="'ms'+s.id">
+                        <button @click="montadorSelecionarServico(s)" class="w-full flex items-center justify-between gap-3 rounded-xl border border-zinc-200 px-4 py-3 text-left hover:border-[#155dfc] hover:bg-[#155dfc]/5 transition">
+                            <div><p class="text-sm font-semibold text-zinc-800" x-text="s.nome"></p><p class="text-xs text-zinc-500" x-text="s.duracao_label"></p></div>
+                            <span class="text-sm font-extrabold text-[#1538fc]" x-text="s.preco_label"></span>
+                        </button>
+                    </template>
+                </div>
+
+                {{-- ETAPA: profissional --}}
+                <div x-show="!montador.loading && montador.etapa === 'profissional'" class="space-y-2">
+                    <button @click="montadorSelecionarProfissional(null, 'Qualquer profissional')" class="w-full rounded-xl border border-zinc-200 px-4 py-3 text-left text-sm font-semibold text-zinc-800 hover:border-[#155dfc] hover:bg-[#155dfc]/5 transition">⭐ Qualquer profissional disponível</button>
+                    <template x-for="p in montador.profissionais" :key="'mp'+p.id">
+                        <button @click="montadorSelecionarProfissional(p.id, p.nome)" class="w-full rounded-xl border border-zinc-200 px-4 py-3 text-left text-sm font-semibold text-zinc-800 hover:border-[#155dfc] hover:bg-[#155dfc]/5 transition" x-text="p.nome"></button>
+                    </template>
+                    <p x-show="!montador.profissionais.length" class="text-sm text-zinc-400 py-4 text-center">Nenhum profissional disponível para este serviço.</p>
+                </div>
+
+                {{-- ETAPA: data (mini calendário) --}}
+                <div x-show="!montador.loading && montador.etapa === 'data'">
+                    {{-- Cabeçalho do mês --}}
+                    <div class="flex items-center justify-between mb-3">
+                        <button @click="calMesAnterior()" :disabled="!calPodeVoltar()" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed">
+                            <svg class="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        <span class="text-sm font-bold text-zinc-800 capitalize" x-text="calLabelMes()"></span>
+                        <button @click="calProxMes()" :disabled="!calPodeAvancar()" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed">
+                            <svg class="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                    </div>
+                    {{-- Dias da semana --}}
+                    <div class="grid grid-cols-7 gap-1 mb-1">
+                        <template x-for="(ws, wi) in ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']" :key="'ws'+wi">
+                            <span class="text-center text-[11px] font-semibold text-zinc-400 py-1" x-text="ws"></span>
+                        </template>
+                    </div>
+                    {{-- Grade de dias --}}
+                    <div class="grid grid-cols-7 gap-1">
+                        <template x-for="(cel, ci) in calMatriz()" :key="'cd'+ci">
+                            <div>
+                                <template x-if="cel">
+                                    <button @click="cel.disponivel && montadorSelecionarData(cel)" :disabled="!cel.disponivel"
+                                        class="w-full aspect-square rounded-lg text-sm font-semibold flex items-center justify-center transition"
+                                        :class="cel.disponivel
+                                            ? 'text-zinc-800 hover:bg-[#155dfc] hover:text-white border border-zinc-200'
+                                            : 'text-zinc-300 cursor-not-allowed line-through decoration-zinc-300'"
+                                        x-text="cel.dia"></button>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                    <p x-show="!montador.datas.length" class="text-sm text-zinc-400 py-4 text-center">Sem datas disponíveis no momento.</p>
+                </div>
+
+                {{-- ETAPA: hora --}}
+                <div x-show="!montador.loading && montador.etapa === 'hora'" class="grid grid-cols-3 gap-2">
+                    <template x-for="h in montador.horarios" :key="'mh'+h.time+(h.professional_id||'x')">
+                        <button @click="h.disponivel && montadorSelecionarHora(h)" :disabled="!h.disponivel"
+                            class="rounded-xl py-2.5 text-sm font-semibold transition"
+                            :class="h.disponivel
+                                ? 'border border-zinc-200 text-zinc-800 hover:border-[#155dfc] hover:bg-[#155dfc]/5'
+                                : 'border border-zinc-100 bg-zinc-50 text-zinc-300 line-through cursor-not-allowed'"
+                            x-text="h.time"></button>
+                    </template>
+                    <p x-show="!montador.horarios.length" class="col-span-3 text-sm text-zinc-400 py-4 text-center">Sem horários nesta data. Escolha outra.</p>
+                </div>
+
+                <p x-show="montador.erro" x-text="montador.erro" class="mt-3 text-sm text-red-600"></p>
+            </div>
+        </div>
+    </div>
+
+    {{-- ===================== CARRINHO DE PRODUTOS (modal) ===================== --}}
+    <div x-cloak x-show="cartAberto" @keydown.escape.window="cartAberto = false"
+         class="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-zinc-900/60 backdrop-blur-sm p-0 sm:p-4" x-transition.opacity>
+        <div class="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col" @click.outside="cartAberto = false">
+            <div class="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
+                <h3 class="text-base font-bold text-zinc-900">Seu carrinho</h3>
+                <button @click="cartAberto = false" class="text-zinc-400 hover:text-zinc-700"><svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <div class="builder-scroll px-5 py-4 space-y-2">
+                <template x-for="item in carrinho" :key="'c'+item.id">
+                    <div class="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 px-4 py-3">
+                        <div class="min-w-0"><p class="text-sm font-semibold text-zinc-800 truncate" x-text="item.nome"></p><p class="text-xs text-zinc-500" x-text="item.preco_label"></p></div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            <button @click="cartAjustar(item.id, -1)" class="w-7 h-7 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold">−</button>
+                            <span class="w-6 text-center text-sm font-semibold" x-text="item.qtd"></span>
+                            <button @click="cartAjustar(item.id, 1)" class="w-7 h-7 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold">+</button>
+                        </div>
+                    </div>
+                </template>
+                <p x-show="!carrinho.length" class="text-sm text-zinc-400 text-center py-6">Carrinho vazio.</p>
+            </div>
+            <div class="border-t border-zinc-200 px-5 py-4 space-y-3" x-show="carrinho.length">
+                <div class="flex justify-between text-sm"><span class="text-zinc-500">Total estimado</span><span class="font-bold text-zinc-900" x-text="carrinhoTotalLabel()"></span></div>
+                <button @click="enviarCarrinhoChat()" class="w-full rounded-xl bg-[#075e54] text-white text-sm font-bold py-3 hover:bg-[#064a42]">Enviar pedido pelo chat</button>
+            </div>
+        </div>
+    </div>
+
     <script>
     function barbeariaApp(opts) {
         return {
@@ -441,6 +668,16 @@
             ],
             abaAtiva: 'servicos',
             dotAtivo: 0,
+            numDots: 1,
+            barbeiroAtivo: 0,
+
+            // Montador de agendamento (site -> chat)
+            montador: { aberto: false, etapa: 'servico', serviceId: null, serviceNome: '', professionalId: null, profissionalNome: '', data: null, dataLabel: '', hora: null, profissionais: [], datas: [], horarios: [], loading: false, erro: '' },
+            calMes: null, // mês exibido no mini calendário
+
+            // Carrinho de produtos
+            carrinho: [],
+            cartAberto: false,
 
             // ===== Chat =====
             mode: 'loading',        // loading | ai | tradicional
@@ -474,12 +711,164 @@
             carregarDados() {
                 fetch(this.configUrl).then(r => r.json()).then(d => {
                     this.config = d;
-                    this.servicos = d.servicos || [];
-                    this.produtos = d.produtos || [];
-                    this.barbeiros = d.barbeiros || [];
+                    // ===== Apenas para apresentação: limita e distribui de forma
+                    // determinística (pelo id), sem alterar o backend =====
+                    const porId = (a, b) => (a.id || 0) - (b.id || 0);
+                    const todosServicos = [...(d.servicos || [])].sort(porId);
+                    this.servicos = todosServicos.slice(0, 6);
+                    this.produtos = [...(d.produtos || [])].sort(porId).slice(0, 6);
+                    const todosBarbeiros = [...(d.barbeiros || [])].sort(porId).slice(0, 6);
+                    // Cada barbeiro recebe um conjunto fixo de até 6 serviços,
+                    // derivado do próprio id (mesmo barbeiro = mesmos serviços).
+                    this.barbeiros = todosBarbeiros.map(b => {
+                        let servicos = [];
+                        if (todosServicos.length) {
+                            const inicio = (b.id || 0) % todosServicos.length;
+                            servicos = Array.from({ length: Math.min(6, todosServicos.length) },
+                                (_, i) => todosServicos[(inicio + i) % todosServicos.length]);
+                        }
+                        return { ...b, servicos };
+                    });
                     if (this.barbeiros.length === 1) this.formData.barbeiro_id = this.barbeiros[0].id;
                     this.carregandoConfig = false;
+                    this.$nextTick(() => this.recalcDots());
                 }).catch(() => { this.carregandoConfig = false; });
+            },
+
+            // ===== Navegação de profissionais =====
+            barbeiroPrev() { if (this.barbeiros.length) this.barbeiroAtivo = (this.barbeiroAtivo - 1 + this.barbeiros.length) % this.barbeiros.length; },
+            barbeiroNext() { if (this.barbeiros.length) this.barbeiroAtivo = (this.barbeiroAtivo + 1) % this.barbeiros.length; },
+
+            // ===== Montador de agendamento =====
+            montadorTitulo() { return { servico: 'Escolha o serviço', profissional: 'Escolha o profissional', data: 'Escolha a data', hora: 'Escolha o horário' }[this.montador.etapa] || 'Agendar'; },
+            montadorEtapaIndex() { return ['servico','profissional','data','hora'].indexOf(this.montador.etapa); },
+            abrirMontador(serviceId, professionalId) {
+                const s = this.servicos.find(x => x.id === serviceId);
+                this.montador = { aberto: true, etapa: 'servico', serviceId: serviceId || null, serviceNome: s ? s.nome : '', professionalId: professionalId || null, profissionalNome: '', data: null, dataLabel: '', hora: null, profissionais: [], datas: [], horarios: [], loading: false, erro: '' };
+                if (professionalId) {
+                    const b = this.barbeiros.find(x => x.id === professionalId);
+                    this.montador.profissionalNome = b ? b.nome : '';
+                }
+                if (serviceId && professionalId) { this.montador.etapa = 'data'; this.montadorCarregarDatas(); }
+                else if (serviceId) { this.montador.etapa = 'profissional'; this.montadorCarregarProfissionais(); }
+            },
+            fecharMontador() { this.montador.aberto = false; },
+            montadorVoltar() {
+                const ordem = ['servico','profissional','data','hora'];
+                const i = ordem.indexOf(this.montador.etapa);
+                if (i > 0) this.montador.etapa = ordem[i - 1];
+                this.montador.erro = '';
+            },
+            montadorSelecionarServico(s) { this.montador.serviceId = s.id; this.montador.serviceNome = s.nome; this.montador.etapa = 'profissional'; this.montadorCarregarProfissionais(); },
+            montadorSelecionarProfissional(id, nome) { this.montador.professionalId = id; this.montador.profissionalNome = nome; this.montador.etapa = 'data'; this.montadorCarregarDatas(); },
+            montadorSelecionarData(d) { this.montador.data = d.data; this.montador.dataLabel = d.label; this.montador.etapa = 'hora'; this.montadorCarregarHorarios(); },
+            montadorSelecionarHora(h) { this.montador.hora = h.time; this.montador.professionalId = h.professional_id; this.montadorFinalizar(); },
+
+            montadorFetch(url, params) {
+                const q = new URLSearchParams(params).toString();
+                this.montador.loading = true; this.montador.erro = '';
+                return fetch(url + '?' + q).then(r => r.json()).finally(() => { this.montador.loading = false; });
+            },
+            montadorCarregarProfissionais() {
+                this.montadorFetch(this.professionalsUrl, { service_id: this.montador.serviceId })
+                    .then(d => { this.montador.profissionais = d.profissionais || []; })
+                    .catch(() => { this.montador.erro = 'Erro ao carregar profissionais.'; });
+            },
+            montadorCarregarDatas() {
+                this.montadorFetch(this.datesUrl, { service_id: this.montador.serviceId, professional_id: this.montador.professionalId || '' })
+                    .then(d => {
+                        this.montador.datas = d.datas || [];
+                        // Posiciona o calendário no mês da primeira data disponível.
+                        const primeira = this.montador.datas[0];
+                        const base = primeira ? this.parseData(primeira.data) : new Date();
+                        this.calMes = new Date(base.getFullYear(), base.getMonth(), 1);
+                    })
+                    .catch(() => { this.montador.erro = 'Erro ao carregar datas.'; });
+            },
+            // ===== Mini calendário (etapa data) =====
+            parseData(s) { const [a, m, d] = (s || '').split('-').map(Number); return new Date(a, (m || 1) - 1, d || 1); },
+            calLabelMes() {
+                if (!this.calMes) return '';
+                return this.calMes.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            },
+            calMatriz() {
+                if (!this.calMes) return [];
+                const ano = this.calMes.getFullYear(), mes = this.calMes.getMonth();
+                const disp = {};
+                (this.montador.datas || []).forEach(d => { disp[d.data] = d; });
+                const primeiroDiaSemana = new Date(ano, mes, 1).getDay();
+                const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+                const celulas = [];
+                for (let i = 0; i < primeiroDiaSemana; i++) celulas.push(null);
+                for (let dia = 1; dia <= diasNoMes; dia++) {
+                    const ds = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+                    const item = disp[ds];
+                    celulas.push({ dia, data: ds, label: item ? item.label : '', disponivel: !!item });
+                }
+                return celulas;
+            },
+            calMesAnterior() { if (this.calMes && this.calPodeVoltar()) this.calMes = new Date(this.calMes.getFullYear(), this.calMes.getMonth() - 1, 1); },
+            calProxMes() { if (this.calMes && this.calPodeAvancar()) this.calMes = new Date(this.calMes.getFullYear(), this.calMes.getMonth() + 1, 1); },
+            calPodeVoltar() {
+                if (!this.calMes) return false;
+                const hoje = new Date();
+                const mesAtual = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+                return this.calMes > mesAtual;
+            },
+            calPodeAvancar() {
+                if (!this.calMes || !(this.montador.datas || []).length) return false;
+                const ultima = this.parseData(this.montador.datas[this.montador.datas.length - 1].data);
+                const mesUltima = new Date(ultima.getFullYear(), ultima.getMonth(), 1);
+                return this.calMes < mesUltima;
+            },
+            montadorCarregarHorarios() {
+                this.montadorFetch(this.timesUrl, { service_id: this.montador.serviceId, data: this.montador.data, professional_id: this.montador.professionalId || '' })
+                    .then(d => { this.montador.horarios = d.horarios || []; })
+                    .catch(() => { this.montador.erro = 'Erro ao carregar horários.'; });
+            },
+            async montadorFinalizar() {
+                if (!this.sessionToken) { this.montador.erro = 'Aguarde a conexão e tente de novo.'; return; }
+                this.montador.loading = true; this.montador.erro = '';
+                try {
+                    const res = await fetch(this.prepareUrl, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrf() },
+                        body: JSON.stringify({ session_token: this.sessionToken, service_id: this.montador.serviceId, professional_id: this.montador.professionalId, data: this.montador.data, hora: this.montador.hora }),
+                    });
+                    const body = await res.json().catch(() => ({}));
+                    if (res.status === 409) { this.montador.erro = body.message || 'Horário recém-ocupado. Escolha outro.'; this.montadorCarregarHorarios(); return; }
+                    if (!body.ok || !body.proposal) { this.montador.erro = body.message || 'Não foi possível preparar o agendamento.'; return; }
+                    this.proposal = body.proposal; this.customerSaved = false; this.proposalError = '';
+                    this.fecharMontador();
+                    this.messages.push({ tipo: 'bot', texto: 'Tudo pronto! Revise o resumo abaixo e confirme seu agendamento. 👇', hora: this.agora() });
+                    this.scrollChat();
+                    this.$nextTick(() => { document.querySelector('aside')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+                } catch (e) { this.montador.erro = 'Erro de conexão.'; }
+                finally { this.montador.loading = false; }
+            },
+
+            // ===== Carrinho de produtos =====
+            cartAdicionar(p) {
+                const ex = this.carrinho.find(i => i.id === p.id);
+                if (ex) ex.qtd++; else this.carrinho.push({ id: p.id, nome: p.nome, preco: p.preco, preco_label: p.preco_label, qtd: 1 });
+            },
+            cartAjustar(id, delta) {
+                const it = this.carrinho.find(i => i.id === id);
+                if (!it) return;
+                it.qtd += delta;
+                if (it.qtd <= 0) this.carrinho = this.carrinho.filter(i => i.id !== id);
+            },
+            carrinhoQtd() { return this.carrinho.reduce((s, i) => s + i.qtd, 0); },
+            carrinhoTotalLabel() {
+                const total = this.carrinho.reduce((s, i) => s + (i.preco || 0) * i.qtd, 0);
+                return 'R$ ' + total.toFixed(2).replace('.', ',');
+            },
+            enviarCarrinhoChat() {
+                const linhas = this.carrinho.map(i => `${i.qtd}x ${i.nome}`).join(', ');
+                const texto = `Olá! Tenho interesse nestes produtos: ${linhas} (total estimado ${this.carrinhoTotalLabel()}). Pode me ajudar?`;
+                this.cartAberto = false;
+                if (this.mode === 'ai') { this.enviarRapido(texto); }
+                else { this.messages.push({ tipo: 'cliente', texto, hora: this.agora() }); this.messages.push({ tipo: 'bot', texto: 'Anotado! Um atendente confirma a disponibilidade desses produtos com você.', hora: this.agora() }); this.scrollChat(); }
+                document.querySelector('aside')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             },
 
             // ===== Chat com IA =====
@@ -490,8 +879,9 @@
                 fetch(this.chatStartUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrf() } })
                     .then(r => r.json())
                     .then(d => {
+                        // Guarda o token sempre: o montador do site usa proposta/confirmação.
+                        if (d && d.session_token) this.sessionToken = d.session_token;
                         if (d && d.ai_enabled && d.session_token) {
-                            this.sessionToken = d.session_token;
                             this.mode = 'ai';
                             this.messages.push({ tipo: 'bot', texto: d.greeting, hora: this.agora() });
                         } else {
@@ -525,7 +915,7 @@
                     this.aiTyping = false;
                     if (status === 410) { this.messages.push({ tipo: 'bot', texto: 'Sua sessão expirou. Vou abrir o agendamento tradicional.', hora: this.agora() }); this.iniciarTradicional(); return; }
                     if (!body.ok && body.message) { this.messages.push({ tipo: 'bot', texto: body.message, hora: this.agora() }); this.scrollChat(); return; }
-                    if (body.assistant) this.messages.push({ tipo: 'bot', texto: body.assistant, hora: this.agora() });
+                    if (body.assistant) this.messages.push({ tipo: 'bot', texto: this.limparTexto(body.assistant), hora: this.agora() });
                     this.ui = body.ui || {};
                     if (this.ui.proposal) { this.proposal = this.ui.proposal; this.customerSaved = false; this.proposalError = ''; }
                     this.scrollChat();
@@ -611,7 +1001,10 @@
             },
             resetCarousel() {
                 this.dotAtivo = 0;
-                this.$nextTick(() => { if (this.$refs.track) this.$refs.track.scrollLeft = 0; });
+                this.$nextTick(() => {
+                    if (this.$refs.track) this.$refs.track.scrollLeft = 0;
+                    this.recalcDots();
+                });
             },
             cardStep() {
                 const track = this.$refs.track;
@@ -619,10 +1012,21 @@
                 const card = track.querySelector('.carousel-card');
                 return card ? card.offsetWidth + 26 : 261;
             },
+            // Quantas posições de scroll existem, considerando quantos cards
+            // cabem na largura visível (1 bolinha por posição alcançável).
+            recalcDots() {
+                const track = this.$refs.track;
+                const total = this.itensAba.length;
+                if (!track || !total) { this.numDots = Math.max(1, total); return; }
+                const visiveis = Math.max(1, Math.round(track.clientWidth / this.cardStep()));
+                this.numDots = Math.max(1, total - visiveis + 1);
+                if (this.dotAtivo > this.numDots - 1) this.dotAtivo = this.numDots - 1;
+            },
             updateDot() {
                 const track = this.$refs.track;
                 if (!track) return;
-                this.dotAtivo = Math.round(track.scrollLeft / this.cardStep());
+                this.recalcDots();
+                this.dotAtivo = Math.min(this.numDots - 1, Math.round(track.scrollLeft / this.cardStep()));
             },
             scrollTo(idx) {
                 if (this.$refs.track) this.$refs.track.scrollLeft = idx * this.cardStep();
@@ -630,8 +1034,14 @@
             scrollNext() {
                 const track = this.$refs.track;
                 if (!track) return;
-                const next = (this.dotAtivo + 1) % this.itensAba.length;
+                const next = (this.dotAtivo + 1) % this.numDots;
                 track.scrollLeft = next * this.cardStep();
+            },
+            scrollPrev() {
+                const track = this.$refs.track;
+                if (!track) return;
+                const prev = (this.dotAtivo - 1 + this.numDots) % this.numDots;
+                track.scrollLeft = prev * this.cardStep();
             },
 
             // ===== Helpers =====
@@ -643,6 +1053,29 @@
             },
             formatNumber(n) { return new Intl.NumberFormat('pt-BR').format(n || 0); },
             agora() { return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); },
+            limparTexto(t) {
+                if (!t) return '';
+                return t
+                    .replace(/\*\*(.+?)\*\*/g, '$1')      // **negrito** -> texto
+                    .replace(/__(.+?)__/g, '$1')          // __negrito__ -> texto
+                    .replace(/(^|\n)\s*[-*•]\s+/g, '$1')  // remove marcadores de lista
+                    .replace(/(^|\n)#{1,6}\s+/g, '$1')    // remove títulos markdown
+                    .replace(/`{1,3}/g, '')               // remove crases de código
+                    .replace(/\n{3,}/g, '\n\n')           // colapsa linhas em branco
+                    .trim();
+            },
+            escapeHtml(s) {
+                return (s || '').replace(/[&<>"']/g, c => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+                }[c]));
+            },
+            // Render seguro: escapa todo o conteúdo e, nas mensagens do bot, deixa
+            // o número das listas ("1.", "2)") em negrito para o cliente escolher.
+            formatarMensagem(texto, tipo) {
+                const esc = this.escapeHtml(texto);
+                if (tipo !== 'bot') return esc;
+                return esc.replace(/(^|\n)(\s*)(\d{1,2})([.)])(\s)/g, '$1$2<strong>$3$4</strong>$5');
+            },
             get horarioLabel() {
                 if (this.config.horario_inicio && this.config.horario_fim) {
                     const hm = (s) => (s || '').slice(0, 5);
@@ -659,16 +1092,7 @@
                 return `${d}/${m}/${y}`;
             },
 
-            // ===== Fluxo do agendamento =====
-            iniciarAgendamento(servico) {
-                this.$refs.chat?.scrollIntoView({ behavior: 'smooth' });
-                if (this.mode === 'ai') {
-                    this.enviarRapido('Quero agendar ' + servico);
-                    return;
-                }
-                if (this.mode === 'loading') { this.iniciarTradicional(); }
-                this.formData.servico = servico;
-            },
+            // ===== Fluxo do agendamento tradicional (fallback) =====
             adicionarMensagem() {
                 const passos = ['nome', 'email', 'telefone', 'servico', 'barbeiro', 'data', 'hora', 'observacoes'];
                 const valor = {

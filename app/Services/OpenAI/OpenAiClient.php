@@ -86,14 +86,27 @@ class OpenAiClient
 
         $url = $cfg['base_url'].'/'.ltrim($path, '/');
 
-        try {
-            $response = $this->request($cfg)->post($url, $payload);
-        } catch (\Throwable $e) {
-            throw new OpenAiException('Falha de rede ao contatar a OpenAI.', 'network');
-        }
+        // Em picos de uso, a OpenAI responde 429 (limite por minuto do projeto).
+        // Em vez de cair direto no fallback, tentamos de novo algumas vezes
+        // respeitando o tempo de espera sugerido pela própria API (Retry-After).
+        $maxAttempts = max(1, (int) ($cfg['max_retries'] ?? 2));
 
-        if ($response->status() === 429) {
-            throw new OpenAiException('Limite de requisições da OpenAI atingido.', 'rate_limited', 429);
+        for ($attempt = 1; ; $attempt++) {
+            try {
+                $response = $this->request($cfg)->post($url, $payload);
+            } catch (\Throwable $e) {
+                throw new OpenAiException('Falha de rede ao contatar a OpenAI.', 'network');
+            }
+
+            if ($response->status() !== 429) {
+                break;
+            }
+
+            if ($attempt >= $maxAttempts) {
+                throw new OpenAiException('Limite de requisições da OpenAI atingido.', 'rate_limited', 429);
+            }
+
+            usleep($this->retryDelayMicros($response, $attempt));
         }
 
         if ($response->status() === 401 || $response->status() === 403) {
@@ -110,6 +123,22 @@ class OpenAiClient
         }
 
         return $json;
+    }
+
+    /**
+     * Tempo de espera (em microssegundos) antes de tentar de novo após um 429.
+     * Prioriza o header Retry-After da OpenAI; senão usa backoff exponencial.
+     * Limitado a 5s para não segurar a requisição do cliente por muito tempo.
+     */
+    private function retryDelayMicros(\Illuminate\Http\Client\Response $response, int $attempt): int
+    {
+        $retryAfter = (float) ($response->header('Retry-After') ?: 0);
+
+        $seconds = $retryAfter > 0
+            ? $retryAfter
+            : min(5.0, 0.5 * (2 ** ($attempt - 1)));
+
+        return (int) (min($seconds, 5.0) * 1_000_000);
     }
 
     /**
