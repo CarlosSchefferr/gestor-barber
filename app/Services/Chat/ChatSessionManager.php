@@ -15,6 +15,7 @@ use Illuminate\Support\Str;
  */
 class ChatSessionManager
 {
+    // Cria a sessão: token único, estado vazio, IP só como hash e validade (TTL) a partir de agora.
     public function start(AgendaConfig $config, ?string $ip, string $locale = 'pt_BR'): ChatSession
     {
         $ttl = (int) config('chat.limits.session_ttl_minutes', 120);
@@ -43,6 +44,7 @@ class ChatSessionManager
             ->first();
     }
 
+    // Renova a atividade e empurra a expiração para frente (mantém a sessão viva durante o uso).
     public function touch(ChatSession $session): void
     {
         $ttl = (int) config('chat.limits.session_ttl_minutes', 120);
@@ -52,6 +54,7 @@ class ChatSessionManager
         ])->save();
     }
 
+    // Grava a mensagem do cliente (com PII mascarada) e conta para o limite por sessão.
     public function recordUserMessage(ChatSession $session, string $content): ChatMessage
     {
         $session->increment('message_count');
@@ -62,6 +65,7 @@ class ChatSessionManager
         ]);
     }
 
+    // Grava a resposta do assistente (não conta no limite, que é só de falas do cliente).
     public function recordAssistantMessage(ChatSession $session, string $content, array $meta = []): ChatMessage
     {
         return $session->messages()->create([
@@ -78,6 +82,7 @@ class ChatSessionManager
      */
     public function historyForModel(ChatSession $session): array
     {
+        // Pega as N falas mais recentes (janela), inverte para ordem cronológica e remascara a PII.
         $window = (int) config('chat.limits.history_window', 16);
 
         return $session->messages()
@@ -99,6 +104,7 @@ class ChatSessionManager
         $session->update(['status' => 'closed']);
     }
 
+    // Teto de mensagens do cliente por sessão (trava contra abuso/custo).
     public function reachedMessageLimit(ChatSession $session): bool
     {
         $max = (int) config('chat.limits.max_messages_per_session', 40);
@@ -106,6 +112,7 @@ class ChatSessionManager
         return $session->message_count >= $max;
     }
 
+    // Estado inicial da reserva: tudo vazio, ainda "coletando" as escolhas do cliente.
     private function emptyState(): array
     {
         return [

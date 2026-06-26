@@ -6,6 +6,11 @@ use App\Models\Service;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 
+/**
+ * Ferramenta: retorna as próximas datas (até 14) com ao menos um horário livre
+ * para o serviço (e profissional, se informado). Sempre consultada antes de
+ * sugerir datas — a disponibilidade nunca vem do catálogo, só das ferramentas.
+ */
 class GetAvailableDatesTool implements Tool
 {
     public function name(): string
@@ -40,16 +45,19 @@ class GetAvailableDatesTool implements Tool
 
     public function handle(array $arguments, ToolContext $context): ToolResult
     {
+        // 1) Valida o serviço.
         $service = Service::query()->where('active', true)->find($arguments['service_id'] ?? null);
         if (! $service) {
             return ToolResult::invalid('Serviço não encontrado ou inativo.');
         }
 
+        // 2) Resolve o profissional (null = qualquer; false = inválido).
         $professional = $this->resolveProfessional($arguments['professional_id'] ?? null, $context, $service);
         if ($professional === false) {
             return ToolResult::invalid('Profissional não encontrado ou indisponível para este serviço.');
         }
 
+        // 3) Consulta as datas livres e devolve com rótulo legível (ex.: "Sexta, 27/06").
         $dates = $context->availability->availableDates($context->config, $service, $professional, 14);
 
         $items = array_map(function (string $date) use ($context) {

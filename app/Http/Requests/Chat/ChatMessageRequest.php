@@ -4,6 +4,11 @@ namespace App\Http\Requests\Chat;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Valida a mensagem enviada ao chat: token de sessão, texto dentro do limite
+ * de caracteres e o campo honeypot "website" (deve vir vazio — se preenchido,
+ * é bot).
+ */
 class ChatMessageRequest extends FormRequest
 {
     public function authorize(): bool

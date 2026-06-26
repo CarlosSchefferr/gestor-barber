@@ -4,6 +4,10 @@ namespace App\Services\Chat\Tools;
 
 use App\Models\Service;
 
+/**
+ * Ferramenta: lista os serviços ativos (preço/duração oficiais), com filtro
+ * opcional por nome. Fonte da verdade para o modelo falar de serviços e preços.
+ */
 class ListServicesTool implements Tool
 {
     public function name(): string
@@ -34,6 +38,7 @@ class ListServicesTool implements Tool
 
     public function handle(array $arguments, ToolContext $context): ToolResult
     {
+        // 1) Filtro opcional por nome.
         $busca = is_string($arguments['busca'] ?? null) ? trim($arguments['busca']) : '';
 
         $query = Service::query()->where('active', true);
@@ -41,8 +46,10 @@ class ListServicesTool implements Tool
             $query->where('name', 'like', '%'.$busca.'%');
         }
 
+        // 2) Busca limitada (teto de 20) só com os campos necessários.
         $services = $query->orderBy('name')->limit(20)->get(['id', 'name', 'description', 'duration', 'price']);
 
+        // 3) Normaliza cada serviço com rótulos prontos (duração/preço) para modelo e UI.
         $items = $services->map(function (Service $s) {
             return [
                 'id' => $s->id,

@@ -386,6 +386,57 @@
                 </div>
             </div>
 
+            {{-- ============ Picker inline: DATA (mini calendário) ============ --}}
+            <div x-show="pickerData()" class="bg-white border-t border-zinc-200 p-3" x-cloak>
+                <p class="text-xs font-semibold text-zinc-500 mb-2 px-1">Escolha uma data</p>
+                {{-- Cabeçalho do mês --}}
+                <div class="flex items-center justify-between mb-2">
+                    <button @click="chatCalAnterior()" :disabled="!chatCalPodeVoltar()" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed">
+                        <svg class="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                    </button>
+                    <span class="text-sm font-bold text-zinc-800 capitalize" x-text="chatCalLabelMes()"></span>
+                    <button @click="chatCalProx()" :disabled="!chatCalPodeAvancar()" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed">
+                        <svg class="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                </div>
+                {{-- Dias da semana --}}
+                <div class="grid grid-cols-7 gap-1 mb-1">
+                    <template x-for="(ws, wi) in ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']" :key="'cws'+wi">
+                        <span class="text-center text-[11px] font-semibold text-zinc-400 py-1" x-text="ws"></span>
+                    </template>
+                </div>
+                {{-- Grade de dias (cheios/indisponíveis aparecem riscados e apagados) --}}
+                <div class="grid grid-cols-7 gap-1">
+                    <template x-for="(cel, ci) in chatCalMatriz()" :key="'ccd'+ci">
+                        <div>
+                            <template x-if="cel">
+                                <button @click="chatEscolherData(cel)" :disabled="!cel.disponivel || aiBusy"
+                                    class="w-full aspect-square rounded-lg text-sm font-semibold flex items-center justify-center transition"
+                                    :class="cel.disponivel
+                                        ? 'text-zinc-800 hover:bg-[#075e54] hover:text-white border border-zinc-200'
+                                        : 'text-zinc-300 cursor-not-allowed line-through decoration-zinc-300'"
+                                    x-text="cel.dia"></button>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            {{-- ============ Picker inline: HORÁRIO (grade) ============ --}}
+            <div x-show="pickerHora()" class="bg-white border-t border-zinc-200 p-3" x-cloak>
+                <p class="text-xs font-semibold text-zinc-500 mb-2 px-1">Escolha um horário</p>
+                <div class="grid grid-cols-4 gap-2 max-h-44 overflow-y-auto">
+                    <template x-for="h in chatHorarios()" :key="'chh'+h.time+(h.professional_id||'x')">
+                        <button @click="chatEscolherHora(h)" :disabled="!h.disponivel || aiBusy"
+                            class="rounded-xl py-2 text-sm font-semibold transition"
+                            :class="h.disponivel
+                                ? 'border border-zinc-200 text-zinc-800 hover:border-[#075e54] hover:bg-[#075e54]/5'
+                                : 'border border-zinc-100 bg-zinc-50 text-zinc-300 line-through cursor-not-allowed'"
+                            x-text="h.time"></button>
+                    </template>
+                </div>
+            </div>
+
             {{-- ============ Card de proposta / confirmação (modo IA) ============ --}}
             <div x-show="proposal" class="bg-white border-t border-zinc-200 p-4" x-cloak>
                 <div class="rounded-2xl border border-zinc-200 overflow-hidden">
@@ -424,9 +475,9 @@
             {{-- ============ Rodapé modo IA ============ --}}
             <div x-show="mode === 'ai'" class="bg-[#e4e4e4] p-3 flex-shrink-0" x-cloak>
                 <div class="flex gap-2">
-                    <input type="text" x-model="aiInput" :disabled="aiBusy" maxlength="1000" placeholder="Digite uma mensagem..." @keydown.enter="enviarMensagem()"
+                    <input type="text" x-model="aiInput" :disabled="aiBusy || pickerAtivo()" maxlength="1000" :placeholder="pickerAtivo() ? 'Escolha uma opção acima 👆' : 'Digite uma mensagem...'" @keydown.enter="enviarMensagem()"
                         class="flex-1 rounded-[20px] bg-white px-4 py-2.5 text-sm outline-none disabled:opacity-60" aria-label="Mensagem">
-                    <button @click="enviarMensagem()" :disabled="aiBusy || !aiInput.trim()" class="w-10 h-10 rounded-full bg-[#075e54] flex items-center justify-center flex-shrink-0 disabled:opacity-50" aria-label="Enviar">
+                    <button @click="enviarMensagem()" :disabled="aiBusy || pickerAtivo() || !aiInput.trim()" class="w-10 h-10 rounded-full bg-[#075e54] flex items-center justify-center flex-shrink-0 disabled:opacity-50" aria-label="Enviar">
                         <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                     </button>
                 </div>
@@ -646,6 +697,7 @@
             aiTyping: false,
             aiBusy: false,
             ui: {},
+            chatCalMes: null, // mês exibido no mini calendário do chat
             proposal: null,
             customer: { nome: '', email: '', telefone: '', observacoes: '' },
             customerSaved: false,
@@ -805,6 +857,69 @@
                 finally { this.montador.loading = false; }
             },
 
+            // ===== Pickers inline do chat (data/horário) =====
+            // Quando a IA devolve datas/horários, o chat exibe um calendário/grade
+            // clicáveis (em vez de o cliente digitar) e o input fica desabilitado.
+            pickerHora() { return this.mode === 'ai' && !this.proposal && (this.ui.times || []).length > 0; },
+            pickerData() { return this.mode === 'ai' && !this.proposal && !this.pickerHora() && (this.ui.dates || []).length > 0; },
+            pickerAtivo() { return this.pickerData() || this.pickerHora(); },
+
+            // Posiciona o calendário no mês da primeira data disponível assim que elas chegam.
+            syncChatPicker() {
+                if ((this.ui.dates || []).length) {
+                    const base = this.parseData(this.ui.dates[0].data);
+                    this.chatCalMes = new Date(base.getFullYear(), base.getMonth(), 1);
+                }
+            },
+
+            // Grade de horários: usa a grade completa (com ocupados) quando disponível,
+            // senão cai para a lista de livres marcando todos como disponíveis.
+            chatHorarios() {
+                if ((this.ui.grid || []).length) return this.ui.grid;
+                return (this.ui.times || []).map(t => ({ time: t.time, disponivel: true, professional_id: t.professional_id }));
+            },
+
+            chatCalLabelMes() { return this.chatCalMes ? this.chatCalMes.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) : ''; },
+            chatCalMatriz() {
+                if (!this.chatCalMes) return [];
+                const ano = this.chatCalMes.getFullYear(), mes = this.chatCalMes.getMonth();
+                const disp = {};
+                (this.ui.dates || []).forEach(d => { disp[d.data] = d; });
+                const primeiroDiaSemana = new Date(ano, mes, 1).getDay();
+                const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+                const celulas = [];
+                for (let i = 0; i < primeiroDiaSemana; i++) celulas.push(null);
+                for (let dia = 1; dia <= diasNoMes; dia++) {
+                    const ds = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+                    const item = disp[ds];
+                    celulas.push({ dia, data: ds, label: item ? item.label : '', disponivel: !!item });
+                }
+                return celulas;
+            },
+            chatCalAnterior() { if (this.chatCalMes && this.chatCalPodeVoltar()) this.chatCalMes = new Date(this.chatCalMes.getFullYear(), this.chatCalMes.getMonth() - 1, 1); },
+            chatCalProx() { if (this.chatCalMes && this.chatCalPodeAvancar()) this.chatCalMes = new Date(this.chatCalMes.getFullYear(), this.chatCalMes.getMonth() + 1, 1); },
+            chatCalPodeVoltar() {
+                if (!this.chatCalMes) return false;
+                const hoje = new Date();
+                return this.chatCalMes > new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+            },
+            chatCalPodeAvancar() {
+                const ds = this.ui.dates || [];
+                if (!this.chatCalMes || !ds.length) return false;
+                const ultima = this.parseData(ds[ds.length - 1].data);
+                return this.chatCalMes < new Date(ultima.getFullYear(), ultima.getMonth(), 1);
+            },
+            chatEscolherData(cel) {
+                if (!cel || !cel.disponivel || this.aiBusy) return;
+                // Eco natural no chat: "Dia 29/06, Segunda-feira" (e não "Dia Segunda, 29/06").
+                const d = this.parseData(cel.data);
+                const dm = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                let semana = d.toLocaleDateString('pt-BR', { weekday: 'long' });
+                semana = semana.charAt(0).toUpperCase() + semana.slice(1);
+                this.enviarRapido(`Dia ${dm}, ${semana}`);
+            },
+            chatEscolherHora(h) { if (h && h.disponivel && !this.aiBusy) this.enviarRapido('Às ' + h.time); },
+
 
             // ===== Chat com IA =====
             csrf() { return document.querySelector('meta[name="csrf-token"]')?.content || ''; },
@@ -871,6 +986,7 @@
                         if (!body.ok && body.message) { this.messages.push({ tipo: 'bot', texto: body.message, hora: this.agora() }); this.scrollChat(); return; }
                         if (body.assistant) this.messages.push({ tipo: 'bot', texto: this.limparTexto(body.assistant), hora: this.agora() });
                         this.ui = body.ui || {};
+                        this.syncChatPicker();
                         if (this.ui.proposal) { this.proposal = this.ui.proposal; this.customerSaved = false; this.proposalError = ''; }
                         this.scrollChat();
                     });

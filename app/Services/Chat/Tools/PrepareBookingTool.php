@@ -6,6 +6,11 @@ use App\Models\Service;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 
+/**
+ * Ferramenta: valida serviço + profissional + data + hora e gera uma proposta
+ * ainda NÃO confirmada (resumo + token para a UI). Não cria o agendamento — a
+ * confirmação definitiva é feita pelo frontend via ChatBookingService.
+ */
 class PrepareBookingTool implements Tool
 {
     public function name(): string
@@ -39,6 +44,7 @@ class PrepareBookingTool implements Tool
 
     public function handle(array $arguments, ToolContext $context): ToolResult
     {
+        // 1) Valida serviço, data/hora (formato) e profissional.
         $service = Service::query()->where('active', true)->find($arguments['service_id'] ?? null);
         if (! $service) {
             return ToolResult::invalid('Serviço não encontrado ou inativo.');
@@ -55,12 +61,14 @@ class PrepareBookingTool implements Tool
             return ToolResult::invalid('Profissional não encontrado ou indisponível para este serviço.');
         }
 
+        // 2) Monta o instante de início no fuso oficial.
         try {
             $start = CarbonImmutable::createFromFormat('Y-m-d H:i', "{$rawDate} {$rawTime}", $context->timezone());
         } catch (\Throwable $e) {
             return ToolResult::invalid('Data ou hora inválida.');
         }
 
+        // 3) Delega ao ProposalBuilder (mesmas regras do montador do site); nulo = indisponível.
         $built = (new \App\Services\Chat\ProposalBuilder($context->availability))
             ->build($context->config, $context->session, $service, $professional, $start);
 

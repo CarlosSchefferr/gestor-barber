@@ -61,37 +61,26 @@ class ChatController extends Controller
      */
     public function message(ChatMessageRequest $request, string $publicToken): JsonResponse
     {
-        // ETAPA 1 — Resolve a barbearia a partir do token público da URL.
-        // Se o token não corresponder a uma agenda ativa, dispara 404.
+        // 1) Resolve a barbearia pelo token público (404 se não for agenda ativa).
         $config = $this->resolveConfig($publicToken);
 
-        // ETAPA 2 — Verifica se a IA está configurada/disponível.
-        // Sem chave/modelo configurados, devolvemos 503 e o frontend cai no
-        // agendamento tradicional.
+        // 2) IA precisa estar configurada; senão 503 e o front cai no tradicional.
         if (! $this->orchestrator->available()) {
             return response()->json(['ok' => false, 'ai_enabled' => false, 'message' => 'Atendimento por IA indisponível.'], 503);
         }
 
-        // ETAPA 3 — Valida a sessão informada pelo cliente.
-        // A sessão precisa existir e estar ativa (não expirada). Caso contrário,
-        // 410 sinaliza ao frontend que ele deve recarregar e começar de novo.
+        // 3) Sessão precisa existir e estar ativa; 410 pede para recarregar.
         $session = $this->resolveActiveSession($config, $request->validated('session_token'));
         if (! $session) {
             return response()->json(['ok' => false, 'error' => 'session_expired', 'message' => 'Sua sessão expirou. Recarregue para começar de novo.'], 410);
         }
 
-        // ETAPA 4 — Aplica o limite de mensagens por conversa.
-        // Protege contra abuso e custo: ao atingir o teto, 429 encerra o canal
-        // de IA e oferece o agendamento tradicional.
+        // 4) Limite de mensagens por conversa (protege contra abuso/custo).
         if ($this->sessions->reachedMessageLimit($session)) {
             return response()->json(['ok' => false, 'error' => 'message_limit', 'message' => 'Chegamos ao limite desta conversa. Você pode usar o agendamento tradicional abaixo.'], 429);
         }
 
-        // ETAPA 5 — Delega a conversa ao orquestrador.
-        // É ele que fala com o modelo, executa as ferramentas e devolve texto +
-        // estruturas. Qualquer exceção inesperada é registrada e convertida em
-        // uma resposta amigável (status 200 com texto de fallback), para a
-        // interface nunca quebrar diante de um erro do backend.
+        // 5) Delega ao orquestrador; erro inesperado vira resposta amigável (200) sem quebrar a UI.
         try {
             $result = $this->orchestrator->converse($config, $session, $request->validated('message'));
         } catch (\Throwable $e) {
@@ -105,9 +94,7 @@ class ChatController extends Controller
             ]);
         }
 
-        // ETAPA 6 — Devolve a resposta ao frontend.
-        // Inclui o texto do assistente, as estruturas de UI e o total atualizado
-        // de mensagens (lido com fresh() para refletir o que acabou de ser gravado).
+        // 6) Devolve texto do assistente, UI e total atualizado de mensagens (fresh()).
         return response()->json([
             'ok' => true,
             'assistant' => $result['assistant'],
@@ -124,6 +111,7 @@ class ChatController extends Controller
      */
     public function prepareFromSelection(Request $request, string $publicToken): JsonResponse
     {
+        // 1) Resolve a barbearia e valida o payload da seleção feita no site.
         $config = $this->resolveConfig($publicToken);
 
         $data = $request->validate([
@@ -134,16 +122,19 @@ class ChatController extends Controller
             'hora' => 'required|date_format:H:i',
         ]);
 
+        // 2) Sessão precisa estar ativa.
         $session = $this->resolveActiveSession($config, $data['session_token']);
         if (! $session) {
             return response()->json(['ok' => false, 'error' => 'session_expired'], 410);
         }
 
+        // 3) Revalida o serviço no servidor (não confia no que veio do cliente).
         $service = Service::where('active', true)->find($data['service_id']);
         if (! $service) {
             return response()->json(['ok' => false, 'message' => 'Serviço indisponível.'], 422);
         }
 
+        // 4) Se um profissional foi escolhido, confirma que ele atende esse serviço.
         $professional = null;
         if (! empty($data['professional_id'])) {
             $professional = $this->availability->professionalsForService($config, $service)
@@ -153,17 +144,20 @@ class ChatController extends Controller
             }
         }
 
+        // 5) Monta o instante de início no fuso oficial.
         try {
             $start = CarbonImmutable::createFromFormat('Y-m-d H:i', $data['data'].' '.$data['hora'], $this->availability->timezone());
         } catch (\Throwable $e) {
             return response()->json(['ok' => false, 'message' => 'Data ou hora inválida.'], 422);
         }
 
+        // 6) Gera a proposta (mesmas regras do chat); nula = horário já ocupado.
         $built = $this->proposalBuilder->build($config, $session, $service, $professional, $start);
         if (! $built) {
             return response()->json(['ok' => false, 'error' => 'slot_unavailable', 'message' => 'Esse horário acabou de ficar indisponível. Escolha outro.'], 409);
         }
 
+        // 7) Devolve o resumo + token e os campos pessoais que ainda faltam coletar.
         $proposal = $built['proposal'];
 
         return response()->json([

@@ -25,17 +25,19 @@ class ProposalBuilder
      */
     public function build(AgendaConfig $config, ChatSession $session, Service $service, ?User $professional, CarbonImmutable $start): ?array
     {
+        // 1) Resolve o horário pedido contra as regras de disponibilidade; nulo = indisponível.
         $slot = $this->availability->resolveSlot($config, $service, $professional, $start);
         if (! $slot) {
             return null;
         }
 
-        // Invalida propostas pendentes anteriores desta sessão.
+        // 2) Cancela propostas pendentes anteriores: só uma proposta viva por sessão.
         ChatBookingProposal::query()
             ->where('chat_session_id', $session->id)
             ->where('status', 'pending')
             ->update(['status' => 'cancelled']);
 
+        // 3) Cria a proposta (ainda não confirmada) com validade curta (TTL).
         $ttl = (int) config('chat.limits.proposal_ttl_minutes', 10);
 
         $proposal = ChatBookingProposal::create([
@@ -52,6 +54,7 @@ class ProposalBuilder
             'expires_at' => now()->addMinutes($ttl),
         ]);
 
+        // 4) Monta o resumo legível (rótulos de data/hora/preço) para a interface exibir.
         $dias = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
         $summary = [

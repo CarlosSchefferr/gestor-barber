@@ -4,6 +4,10 @@ namespace App\Services\Chat\Tools;
 
 use Illuminate\Support\Str;
 
+/**
+ * Ferramenta: devolve dados institucionais confirmados (nome, endereço,
+ * telefone, horário de funcionamento) para responder dúvidas sobre a barbearia.
+ */
 class GetBusinessInformationTool implements Tool
 {
     public function name(): string
@@ -31,6 +35,7 @@ class GetBusinessInformationTool implements Tool
     {
         $config = $context->config;
 
+        // 1) Converte os dias de atendimento para rótulos curtos (Seg, Ter, ...).
         $diasMap = [
             'segunda' => 'Seg', 'terca' => 'Ter', 'quarta' => 'Qua', 'quinta' => 'Qui',
             'sexta' => 'Sex', 'sabado' => 'Sáb', 'domingo' => 'Dom',

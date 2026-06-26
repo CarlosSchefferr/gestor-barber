@@ -5,6 +5,10 @@ namespace App\Services\Chat\Tools;
 use App\Models\Service;
 use App\Models\User;
 
+/**
+ * Ferramenta: lista os profissionais ativos. Com service_id, restringe aos que
+ * estão aptos a executar aquele serviço.
+ */
 class ListProfessionalsTool implements Tool
 {
     public function name(): string
@@ -35,6 +39,7 @@ class ListProfessionalsTool implements Tool
 
     public function handle(array $arguments, ToolContext $context): ToolResult
     {
+        // 1) Se veio service_id, valida o serviço para filtrar só quem o executa.
         $serviceId = $arguments['service_id'] ?? null;
         $service = null;
 
@@ -45,6 +50,7 @@ class ListProfessionalsTool implements Tool
             }
         }
 
+        // 2) Com serviço: profissionais aptos a ele; sem serviço: todos os ativos.
         $professionals = $service
             ? $context->availability->professionalsForService($context->config, $service)
             : $context->availability->professionals($context->config);

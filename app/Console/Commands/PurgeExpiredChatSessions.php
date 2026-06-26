@@ -20,21 +20,23 @@ class PurgeExpiredChatSessions extends Command
     {
         $now = now();
 
+        // 1) Marca como expiradas as propostas pendentes que passaram da validade.
         $expiredProposals = ChatBookingProposal::query()
             ->where('status', 'pending')
             ->where('expires_at', '<', $now)
             ->update(['status' => 'expired']);
 
+        // 2) Marca como expiradas as sessões ativas vencidas.
         $expiredSessions = ChatSession::query()
             ->where('status', 'active')
             ->whereNotNull('expires_at')
             ->where('expires_at', '<', $now)
             ->update(['status' => 'expired']);
 
+        // 3) Remove conversas antigas além da retenção (cascata: mensagens, tools e propostas).
         $retentionDays = (int) config('chat.limits.retention_days', 30);
         $cutoff = now()->subDays(max(1, $retentionDays));
 
-        // A exclusão das sessões remove em cascata mensagens, tools e propostas.
         $deleted = ChatSession::query()
             ->where('updated_at', '<', $cutoff)
             ->whereIn('status', ['expired', 'closed'])
