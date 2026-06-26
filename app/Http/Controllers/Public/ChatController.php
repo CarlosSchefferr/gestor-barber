@@ -50,8 +50,8 @@ class ChatController extends Controller
             'ai_enabled' => $aiEnabled,
             'session_token' => $session->session_token,
             'greeting' => $aiEnabled
-                ? 'Olá! 👋 Sou o assistente da '.($config->nome_barbearia ?: 'barbearia')
-                    .'. Posso te ajudar a agendar um horário. O que você gostaria de fazer hoje?'
+                ? 'Oi! 👋 Aqui é da '.($config->nome_barbearia ?: 'barbearia')
+                    .' 💈 Que bom te ver por aqui! Quer marcar um horário? Me conta o que você precisa que eu te ajudo.'
                 : null,
         ]);
     }
@@ -61,21 +61,37 @@ class ChatController extends Controller
      */
     public function message(ChatMessageRequest $request, string $publicToken): JsonResponse
     {
+        // ETAPA 1 — Resolve a barbearia a partir do token público da URL.
+        // Se o token não corresponder a uma agenda ativa, dispara 404.
         $config = $this->resolveConfig($publicToken);
 
+        // ETAPA 2 — Verifica se a IA está configurada/disponível.
+        // Sem chave/modelo configurados, devolvemos 503 e o frontend cai no
+        // agendamento tradicional.
         if (! $this->orchestrator->available()) {
             return response()->json(['ok' => false, 'ai_enabled' => false, 'message' => 'Atendimento por IA indisponível.'], 503);
         }
 
+        // ETAPA 3 — Valida a sessão informada pelo cliente.
+        // A sessão precisa existir e estar ativa (não expirada). Caso contrário,
+        // 410 sinaliza ao frontend que ele deve recarregar e começar de novo.
         $session = $this->resolveActiveSession($config, $request->validated('session_token'));
         if (! $session) {
             return response()->json(['ok' => false, 'error' => 'session_expired', 'message' => 'Sua sessão expirou. Recarregue para começar de novo.'], 410);
         }
 
+        // ETAPA 4 — Aplica o limite de mensagens por conversa.
+        // Protege contra abuso e custo: ao atingir o teto, 429 encerra o canal
+        // de IA e oferece o agendamento tradicional.
         if ($this->sessions->reachedMessageLimit($session)) {
             return response()->json(['ok' => false, 'error' => 'message_limit', 'message' => 'Chegamos ao limite desta conversa. Você pode usar o agendamento tradicional abaixo.'], 429);
         }
 
+        // ETAPA 5 — Delega a conversa ao orquestrador.
+        // É ele que fala com o modelo, executa as ferramentas e devolve texto +
+        // estruturas. Qualquer exceção inesperada é registrada e convertida em
+        // uma resposta amigável (status 200 com texto de fallback), para a
+        // interface nunca quebrar diante de um erro do backend.
         try {
             $result = $this->orchestrator->converse($config, $session, $request->validated('message'));
         } catch (\Throwable $e) {
@@ -89,6 +105,9 @@ class ChatController extends Controller
             ]);
         }
 
+        // ETAPA 6 — Devolve a resposta ao frontend.
+        // Inclui o texto do assistente, as estruturas de UI e o total atualizado
+        // de mensagens (lido com fresh() para refletir o que acabou de ser gravado).
         return response()->json([
             'ok' => true,
             'assistant' => $result['assistant'],

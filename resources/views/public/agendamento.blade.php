@@ -163,16 +163,6 @@
             <section class="px-8 py-6">
                 <div class="flex items-center justify-between gap-3 border-b-2 border-[#155dfc] pb-3">
                     <h2 class="text-[20px] sm:text-[24px] font-bold text-black truncate" x-text="tituloAba"></h2>
-                    {{-- Carrinho resumido (mesma linha do título) --}}
-                    <button x-show="carrinho.length" @click="cartAberto = true" x-cloak
-                        class="flex items-center gap-2 rounded-full bg-[#075e54] text-white pl-3 pr-4 py-1.5 hover:bg-[#064a42] transition flex-shrink-0">
-                        <span class="relative flex items-center justify-center">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                            <span class="absolute -top-2 -right-2 rounded-full bg-white text-[#075e54] text-[10px] font-bold w-4 h-4 flex items-center justify-center" x-text="carrinhoQtd()"></span>
-                        </span>
-                        {{-- Total visível só em telas maiores; no mobile fica só o ícone + badge --}}
-                        <span class="hidden sm:inline text-sm font-bold" x-text="carrinhoTotalLabel()"></span>
-                    </button>
                 </div>
 
                 {{-- Loading --}}
@@ -225,7 +215,6 @@
                                             <p class="text-[12px] text-[#484848] mt-1" x-text="item.marca || ''"></p>
                                             <div class="mt-auto pt-3 flex items-center justify-between gap-2">
                                                 <span class="text-[20px] font-extrabold text-[#1538fc]" x-text="item.preco_label"></span>
-                                                <button @click="cartAdicionar(item)" class="rounded-lg bg-[#075e54] text-white text-xs font-bold px-3 py-1.5 hover:bg-[#064a42] flex-shrink-0">Adicionar</button>
                                             </div>
                                         </div>
                                     </div>
@@ -371,28 +360,28 @@
                 {{-- Serviços --}}
                 <div x-show="ui.services && ui.services.length" class="flex flex-wrap gap-2 py-1">
                     <template x-for="s in (ui.services || [])" :key="'s'+s.id">
-                        <button @click="enviarRapido(s.nome)" :disabled="aiTyping" class="rounded-full border border-[#075e54]/30 bg-[#075e54]/5 px-3 py-1.5 text-xs font-medium text-[#075e54] hover:bg-[#075e54]/10 disabled:opacity-50">
+                        <button @click="enviarRapido(s.nome)" :disabled="aiBusy" class="rounded-full border border-[#075e54]/30 bg-[#075e54]/5 px-3 py-1.5 text-xs font-medium text-[#075e54] hover:bg-[#075e54]/10 disabled:opacity-50">
                             <span x-text="s.nome"></span><span class="text-zinc-500" x-text="s.preco_label ? ' · ' + s.preco_label : ''"></span>
                         </button>
                     </template>
                 </div>
                 {{-- Profissionais --}}
                 <div x-show="ui.professionals && ui.professionals.length" class="flex flex-wrap gap-2 py-1">
-                    <button x-show="ui.professionals && ui.professionals.length > 1" @click="enviarRapido('Qualquer profissional disponível')" :disabled="aiTyping" class="rounded-full border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50">Qualquer profissional</button>
+                    <button x-show="ui.professionals && ui.professionals.length > 1" @click="enviarRapido('Qualquer profissional disponível')" :disabled="aiBusy" class="rounded-full border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50">Qualquer profissional</button>
                     <template x-for="p in (ui.professionals || [])" :key="'p'+p.id">
-                        <button @click="enviarRapido('Com ' + p.nome)" :disabled="aiTyping" class="rounded-full border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50" x-text="p.nome"></button>
+                        <button @click="enviarRapido('Com ' + p.nome)" :disabled="aiBusy" class="rounded-full border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50" x-text="p.nome"></button>
                     </template>
                 </div>
                 {{-- Datas --}}
                 <div x-show="ui.dates && ui.dates.length" class="flex flex-wrap gap-2 py-1">
                     <template x-for="d in (ui.dates || [])" :key="'d'+d.data">
-                        <button @click="enviarRapido('Dia ' + d.label)" :disabled="aiTyping" class="rounded-full border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50" x-text="d.label"></button>
+                        <button @click="enviarRapido('Dia ' + d.label)" :disabled="aiBusy" class="rounded-full border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50" x-text="d.label"></button>
                     </template>
                 </div>
                 {{-- Horários --}}
                 <div x-show="ui.times && ui.times.length" class="flex flex-wrap gap-2 py-1">
                     <template x-for="t in (ui.times || [])" :key="'t'+t.time+t.professional_id">
-                        <button @click="enviarRapido('Às ' + t.time)" :disabled="aiTyping" class="rounded-full border border-[#155dfc]/30 bg-[#155dfc]/5 px-3 py-1.5 text-xs font-semibold text-[#155dfc] hover:bg-[#155dfc]/10 disabled:opacity-50" x-text="t.time"></button>
+                        <button @click="enviarRapido('Às ' + t.time)" :disabled="aiBusy" class="rounded-full border border-[#155dfc]/30 bg-[#155dfc]/5 px-3 py-1.5 text-xs font-semibold text-[#155dfc] hover:bg-[#155dfc]/10 disabled:opacity-50" x-text="t.time"></button>
                     </template>
                 </div>
             </div>
@@ -435,9 +424,9 @@
             {{-- ============ Rodapé modo IA ============ --}}
             <div x-show="mode === 'ai'" class="bg-[#e4e4e4] p-3 flex-shrink-0" x-cloak>
                 <div class="flex gap-2">
-                    <input type="text" x-model="aiInput" :disabled="aiTyping" maxlength="1000" placeholder="Digite uma mensagem..." @keydown.enter="enviarMensagem()"
+                    <input type="text" x-model="aiInput" :disabled="aiBusy" maxlength="1000" placeholder="Digite uma mensagem..." @keydown.enter="enviarMensagem()"
                         class="flex-1 rounded-[20px] bg-white px-4 py-2.5 text-sm outline-none disabled:opacity-60" aria-label="Mensagem">
-                    <button @click="enviarMensagem()" :disabled="aiTyping || !aiInput.trim()" class="w-10 h-10 rounded-full bg-[#075e54] flex items-center justify-center flex-shrink-0 disabled:opacity-50" aria-label="Enviar">
+                    <button @click="enviarMensagem()" :disabled="aiBusy || !aiInput.trim()" class="w-10 h-10 rounded-full bg-[#075e54] flex items-center justify-center flex-shrink-0 disabled:opacity-50" aria-label="Enviar">
                         <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                     </button>
                 </div>
@@ -622,33 +611,6 @@
         </div>
     </div>
 
-    {{-- ===================== CARRINHO DE PRODUTOS (modal) ===================== --}}
-    <div x-cloak x-show="cartAberto" @keydown.escape.window="cartAberto = false"
-         class="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-zinc-900/60 backdrop-blur-sm p-0 sm:p-4" x-transition.opacity>
-        <div class="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col" @click.outside="cartAberto = false">
-            <div class="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
-                <h3 class="text-base font-bold text-zinc-900">Seu carrinho</h3>
-                <button @click="cartAberto = false" class="text-zinc-400 hover:text-zinc-700"><svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
-            </div>
-            <div class="builder-scroll px-5 py-4 space-y-2">
-                <template x-for="item in carrinho" :key="'c'+item.id">
-                    <div class="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 px-4 py-3">
-                        <div class="min-w-0"><p class="text-sm font-semibold text-zinc-800 truncate" x-text="item.nome"></p><p class="text-xs text-zinc-500" x-text="item.preco_label"></p></div>
-                        <div class="flex items-center gap-2 flex-shrink-0">
-                            <button @click="cartAjustar(item.id, -1)" class="w-7 h-7 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold">−</button>
-                            <span class="w-6 text-center text-sm font-semibold" x-text="item.qtd"></span>
-                            <button @click="cartAjustar(item.id, 1)" class="w-7 h-7 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold">+</button>
-                        </div>
-                    </div>
-                </template>
-                <p x-show="!carrinho.length" class="text-sm text-zinc-400 text-center py-6">Carrinho vazio.</p>
-            </div>
-            <div class="border-t border-zinc-200 px-5 py-4 space-y-3" x-show="carrinho.length">
-                <div class="flex justify-between text-sm"><span class="text-zinc-500">Total estimado</span><span class="font-bold text-zinc-900" x-text="carrinhoTotalLabel()"></span></div>
-                <button @click="enviarCarrinhoChat()" class="w-full rounded-xl bg-[#075e54] text-white text-sm font-bold py-3 hover:bg-[#064a42]">Enviar pedido pelo chat</button>
-            </div>
-        </div>
-    </div>
 
     <script>
     function barbeariaApp(opts) {
@@ -675,10 +637,6 @@
             montador: { aberto: false, etapa: 'servico', serviceId: null, serviceNome: '', professionalId: null, profissionalNome: '', data: null, dataLabel: '', hora: null, profissionais: [], datas: [], horarios: [], loading: false, erro: '' },
             calMes: null, // mês exibido no mini calendário
 
-            // Carrinho de produtos
-            carrinho: [],
-            cartAberto: false,
-
             // ===== Chat =====
             mode: 'loading',        // loading | ai | tradicional
             messages: [],
@@ -686,6 +644,7 @@
             sessionToken: null,
             aiInput: '',
             aiTyping: false,
+            aiBusy: false,
             ui: {},
             proposal: null,
             customer: { nome: '', email: '', telefone: '', observacoes: '' },
@@ -846,30 +805,6 @@
                 finally { this.montador.loading = false; }
             },
 
-            // ===== Carrinho de produtos =====
-            cartAdicionar(p) {
-                const ex = this.carrinho.find(i => i.id === p.id);
-                if (ex) ex.qtd++; else this.carrinho.push({ id: p.id, nome: p.nome, preco: p.preco, preco_label: p.preco_label, qtd: 1 });
-            },
-            cartAjustar(id, delta) {
-                const it = this.carrinho.find(i => i.id === id);
-                if (!it) return;
-                it.qtd += delta;
-                if (it.qtd <= 0) this.carrinho = this.carrinho.filter(i => i.id !== id);
-            },
-            carrinhoQtd() { return this.carrinho.reduce((s, i) => s + i.qtd, 0); },
-            carrinhoTotalLabel() {
-                const total = this.carrinho.reduce((s, i) => s + (i.preco || 0) * i.qtd, 0);
-                return 'R$ ' + total.toFixed(2).replace('.', ',');
-            },
-            enviarCarrinhoChat() {
-                const linhas = this.carrinho.map(i => `${i.qtd}x ${i.nome}`).join(', ');
-                const texto = `Olá! Tenho interesse nestes produtos: ${linhas} (total estimado ${this.carrinhoTotalLabel()}). Pode me ajudar?`;
-                this.cartAberto = false;
-                if (this.mode === 'ai') { this.enviarRapido(texto); }
-                else { this.messages.push({ tipo: 'cliente', texto, hora: this.agora() }); this.messages.push({ tipo: 'bot', texto: 'Anotado! Um atendente confirma a disponibilidade desses produtos com você.', hora: this.agora() }); this.scrollChat(); }
-                document.querySelector('aside')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            },
 
             // ===== Chat com IA =====
             csrf() { return document.querySelector('meta[name="csrf-token"]')?.content || ''; },
@@ -899,31 +834,46 @@
 
             enviarMensagem() {
                 const texto = (this.aiInput || '').trim();
-                if (!texto || this.aiTyping) return;
+                if (!texto || this.aiBusy) return;
                 this.aiInput = '';
                 this.messages.push({ tipo: 'cliente', texto, hora: this.agora() });
-                this.aiTyping = true;
+                this.aiBusy = true;
                 this.ui = {};
                 this.scrollChat();
 
-                fetch(this.chatMessageUrl, {
+                // Simulação humana: depois da mensagem, fica alguns segundos "Online" em silêncio
+                // e só então começa a "digitar", como uma pessoa de verdade.
+                const opcoesEspera = [4000, 4000, 5000];
+                const espera = opcoesEspera[Math.floor(Math.random() * opcoesEspera.length)];
+                const tempoMinDigitando = 1200; // segura o "digitando..." por um instante após a resposta chegar
+
+                // Dispara a requisição imediatamente (em paralelo com a espera).
+                const requisicao = fetch(this.chatMessageUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrf() },
                     body: JSON.stringify({ session_token: this.sessionToken, message: texto, website: '' }),
                 }).then(async r => ({ status: r.status, body: await r.json().catch(() => ({})) }))
-                  .then(({ status, body }) => {
-                    this.aiTyping = false;
-                    if (status === 410) { this.messages.push({ tipo: 'bot', texto: 'Sua sessão expirou. Vou abrir o agendamento tradicional.', hora: this.agora() }); this.iniciarTradicional(); return; }
-                    if (!body.ok && body.message) { this.messages.push({ tipo: 'bot', texto: body.message, hora: this.agora() }); this.scrollChat(); return; }
-                    if (body.assistant) this.messages.push({ tipo: 'bot', texto: this.limparTexto(body.assistant), hora: this.agora() });
-                    this.ui = body.ui || {};
-                    if (this.ui.proposal) { this.proposal = this.ui.proposal; this.customerSaved = false; this.proposalError = ''; }
-                    this.scrollChat();
-                }).catch(() => {
-                    this.aiTyping = false;
-                    this.messages.push({ tipo: 'bot', texto: 'Tive um problema de conexão. Tente novamente ou use o agendamento sem IA.', hora: this.agora() });
-                    this.scrollChat();
-                });
+                  .catch(() => ({ status: 0, body: {} }));
+
+                const esperaSilenciosa = new Promise(res => setTimeout(res, espera));
+
+                // Passada a espera silenciosa, mostra o "digitando...".
+                esperaSilenciosa.then(() => { this.aiTyping = true; this.scrollChat(); });
+
+                // Só renderiza a resposta após a espera + a resposta ter chegado + um tempo mínimo digitando.
+                Promise.all([requisicao, esperaSilenciosa])
+                    .then(([res]) => new Promise(done => setTimeout(() => done(res), tempoMinDigitando)))
+                    .then(({ status, body }) => {
+                        this.aiTyping = false;
+                        this.aiBusy = false;
+                        if (status === 0) { this.messages.push({ tipo: 'bot', texto: 'Tive um problema de conexão. Tente novamente ou use o agendamento sem IA.', hora: this.agora() }); this.scrollChat(); return; }
+                        if (status === 410) { this.messages.push({ tipo: 'bot', texto: 'Sua sessão expirou. Vou abrir o agendamento tradicional.', hora: this.agora() }); this.iniciarTradicional(); return; }
+                        if (!body.ok && body.message) { this.messages.push({ tipo: 'bot', texto: body.message, hora: this.agora() }); this.scrollChat(); return; }
+                        if (body.assistant) this.messages.push({ tipo: 'bot', texto: this.limparTexto(body.assistant), hora: this.agora() });
+                        this.ui = body.ui || {};
+                        if (this.ui.proposal) { this.proposal = this.ui.proposal; this.customerSaved = false; this.proposalError = ''; }
+                        this.scrollChat();
+                    });
             },
 
             salvarCliente() {

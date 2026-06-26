@@ -41,7 +41,11 @@ class ChatOrchestrator
      */
     public function converse(AgendaConfig $config, ChatSession $session, string $userMessage): array
     {
-        // 1. Moderação de entrada.
+        // ETAPA 1 — Moderação de entrada.
+        // Antes de gastar uma chamada de modelo, passamos a mensagem do cliente
+        // pelo endpoint (gratuito) de moderação da OpenAI. Se for sinalizada
+        // como conteúdo impróprio, encerramos aqui com uma resposta padrão e
+        // nem chegamos a conversar com o modelo principal.
         if ($this->isFlagged($userMessage)) {
             $reply = 'Desculpe, não posso ajudar com isso. Posso te ajudar a agendar um horário?';
             $this->sessions->recordAssistantMessage($session, $reply);
@@ -49,29 +53,62 @@ class ChatOrchestrator
             return ['assistant' => $reply, 'ui' => [], 'status' => 'moderated'];
         }
 
+        // ETAPA 2 — Persistência da mensagem do cliente.
+        // Grava a fala do usuário no histórico da sessão e atualiza o
+        // "last_activity" (touch) para a sessão não expirar no meio da conversa.
         $this->sessions->recordUserMessage($session, $userMessage);
         $this->sessions->touch($session);
 
+        // ETAPA 3 — Montagem do contexto das ferramentas.
+        // O ToolContext carrega config da barbearia, a sessão e o serviço de
+        // disponibilidade. É ele que cada tool recebe para consultar o banco —
+        // o modelo nunca toca no banco diretamente.
         $context = new ToolContext($config, $session, $this->availability);
 
-        // Estado estruturado da reserva (persistido entre turnos): impede a IA
-        // de perder o contexto (serviço/profissional/data já escolhidos).
+        // ETAPA 4 — Recuperação do estado estruturado da reserva.
+        // O que o cliente já escolheu (serviço/profissional/data/hora) fica
+        // salvo em $session->state e é restaurado a cada turno. Isso impede a
+        // IA de "esquecer" decisões anteriores e perguntar a mesma coisa de novo.
         $selection = is_array($session->state) ? $session->state : [];
+
+        // ETAPA 5 — Construção das instruções (system prompt).
+        // Junta o prompt base + contexto temporal (fuso/agora) + catálogo de
+        // serviços e profissionais + o bloco da seleção atual. É o "manual"
+        // que orienta o comportamento do modelo nesta requisição.
         $instructions = $this->buildInstructions($config, $selection);
 
+        // ETAPA 6 — Montagem do input (histórico da conversa).
+        // Converte o histórico da sessão no formato esperado pela Responses API
+        // (lista de mensagens com role/content). É a memória de curto prazo que
+        // enviamos junto a cada chamada.
         $input = [];
         foreach ($this->sessions->historyForModel($session) as $msg) {
             $input[] = ['role' => $msg['role'], 'content' => $msg['content']];
         }
 
+        // ETAPA 7 — Preparação do loop de function calling.
+        // O modelo pode pedir para executar ferramentas (consultar horários,
+        // listar profissionais etc.). Como cada pedido exige uma nova rodada
+        // com o modelo, limitamos o número de iterações para não rodar infinito
+        // nem estourar custo. $ui acumula estruturas para a interface; os demais
+        // contadores servem para auditoria e para a resposta final.
         $maxIterations = (int) config('chat.limits.max_tool_iterations', 4);
         $ui = [];
         $toolCallCount = 0;
         $assistantText = '';
 
+        // ETAPA 8 — Loop de conversa com o modelo.
+        // Cada volta do laço é uma chamada à Responses API. Repetimos enquanto
+        // o modelo pedir ferramentas; saímos assim que ele devolver só texto
+        // (resposta final) ou ao atingir o limite de iterações.
         for ($iteration = 0; $iteration <= $maxIterations; $iteration++) {
             $startedAt = microtime(true);
 
+            // ETAPA 8.1 — Chamada ao modelo.
+            // Monta o payload (instruções + input + definições das tools) e
+            // dispara a requisição HTTP. Em caso de erro da OpenAI, registramos
+            // o consumo e devolvemos uma mensagem de fallback orientando o
+            // cliente a usar o agendamento tradicional.
             try {
                 $response = $this->client->responses($this->payload($instructions, $input));
             } catch (OpenAiException $e) {
@@ -89,8 +126,15 @@ class ChatOrchestrator
                 ];
             }
 
+            // ETAPA 8.2 — Registro de consumo (tokens/latência).
+            // Toda chamada bem-sucedida é contabilizada para controle de custo
+            // e monitoramento, mesmo que ainda venham mais iterações.
             $this->recordUsage($session, $config, $response, $startedAt, 'ok', $toolCallCount);
 
+            // ETAPA 8.3 — Leitura da resposta do modelo.
+            // A saída da Responses API é uma lista de itens. Separamos o que é
+            // pedido de ferramenta (function_call) do que é texto para o cliente
+            // (message), acumulando cada um na sua variável.
             $functionCalls = [];
             $iterationText = '';
             foreach (($response['output'] ?? []) as $item) {
@@ -102,21 +146,33 @@ class ChatOrchestrator
                 }
             }
 
-            // O texto da iteração mais recente prevalece (evita duplicar o
-            // preâmbulo emitido junto com a tool call e a resposta final).
+            // ETAPA 8.4 — Texto mais recente prevalece.
+            // O texto da iteração atual sobrescreve o anterior: evita duplicar o
+            // preâmbulo que às vezes vem junto com a tool call e a resposta final.
             if (trim($iterationText) !== '') {
                 $assistantText = $iterationText;
             }
 
+            // ETAPA 8.5 — Saída do loop quando não há ferramentas a executar.
+            // Se o modelo respondeu só com texto, a conversa deste turno acabou.
             if (empty($functionCalls)) {
                 break;
             }
 
+            // ETAPA 8.6 — Trava de segurança do limite de iterações.
+            // Se o modelo continuar pedindo ferramentas além do limite, paramos
+            // e devolvemos um texto pedindo objetividade ao cliente.
             if ($iteration >= $maxIterations) {
                 $assistantText = $assistantText ?: 'Vamos com calma: me diga em uma frase o que você precisa agendar.';
                 break;
             }
 
+            // ETAPA 8.7 — Execução das ferramentas pedidas.
+            // Para cada function_call: executamos a tool no backend (com
+            // validação), agregamos o que ela devolve para a interface ($ui),
+            // atualizamos a seleção da reserva e devolvemos ao modelo tanto a
+            // chamada quanto o resultado — assim, na próxima volta do laço ele
+            // "enxerga" o que a ferramenta retornou e pode concluir a resposta.
             foreach ($functionCalls as $call) {
                 $toolCallCount++;
                 [$outputJson, $callUi] = $this->executeTool($call, $context);
@@ -138,12 +194,22 @@ class ChatOrchestrator
             }
         }
 
+        // ETAPA 9 — Resposta final e garantia de fallback de texto.
+        // Se por algum motivo o modelo não produziu texto, usamos uma frase
+        // neutra para nunca devolver mensagem vazia ao cliente.
         $assistantText = trim($assistantText) ?: 'Como posso te ajudar com seu agendamento?';
+
+        // ETAPA 10 — Persistência da resposta no histórico.
         $this->sessions->recordAssistantMessage($session, $assistantText);
 
-        // Persiste o estado da reserva para o próximo turno.
+        // ETAPA 11 — Persistência do estado da reserva para o próximo turno.
+        // Salva a seleção acumulada (serviço/profissional/data/hora) para que o
+        // próximo turno comece já sabendo onde a conversa parou.
         $session->forceFill(['state' => $selection])->save();
 
+        // ETAPA 12 — Retorno para o controller.
+        // 'assistant' = texto exibido no chat; 'ui' = estruturas auxiliares
+        // (botões de horário, proposta etc.); 'status' = desfecho do turno.
         return ['assistant' => $assistantText, 'ui' => $ui, 'status' => 'ok'];
     }
 
@@ -264,6 +330,16 @@ class ChatOrchestrator
     {
         $cfg = (array) config('chat.openai');
 
+        // Monta o corpo enviado à Responses API. Cada campo significa:
+        // - model: qual modelo da OpenAI usar (vem da config).
+        // - instructions: o system prompt completo (regras + catálogo + estado).
+        // - input: o histórico/turnos da conversa a serem considerados.
+        // - tools: as ferramentas que o modelo PODE pedir para executar.
+        // - tool_choice 'auto': o modelo decide se chama ferramenta ou responde.
+        // - parallel_tool_calls false: uma ferramenta por vez, para o backend
+        //   validar cada passo em ordem e manter o estado coerente.
+        // - store false: a OpenAI não retém a conversa; o histórico é nosso.
+        // - max_output_tokens: teto de tamanho da resposta (controle de custo).
         return [
             'model' => $cfg['model'],
             'instructions' => $instructions,
